@@ -10,6 +10,11 @@
 
 Obraz (`Dockerfile`) zawiera **FFmpeg** — wymagany do składania segmentów MP3.
 
+## Trwałość danych (ważne!)
+
+Bez Supabase aplikacja działa w trybie demo i trzyma **wszystkie dane w plikach** (`.data/db.json` — konta, klucze API z panelu, postępy — oraz `.data/storage/` — audio i okładki). System plików kontenera Railway jest **ulotny**: każde wdrożenie go czyści.
+Dopóki nie podłączysz Supabase, dodaj w Railway **Volume** zamontowany pod `/app/.data` (Service → Settings → Volumes). Docelowo: Supabase (baza + Storage).
+
 ## Środowiska
 
 | | development | staging | production |

@@ -60,10 +60,22 @@ export function Elofik({ mood = "idle", className, title = "Elofik, mały elf op
         <path d="M85 231 l2.2 4.6 5 .7 -3.6 3.5 .9 5 -4.5 -2.4 -4.5 2.4 .9 -5 -3.6 -3.5 5 -.7z" fill="#F6C76D" />
 
         {/* prawa ręka (macha) */}
-        <g className="elofik-arm-r">
-          <path d="M170 196 Q190 220 182 246" stroke="url(#elo-sweater)" strokeWidth="20" strokeLinecap="round" fill="none" />
-          <circle cx="181" cy="248" r="10" fill="url(#elo-skin)" />
-        </g>
+        {mood === "waving" ? (
+          // ręka uniesiona, macha sama dłoń (obrót wokół nadgarstka) — ramię pozostaje nieruchome
+          <g>
+            <path d="M168 198 Q198 194 200 162" stroke="url(#elo-sweater)" strokeWidth="20" strokeLinecap="round" fill="none" />
+            <g className="elofik-hand-wave">
+              <ellipse cx="201" cy="146" rx="10" ry="12.5" fill="url(#elo-skin)" />
+              <ellipse cx="190.5" cy="152" rx="4" ry="6.5" transform="rotate(-38 190.5 152)" fill="url(#elo-skin)" />
+              <path d="M197 136 L197 141 M201.5 134.5 L201.5 140 M206 136 L206 141" stroke="#E3A27C" strokeWidth="1.6" strokeLinecap="round" />
+            </g>
+          </g>
+        ) : (
+          <g className="elofik-arm-r">
+            <path d="M170 196 Q190 220 182 246" stroke="url(#elo-sweater)" strokeWidth="20" strokeLinecap="round" fill="none" />
+            <circle cx="181" cy="248" r="10" fill="url(#elo-skin)" />
+          </g>
+        )}
 
         {/* głowa */}
         <g className="elofik-head">

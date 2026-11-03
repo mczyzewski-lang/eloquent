@@ -11,8 +11,12 @@ import { Faq } from "@/components/landing/Faq";
 import { PREMIUM_FEATURES } from "@/lib/domain/pricing";
 import { STORY_CATALOG } from "@/content/stories";
 import { cn } from "@/lib/utils";
+import { getCoverMap } from "@/lib/ai/images";
 
-export default function LandingPage() {
+export const revalidate = 300; // okładki z panelu pojawiają się bez nowego wdrożenia
+
+export default async function LandingPage() {
+  const covers = await getCoverMap().catch(() => ({}) as Record<string, string>);
   const samples = STORY_CATALOG.slice(0, 3);
   const week = STORY_CATALOG.slice(0, 7);
   return (
@@ -64,7 +68,7 @@ export default function LandingPage() {
         <div className="mt-10 grid gap-6 sm:grid-cols-3">
           {samples.map((s) => (
             <article key={s.storyId} className="card-soft overflow-hidden p-0">
-              <StoryCover day={s.dayNumber} title={s.title} word={s.wordOfDay} className="aspect-[4/3] rounded-none" />
+              <StoryCover day={s.dayNumber} title={s.title} word={s.wordOfDay} imageUrl={covers[s.storyId]} className="aspect-[4/3] rounded-none" />
               <div className="p-5">
                 <p className="text-sm font-bold uppercase tracking-wide text-gold-deep">Dzień {s.dayNumber} · {s.estimatedMinutes} min</p>
                 <p className="mt-2 leading-relaxed text-muted">{s.summary}</p>
@@ -133,7 +137,7 @@ export default function LandingPage() {
         <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-7">
           {week.map((s) => (
             <div key={s.storyId} className="card-soft p-3 text-center">
-              <StoryCover day={s.dayNumber} compact className="aspect-square" />
+              <StoryCover day={s.dayNumber} compact imageUrl={covers[s.storyId]} className="aspect-square" />
               <p className="mt-2 text-xs font-bold uppercase text-muted">Dzień {s.dayNumber}</p>
               <p className="font-display font-semibold capitalize text-navy">{s.wordOfDay}</p>
             </div>

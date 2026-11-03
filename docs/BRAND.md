@@ -22,7 +22,9 @@ Nie obiecujemy „podnoszenia IQ” ani wymiernych efektów — komunikujemy roz
 | Zakazane | Szpiczasta czapka świątecznego elfa, dzwoneczki, renifery, czerwono-zielone kostiumy, motywy bożonarodzeniowe |
 
 Implementacja wektorowa: `src/components/elofik/Elofik.tsx` (nastroje: `idle`, `listening`, `happy`, `waving`, `telling`, `sleepy`; animacje uszu w `globals.css`).
-Prompt bazowy ilustracji: `src/lib/ai/character.ts` (`ELOFIK_CHARACTER_SHEET`) — **każdy** prompt obrazu zaczyna się od tego opisu.
+Prompt bazowy ilustracji: `src/lib/ai/character.ts` (`ELOFIK_CHARACTER_SHEET`) — **każdy** prompt obrazu zawiera ten opis, a do każdego generowania dołączany jest **arkusz referencyjny** `public/brand/elofik-reference.png` (pozy: przód, machanie dłonią, radość, nasłuchiwanie), renderowany z kodu maskotki skryptem `scripts/render-reference.tsx`.
+
+Machanie: Elofik unosi rękę i macha **dłonią** (obrót wokół nadgarstka), ramię pozostaje nieruchome.
 
 ## Paleta
 
@@ -39,7 +41,7 @@ Typografia: **Baloo 2** (nagłówki — miękka, zaokrąglona), **Nunito** (teks
 
 ## Reguły generowania ilustracji
 
-1. Styl: premium children's storybook 3D, miękkie tkaniny (filc, dzianina), ciepłe złote światło, subtelna magia, płytka głębia ostrości.
+1. Styl: ten sam czysty, miękki, zaokrąglony styl wektorowy co maskotka na stronie (gładkie kształty, delikatne gradienty, bez ostrych konturów), ciepłe złote światło, subtelna magia.
 2. Elofik zawsze identyczny (character sheet powyżej). Zmiana wyglądu = nowa wersja `CHARACTER_SHEET_VERSION`.
 3. Jedna ilustracja na bajkę — **nigdy** osobna grafika dla imienia dziecka. Imię nakładamy w UI jako warstwę tekstową (`StoryCover`).
 4. Bez tekstu, logotypów i znaków wodnych w obrazie. Bez przemocy i scen strasznych.

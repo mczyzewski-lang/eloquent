@@ -61,7 +61,10 @@ export const config = {
       return getOverride("openai_api_key") ?? process.env.OPENAI_API_KEY ?? "";
     },
     textModel: process.env.OPENAI_TEXT_MODEL ?? "gpt-5-mini",
-    imageModel: process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1",
+    // gpt-image-1 wyłączony 23.10.2026 — domyślnie gpt-image-2.5-sunburst (można zmienić w panelu)
+    get imageModel() {
+      return getOverride("openai_image_model") ?? process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-2.5-sunburst";
+    },
   },
   email: {
     resendApiKey: process.env.RESEND_API_KEY ?? "",

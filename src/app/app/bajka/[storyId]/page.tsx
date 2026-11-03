@@ -3,6 +3,7 @@ import { requireFamily } from "@/lib/auth/guards";
 import { AccessDeniedError, assertStoryAccessible } from "@/lib/services/access";
 import { addressForm } from "@/lib/domain/names";
 import { StoryExperience } from "@/components/story/StoryExperience";
+import { getCoverMap } from "@/lib/ai/images";
 
 export const metadata = { title: "Bajka", robots: { index: false } };
 
@@ -29,6 +30,7 @@ export default async function StoryPage({ params, searchParams }: { params: Prom
         wordDefinition: story.wordDefinition,
         parentQuestion: story.parentQuestion,
         estimatedMinutes: story.estimatedMinutes,
+        coverUrl: (await getCoverMap())[story.storyId] ?? null,
       }}
       childName={forms.nominative}
       childAddress={addressForm(forms, bundle.child!.address_style)}

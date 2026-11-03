@@ -62,9 +62,12 @@ Ochrona przed podwójną subskrypcją: sprawdzenie w aplikacji + w Stripe (`subs
 
 ## 5. OpenAI (scenariusze i ilustracje)
 
-- `OPENAI_API_KEY`, `OPENAI_TEXT_MODEL`, `OPENAI_IMAGE_MODEL`.
+- Klucz i model ustawisz w **Admin → Ustawienia i klucze API** (albo `OPENAI_API_KEY`, `OPENAI_TEXT_MODEL`, `OPENAI_IMAGE_MODEL`).
+- **Model ilustracji:** domyślnie `gpt-image-2.5-sunburst` (`gpt-image-1` został wyłączony 23.10.2026; alternatywa `gpt-image-2.5-flare`).
 - Generator scenariuszy (`src/lib/ai/story-generator.ts`): dane admina trafiają do modelu jako JSON-dane (ochrona przed prompt injection), wynik walidowany schematem zod i regułami redakcyjnymi, status zawsze `draft`.
-- Ilustracje (`src/lib/ai/images.ts`): prompt = character sheet + scena; cache po hashu promptu; jedna grafika na bajkę.
+- **Okładki bajek (spójna postać):** Admin → CMS bajek → „Wygeneruj brakujące” (lub w edytorze bajki „Wygeneruj okładkę”). Każde wywołanie to `images.edit` z dołączonym **arkuszem referencyjnym Elofika** (`public/brand/elofik-reference.png`, 4 pozy renderowane z kodu maskotki) i stałym opisem postaci (`src/lib/ai/character.ts`, wersja `ELF_V3`). Model odwzorowuje tę postać zamiast wymyślać nowego elfa. Rozmiar 1536×1024, `webp`, ok. 0,08 USD/okładkę (budżet AI musi być > 0).
+- Po zmianie wyglądu maskotki: `npx tsx scripts/render-reference.tsx` (nowy arkusz), podbij `CHARACTER_SHEET_VERSION` i wygeneruj okładki ponownie.
+- Okładka jest jedna na bajkę (wspólna dla wszystkich rodzin), imię dziecka nakłada UI. Serwowana publicznie z `/api/covers/[id]` (bez danych dzieci).
 - OpenAI nigdy nie otrzymuje danych dzieci (imion, wieku).
 
 ## 6. E-mail

@@ -15,6 +15,7 @@ export default async function AdminStoryPage({ params }: { params: Promise<{ id:
       initial={story}
       status={row.status}
       issues={validateStory(story)}
+      coverUrl={row.cover_path ? `/api/covers/${id}?v=${encodeURIComponent(row.updated_at)}` : null}
       versions={versions.map((v) => ({ version: v.version, reviewedBy: v.reviewed_by, createdAt: v.created_at }))}
     />
   );

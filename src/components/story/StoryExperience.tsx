@@ -20,6 +20,7 @@ export interface StoryMeta {
   wordDefinition: string;
   parentQuestion: string;
   estimatedMinutes: number;
+  coverUrl?: string | null;
 }
 
 interface AudioInfo {
@@ -362,7 +363,7 @@ function StoryPlayer({
         </div>
 
         <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} className="mt-4">
-          <StoryCover day={story.dayNumber} word={story.wordOfDay} childName={childName} className="aspect-square shadow-2xl" />
+          <StoryCover day={story.dayNumber} word={story.wordOfDay} childName={childName} imageUrl={story.coverUrl} className="aspect-square shadow-2xl" />
         </motion.div>
 
         <div className="mt-6 text-center">

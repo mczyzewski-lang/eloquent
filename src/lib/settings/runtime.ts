@@ -21,6 +21,7 @@ export const SETTINGS: SettingMeta[] = [
   { key: "elevenlabs_api_key", label: "ElevenLabs — klucz API", secret: true, envVar: "ELEVENLABS_API_KEY", help: "ElevenLabs → Developers → API Keys. Uprawnienia: Text to Speech, Speech to Text, Voices (odczyt), User (odczyt).", placeholder: "sk_…" },
   { key: "elevenlabs_voice_id", label: "ElevenLabs — Voice ID głosu Elofika", secret: false, envVar: "ELEVENLABS_VOICE_ID", help: "ElevenLabs → Voices → wybrany głos → „Copy voice ID”.", placeholder: "np. 21m00Tcm4TlvDq8ikWAM" },
   { key: "openai_api_key", label: "OpenAI — klucz API", secret: true, envVar: "OPENAI_API_KEY", help: "platform.openai.com → API keys. Używany do scenariuszy i ilustracji (bez danych dzieci).", placeholder: "sk-…" },
+  { key: "openai_image_model", label: "OpenAI — model ilustracji", secret: false, envVar: "OPENAI_IMAGE_MODEL", help: "Domyślnie gpt-image-2.5-sunburst (gpt-image-1 został wyłączony 23.10.2026). Alternatywa: gpt-image-2.5-flare.", placeholder: "gpt-image-2.5-sunburst" },
   { key: "ai_monthly_budget_usd", label: "Miesięczny budżet AI (USD)", secret: false, envVar: "AI_MONTHLY_BUDGET_USD", help: "Bez budżetu > 0 płatne generowanie (TTS, Scribe, OpenAI) jest zablokowane, nawet z kluczami.", placeholder: "np. 20" },
 ];
 
@@ -64,6 +65,7 @@ export function validateSetting(key: RuntimeSettingKey, value: string): string |
   }
   if (key === "openai_api_key" && !/^sk-[A-Za-z0-9_-]{20,}$/.test(v)) return "Klucz OpenAI zaczyna się od „sk-”.";
   if (key === "elevenlabs_api_key" && !/^[A-Za-z0-9_-]{20,}$/.test(v)) return "To nie wygląda na klucz ElevenLabs.";
+  if (key === "openai_image_model" && !/^(gpt-image|chatgpt-image)[a-z0-9.-]*$/.test(v)) return "Podaj nazwę modelu obrazów OpenAI, np. gpt-image-2.5-sunburst.";
   if (key === "elevenlabs_voice_id" && !/^[A-Za-z0-9]{10,40}$/.test(v)) return "Voice ID składa się z liter i cyfr (ok. 20 znaków).";
   return null;
 }

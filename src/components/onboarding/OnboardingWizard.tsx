@@ -97,7 +97,7 @@ export async function submitDraft(d: OnboardingDraft) {
   } catch {}
 }
 
-export function OnboardingWizard({ initialName, auth, loggedIn }: { initialName: string; auth: AuthConfig; loggedIn: boolean }) {
+export function OnboardingWizard({ initialName, auth, loggedIn, day1Cover }: { initialName: string; auth: AuthConfig; loggedIn: boolean; day1Cover?: string | null }) {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
@@ -302,7 +302,7 @@ export function OnboardingWizard({ initialName, auth, loggedIn }: { initialName:
           {step === 4 && (
             <div className="space-y-6 text-center">
               <h1 className="text-2xl font-semibold">{gen ? `Świat Elofika dla ${gen} jest gotowy!` : `Świat Elofika jest gotowy, ${nom}!`}</h1>
-              <StoryCover day={1} title="Elofik i tajemniczy ślad" word="dociekliwość" childName={nom} className="aspect-[4/3]" />
+              <StoryCover day={1} title="Elofik i tajemniczy ślad" word="dociekliwość" childName={nom} imageUrl={day1Cover} className="aspect-[4/3]" />
               {summary && <p className="text-lg text-navy">{gen ? `W przygodach ${gen}` : "W przygodach"} mogą pojawiać się {summary}.</p>}
               <Button size="xl" className="w-full" onClick={next}>
                 Rozpocznij przygodę <Sparkles className="h-5 w-5" />

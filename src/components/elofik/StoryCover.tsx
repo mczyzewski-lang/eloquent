@@ -100,7 +100,10 @@ export function StoryCover({
   childName,
   className,
   compact = false,
+  imageUrl,
 }: {
+  /** Okładka wygenerowana w panelu (OpenAI). Brak = wektorowa scena z maskotką. */
+  imageUrl?: string | null;
   day: number;
   title?: string;
   word?: string;
@@ -112,6 +115,11 @@ export function StoryCover({
   const dark = s.kind === "stars";
   return (
     <div className={cn("relative overflow-hidden rounded-[1.75rem]", className)}>
+      {imageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element -- okładka z własnego API, już zoptymalizowana (webp)
+        <img src={imageUrl} alt={title ? `Ilustracja: ${title}` : ""} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
+      ) : (
+      <>
       <svg viewBox="0 0 320 240" className="block h-full w-full" preserveAspectRatio="xMidYMid slice" aria-hidden>
         <defs>
           <linearGradient id={`sky-${day}`} x1="0" y1="0" x2="0" y2="1">
@@ -126,6 +134,8 @@ export function StoryCover({
       <div className={cn("absolute left-1/2 -translate-x-1/2", compact || !title ? "bottom-[6%] w-[34%]" : "bottom-[22%] w-[28%]")}>
         <Elofik mood={dark ? "sleepy" : "idle"} />
       </div>
+      </>
+      )}
       {!compact && (word || childName) && (
         <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
           {word && <span className="rounded-full bg-white/85 px-3 py-1 text-xs font-bold uppercase tracking-wide text-navy backdrop-blur">{word}</span>}

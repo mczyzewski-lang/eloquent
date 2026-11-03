@@ -13,6 +13,7 @@ import { Badge, Card } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { PageView } from "@/components/site/PageView";
 import { cn, minutesLabel } from "@/lib/utils";
+import { getCoverMap } from "@/lib/ai/images";
 
 export const metadata = { title: "Bajki", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -40,6 +41,7 @@ export default async function AppHome({ searchParams }: { searchParams: Promise<
   const { bundle } = await requireFamily("/app");
   const lib = await getFamilyLibrary(bundle.family);
   const progress = await getProgressMap(bundle.family.id);
+  const covers = await getCoverMap();
   const forms = bundle.childForms!;
   const tab = TABS.some((t) => t.id === sp.tab) ? sp.tab! : "dzisiaj";
   const hour = localParts(new Date(), bundle.family.timezone).hour;
@@ -79,7 +81,7 @@ export default async function AppHome({ searchParams }: { searchParams: Promise<
           <div className="mt-4 space-y-6">
             {today ? (
               <Link href={`/app/bajka/${today.storyId}`} className="card-soft group block overflow-hidden p-0 transition hover:-translate-y-0.5" data-testid="today-card">
-                <StoryCover day={today.dayNumber} word={today.wordOfDay} childName={forms.nominative} className="aspect-[16/10] rounded-none" />
+                <StoryCover day={today.dayNumber} word={today.wordOfDay} childName={forms.nominative} imageUrl={covers[today.storyId]} className="aspect-[16/10] rounded-none" />
                 <div className="flex items-center gap-4 p-5">
                   <div className="flex-1">
                     <p className="text-sm font-bold uppercase tracking-wide text-gold-deep">Dzień {today.dayNumber} — {today.wordOfDay}</p>
@@ -150,7 +152,7 @@ export default async function AppHome({ searchParams }: { searchParams: Promise<
         {tab === "bajki" && (
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             {[...lib.unlocked].reverse().map((s) => (
-              <StoryTile key={s.storyId} s={s} p={progress.get(s.storyId)} childName={forms.nominative} />
+              <StoryTile key={s.storyId} s={s} p={progress.get(s.storyId)} childName={forms.nominative} coverUrl={covers[s.storyId]} />
             ))}
           </div>
         )}
@@ -185,7 +187,7 @@ export default async function AppHome({ searchParams }: { searchParams: Promise<
             {lib.unlocked
               .filter((s) => progress.get(s.storyId)?.favorite)
               .map((s) => (
-                <StoryTile key={s.storyId} s={s} p={progress.get(s.storyId)} childName={forms.nominative} />
+                <StoryTile key={s.storyId} s={s} p={progress.get(s.storyId)} childName={forms.nominative} coverUrl={covers[s.storyId]} />
               ))}
           </div>
         )}
@@ -227,10 +229,10 @@ export default async function AppHome({ searchParams }: { searchParams: Promise<
   );
 }
 
-function StoryTile({ s, p, childName }: { s: { storyId: string; dayNumber: number; title: string; wordOfDay: string; estimatedMinutes: number }; p?: { completed: boolean; favorite: boolean }; childName: string }) {
+function StoryTile({ s, p, childName, coverUrl }: { coverUrl?: string; s: { storyId: string; dayNumber: number; title: string; wordOfDay: string; estimatedMinutes: number }; p?: { completed: boolean; favorite: boolean }; childName: string }) {
   return (
     <Link href={`/app/bajka/${s.storyId}`} className="card-soft block overflow-hidden p-0">
-      <StoryCover day={s.dayNumber} word={s.wordOfDay} childName={childName} className="aspect-[16/10] rounded-none" />
+      <StoryCover day={s.dayNumber} word={s.wordOfDay} childName={childName} imageUrl={coverUrl} className="aspect-[16/10] rounded-none" />
       <div className="p-4">
         <p className="text-xs font-bold uppercase tracking-wide text-gold-deep">Dzień {s.dayNumber} · {s.estimatedMinutes} min {p?.completed ? "· ✓" : ""}</p>
         <p className="mt-1 font-display text-lg font-semibold leading-tight text-navy">{s.title}</p>

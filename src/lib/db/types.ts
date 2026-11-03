@@ -46,6 +46,8 @@ export interface StoryRow {
   current_version: number;
   status: StoryVersion["status"];
   scheduled_for: string | null;
+  /** Okładka wygenerowana przez OpenAI (ścieżka w storage) — wspólna dla wszystkich rodzin. */
+  cover_path?: string | null;
   created_at: string;
   updated_at: string;
 }

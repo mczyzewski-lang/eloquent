@@ -127,8 +127,9 @@
 @keyframes ear-happy-r { from { transform: rotate(4deg); } to { transform: rotate(16deg); } }
 @keyframes hop { 0%, 100% { transform: translateY(0) scaleY(1); } 40% { transform: translateY(-10px) scaleY(1.02); } 60% { transform: translateY(-6px); } }
 
-.mood-waving .elofik-arm-r { transform-box: fill-box; transform-origin: 10% 90%; animation: wave .6s ease-in-out infinite alternate; }
-@keyframes wave { from { transform: rotate(-10deg); } to { transform: rotate(-45deg); } }
+/* machanie dłonią: obrót wokół nadgarstka (200,160 w układzie SVG) */
+.mood-waving .elofik-hand-wave { transform-box: view-box; transform-origin: 200px 160px; animation: wave-hand .38s ease-in-out infinite alternate; }
+@keyframes wave-hand { from { transform: rotate(-16deg); } to { transform: rotate(18deg); } }
 
 .mood-telling .elofik-mouth { transform-box: fill-box; transform-origin: center top; animation: talk .35s ease-in-out infinite alternate; }
 @keyframes talk { from { transform: scaleY(0.7); } to { transform: scaleY(1.15); } }
