@@ -66,7 +66,7 @@ export async function POST(req: Request) {
         return json(res);
       }
       case "tts_models":
-        return json({ models: await listTtsModels(), designModels: VOICE_DESIGN_MODELS });
+        return json({ models: await listTtsModels(), allModels: await listTtsModels({ all: true }), designModels: VOICE_DESIGN_MODELS });
       case "model_demos": {
         const row = await renderModelDemos(b.candidateId, b.models);
         return json({ candidate: await view(row) });

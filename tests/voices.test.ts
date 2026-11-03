@@ -77,4 +77,28 @@ describe("Studio głosu Elofika", () => {
     expect(config.elevenlabs.ttsModel).toBe("eleven_v3");
     expect(chosen.version).toBe("VOICE_ABC123DE_V3");
   });
+
+  it("v4 bez polskiego na liście języków i dogenerowanie jednego modelu bez kasowania istniejących dem", async () => {
+    vi.stubGlobal("fetch", async (url: string, init?: RequestInit) => {
+      requests.push({ url, body: init?.body ? JSON.parse(String(init.body)) : null });
+      if (url.endsWith("/v1/text-to-voice")) return new Response(JSON.stringify({ voice_id: "Abc123Def456Ghi789Jk" }));
+      if (url.endsWith("/v1/text-to-voice/design")) return new Response(JSON.stringify({ previews: [{ generated_voice_id: "g1", audio_base_64: Buffer.from("x").toString("base64") }] }));
+      if (url.endsWith("/v1/models"))
+        return new Response(JSON.stringify([
+          { model_id: "eleven_multilingual_v2", can_do_text_to_speech: true, languages: [{ language_id: "pl" }] },
+          { model_id: "eleven_v4", can_do_text_to_speech: true, languages: [] },
+          { model_id: "eleven_monolingual_v1", can_do_text_to_speech: true, languages: [{ language_id: "en" }] },
+        ]));
+      if (url.includes("/v1/text-to-speech/")) return new Response(Buffer.from("mp3"));
+      return new Response("nf", { status: 404 });
+    });
+    await saveSetting("elevenlabs_api_key", "sk_0123456789abcdef0123456789abcdef", "a@x.pl");
+    await saveSetting("ai_monthly_budget_usd", "5", "a@x.pl");
+    const { listTtsModels, renderModelDemos } = await import("@/lib/services/voices");
+    expect((await listTtsModels()).map((m) => m.id)).toEqual(["eleven_multilingual_v2", "eleven_v4"]);
+    const [cand] = await designVoices({ name: "Wesoły elf", description: "A bright cheerful youthful elf voice speaking Polish" });
+    await renderModelDemos(cand.id, ["eleven_multilingual_v2"]);
+    const row = await renderModelDemos(cand.id, ["eleven_v4"]);
+    expect(row.model_demos?.map((d) => d.model)).toEqual(["eleven_multilingual_v2", "eleven_v4"]);
+  });
 });

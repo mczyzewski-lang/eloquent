@@ -196,18 +196,25 @@ export interface TtsModelInfo {
 export const VOICE_DESIGN_MODELS = ["eleven_multilingual_ttv_v2", "eleven_ttv_v3"];
 const FALLBACK_TTS_MODELS = ["eleven_multilingual_v2", "eleven_v3", "eleven_flash_v2_5", "eleven_turbo_v2_5"];
 
+/** Modele tylko angielskie — nie mają sensu dla polskich bajek. */
+const ENGLISH_ONLY = /^eleven_(monolingual_v1|english_|turbo_v2$|flash_v2$)/;
+/** Nowsze generacje (v3, v4, …) są wielojęzyczne, nawet gdy /v1/models nie wymienia przy nich polskiego. */
+const NEW_GENERATION = /_v([3-9]|\d{2})(\b|_|$)/;
+
 /**
- * Modele TTS dostępne na koncie (GET /v1/models) z obsługą polskiego — v2, v3 i każdy nowszy (np. v4), jeśli konto go ma.
+ * Modele TTS dostępne na koncie (GET /v1/models) z obsługą polskiego — v2, v3, v4 i każdy nowszy, jeśli konto go ma.
+ * `all: true` zwraca też pozostałe modele TTS z konta (do ręcznego dodania pojedynczego demo).
  */
-export async function listTtsModels(): Promise<TtsModelInfo[]> {
+export async function listTtsModels(opts: { all?: boolean } = {}): Promise<TtsModelInfo[]> {
   await ensureRuntimeSettings();
   try {
     const res = await el("/v1/models", { method: "GET" });
     const models = (await res.json()) as { model_id: string; name?: string; can_do_text_to_speech?: boolean; languages?: { language_id: string }[] }[];
     const out = models
       .filter((m) => m.can_do_text_to_speech !== false && !/ttv|sts|scribe|music/i.test(m.model_id))
-      .map((m) => ({ id: m.model_id, name: m.name ?? m.model_id, polish: (m.languages ?? []).some((l) => l.language_id === "pl") }));
-    const pl = out.filter((m) => m.polish);
+      .map((m) => ({ id: m.model_id, name: m.name ?? m.model_id, polish: (m.languages ?? []).some((l) => l.language_id === "pl") || NEW_GENERATION.test(m.model_id) }));
+    if (opts.all) return out;
+    const pl = out.filter((m) => m.polish && !ENGLISH_ONLY.test(m.id));
     if (pl.length) return pl;
     if (out.length) return out;
   } catch (e) {
@@ -227,7 +234,7 @@ export async function renderModelDemos(candidateId: string, models: string[]): P
   if (!c) throw new VoiceStudioError("Nie znaleziono kandydata.");
   if (!c.voice_id) c = await saveDesignedVoice(c.id);
   const voiceId = c.voice_id!;
-  const list = models.filter((m) => /^eleven_[a-z0-9_]{2,40}$/.test(m)).slice(0, 8);
+  const list = models.filter((m) => /^eleven_[a-z0-9_.]{2,40}$/.test(m)).slice(0, 8);
   const existing = new Map((c.model_demos ?? []).map((d) => [d.model, d]));
   const todo = list.filter((m) => !existing.get(m)?.path);
   apiKey();
@@ -248,14 +255,16 @@ export async function renderModelDemos(candidateId: string, models: string[]): P
       existing.set(model, { model, path: null, error: (e as Error).message.slice(0, 200) });
     }
   }
-  const model_demos = list.map((m) => existing.get(m)!).filter(Boolean);
+  // dopisujemy nowe modele do już istniejących dem (nic nie znika przy dodaniu jednego modelu)
+  const order = [...(c.model_demos ?? []).map((d) => d.model), ...list.filter((m) => !(c.model_demos ?? []).some((d) => d.model === m))];
+  const model_demos = order.map((m) => existing.get(m)!).filter(Boolean);
   return (await db.update("voice_candidates", { id: c.id }, { model_demos }))[0];
 }
 
 /** Ustawia głos (i opcjonalnie model TTS) jako wiodący. Nowa wersja = nowe klucze cache, kolejne nagrania już nowym głosem. */
 export async function chooseLeadingVoice(voiceId: string, actorEmail: string, model?: string | null) {
   if (!/^[A-Za-z0-9]{10,40}$/.test(voiceId)) throw new VoiceStudioError("Nieprawidłowy Voice ID.");
-  if (model && !/^eleven_[a-z0-9_]{2,40}$/.test(model)) throw new VoiceStudioError("Nieprawidłowy model TTS.");
+  if (model && !/^eleven_[a-z0-9_.]{2,40}$/.test(model)) throw new VoiceStudioError("Nieprawidłowy model TTS.");
   const modelTag = model ? `_${model.replace(/^eleven_/, "").replace(/[^a-z0-9]/gi, "").toUpperCase().slice(0, 12)}` : "";
   const version = `VOICE_${voiceId.slice(0, 8).toUpperCase()}${modelTag}`;
   await saveSetting("elevenlabs_voice_id", voiceId, actorEmail);

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, Library, Loader2, Mic2, Star, Trash2, Wand2 } from "lucide-react";
+import { CheckCircle2, Library, Loader2, Mic2, Plus, Star, Trash2, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
@@ -59,6 +59,8 @@ export function VoiceStudio({
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [library, setLibrary] = useState<LibraryVoice[] | null>(null);
+  const [accountModels, setAccountModels] = useState<{ id: string; name: string }[] | null>(null);
+  const [addModel, setAddModel] = useState<Record<string, string>>({});
 
   const run = async (key: string, fn: () => Promise<void>) => {
     setBusy(key);
@@ -99,7 +101,23 @@ export function VoiceStudio({
 
   const replace = (c: Candidate) => setCandidates((list) => list.map((x) => (x.id === c.id ? c : x)));
 
-  const ttsModelsList = async () => (await call<{ models: { id: string; name: string }[]; designModels: string[] }>({ action: "tts_models" }));
+  const ttsModelsList = async () => {
+    const j = await call<{ models: { id: string; name: string }[]; allModels?: { id: string; name: string }[]; designModels: string[] }>({ action: "tts_models" });
+    setAccountModels(j.allModels ?? j.models);
+    return j;
+  };
+
+  /** Dogenerowanie demo w jednym, wskazanym modelu (np. v4) — istniejące dema zostają. */
+  const addModelDemo = (c: Candidate, modelId: string) =>
+    run(`add-${c.id}`, async () => {
+      const id = modelId.trim();
+      if (!/^eleven_[a-z0-9_.]{2,40}$/.test(id)) throw new Error("Podaj identyfikator modelu ElevenLabs, np. eleven_v3 (zaczyna się od „eleven_”).");
+      const updated = (await call<{ candidate: Candidate }>({ action: "model_demos", candidateId: c.id, models: [id] })).candidate;
+      replace(updated);
+      const d = updated.modelDemos?.find((x) => x.model === id);
+      setMsg(d?.url ? { ok: true, text: `Dodano demo „${c.name}” w modelu ${id}.` } : { ok: false, text: `ElevenLabs nie wygenerował ${id}: ${d?.error ?? "nieznany błąd"}` });
+      setAddModel((m) => ({ ...m, [c.id]: "" }));
+    });
 
   const compareModels = (c: Candidate) =>
     run(`cmp-${c.id}`, async () => {
@@ -251,12 +269,29 @@ export function VoiceStudio({
                     })}
                   </ul>
                 )}
-                <div className="mt-3 flex flex-wrap gap-2">
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <Input
+                    className="h-8 min-w-0 flex-1 font-mono text-xs"
+                    list={`models-${c.id}`}
+                    placeholder="dodaj model, np. eleven_v4"
+                    aria-label={`Dodaj demo w innym modelu dla ${c.name}`}
+                    value={addModel[c.id] ?? ""}
+                    onFocus={() => { if (!accountModels && keyConfigured) ttsModelsList().catch(() => {}); }}
+                    onChange={(e) => setAddModel((m) => ({ ...m, [c.id]: e.target.value }))}
+                  />
+                  <datalist id={`models-${c.id}`}>
+                    {(accountModels ?? []).filter((m) => !(c.modelDemos ?? []).some((d) => d.model === m.id && d.url)).map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                  </datalist>
+                  <Button size="sm" variant="soft" disabled={!!busy || !keyConfigured || !(addModel[c.id] ?? "").trim()} onClick={() => addModelDemo(c, addModel[c.id] ?? "")}>
+                    {busy === `add-${c.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Dodaj demo
+                  </Button>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2">
                   <Button size="sm" variant={isCurrent ? "sage" : "primary"} disabled={!!busy || isCurrent} onClick={() => choose(c)} data-testid="choose-voice">
                     {busy?.startsWith(`choose-${c.id}`) ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} {isCurrent ? "Wiodący głos" : "Ustaw jako głos Elofika"}
                   </Button>
                   <Button size="sm" variant="soft" disabled={!!busy || !keyConfigured} onClick={() => compareModels(c)}>
-                    {busy === `cmp-${c.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mic2 className="h-4 w-4" />} {(c.modelDemos ?? []).length ? "Odśwież modele" : "Porównaj modele v2/v3/…"}
+                    {busy === `cmp-${c.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mic2 className="h-4 w-4" />} {(c.modelDemos ?? []).length ? "Odśwież modele" : "Porównaj modele v2/v3/v4…"}
                   </Button>
                   <Button size="sm" variant="ghost" disabled={!!busy || isCurrent} onClick={() => run(`del-${c.id}`, async () => { await call({ action: "delete", candidateId: c.id }); setCandidates((l) => l.filter((x) => x.id !== c.id)); })}>
                     <Trash2 className="h-4 w-4" />
