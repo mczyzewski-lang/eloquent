@@ -68,12 +68,12 @@ export function Elofik({ mood = "idle", className, title = "Elofik, mały elf op
         {/* głowa */}
         <g className="elofik-head">
           <g className="elofik-ear-l">
-            <path d="M70 102 Q46 90 32 72 Q38 100 70 136 Z" fill="url(#elo-skin)" />
-            <path d="M66 106 Q50 96 42 84 Q46 102 66 126 Z" fill="#F3A8A0" opacity="0.55" />
+            <path d="M70 98 Q44 92 34 80 Q40 108 70 138 Z" fill="url(#elo-skin)" />
+            <path d="M66 104 Q50 98 44 90 Q48 108 66 128 Z" fill="#F3A8A0" opacity="0.55" />
           </g>
           <g className="elofik-ear-r">
-            <path d="M170 102 Q194 90 208 72 Q202 100 170 136 Z" fill="url(#elo-skin)" />
-            <path d="M174 106 Q190 96 198 84 Q194 102 174 126 Z" fill="#F3A8A0" opacity="0.55" />
+            <path d="M170 98 Q196 92 206 80 Q200 108 170 138 Z" fill="url(#elo-skin)" />
+            <path d="M174 104 Q190 98 196 90 Q192 108 174 128 Z" fill="#F3A8A0" opacity="0.55" />
           </g>
 
           <circle cx="120" cy="118" r="60" fill="url(#elo-skin)" />
@@ -149,8 +149,8 @@ export function Logo({ className }: { className?: string }) {
     <span className={cn("inline-flex items-center gap-2 font-display text-2xl font-semibold text-navy", className)}>
       <span className="relative inline-block h-9 w-9">
         <svg viewBox="0 0 40 40" className="h-9 w-9" aria-hidden>
-          <path d="M9 17 Q5 14 4 10 Q6 15 11 22 Z" fill="#EDBB94" />
-          <path d="M31 17 Q35 14 36 10 Q34 15 29 22 Z" fill="#EDBB94" />
+          <path d="M9 16 Q5 15 3 12 Q5 18 11 23 Z" fill="#EDBB94" />
+          <path d="M31 16 Q35 15 37 12 Q35 18 29 23 Z" fill="#EDBB94" />
           <circle cx="20" cy="21" r="12" fill="#F3CBA8" />
           <path d="M8 20 Q8 9 20 9 Q32 9 32 20 Q28 15 24 15 Q22 18 19 17 Q16 14 12 16 Q10 18 8 20 Z" fill="#B9784A" />
           <circle cx="16" cy="23" r="2" fill="#4A2F22" />
