@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { error, handleError, json, readJson, sameOrigin } from "@/lib/api";
+import { error, adminHandleError, handleError, json, readJson, sameOrigin } from "@/lib/api";
 import { getSessionUser } from "@/lib/auth/session";
 import { auditLog } from "@/lib/auth/guards";
 import { getDb } from "@/lib/db";
@@ -79,7 +79,7 @@ export async function POST(req: Request) {
   } catch (e) {
     if (e instanceof VoiceStudioError) return error(e.message, (e as { status?: number }).status === 401 ? 401 : 422);
     if ((e as Error).name === "BudgetExceededError") return error("Brak budżetu AI — ustaw miesięczny budżet w Ustawieniach.", 422);
-    return handleError(e);
+    return adminHandleError(e, "voices");
   }
 }
 

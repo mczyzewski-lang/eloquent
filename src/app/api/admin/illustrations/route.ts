@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { revalidatePath, revalidateTag } from "next/cache";
-import { error, handleError, json, readJson, sameOrigin } from "@/lib/api";
+import { error, adminHandleError, handleError, json, readJson, sameOrigin } from "@/lib/api";
 import { getSessionUser } from "@/lib/auth/session";
 import { auditLog } from "@/lib/auth/guards";
 import {
@@ -95,8 +95,6 @@ export async function POST(req: Request) {
   } catch (e) {
     if (e instanceof IllustrationError) return error(e.message, 422, { code: e.code });
     if ((e as Error).name === "BudgetExceededError") return error("Brak budżetu AI — ustaw miesięczny budżet w Ustawieniach.", 422);
-    const status = (e as { status?: number }).status;
-    if (status) return error(`OpenAI (${status}): ${(e as Error).message}`.slice(0, 400), 502);
-    return handleError(e);
+    return adminHandleError(e, "illustrations");
   }
 }

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { error, handleError, json, readJson, sameOrigin } from "@/lib/api";
+import { error, adminHandleError, handleError, json, readJson, sameOrigin } from "@/lib/api";
 import { getSessionUser } from "@/lib/auth/session";
 import { auditLog } from "@/lib/auth/guards";
 import { getDb, nowIso } from "@/lib/db";
@@ -54,6 +54,6 @@ export async function POST(req: Request) {
       }
     }
   } catch (e) {
-    return handleError(e);
+    return adminHandleError(e, "greetings");
   }
 }

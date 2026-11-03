@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { error, handleError, json, readJson, sameOrigin } from "@/lib/api";
+import { error, adminHandleError, handleError, json, readJson, sameOrigin } from "@/lib/api";
 import { getSessionUser } from "@/lib/auth/session";
 import { auditLog } from "@/lib/auth/guards";
 import { config } from "@/lib/config";
@@ -119,6 +119,6 @@ export async function POST(req: Request) {
     await auditLog(user, "settings.update", entries.map(([k]) => k).join(","), { cleared: entries.filter(([, v]) => !v.trim()).map(([k]) => k) });
     return json({ ok: true, settings: await describeSettings() });
   } catch (e) {
-    return handleError(e);
+    return adminHandleError(e, "settings");
   }
 }
