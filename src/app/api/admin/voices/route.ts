@@ -5,7 +5,7 @@ import { auditLog } from "@/lib/auth/guards";
 import { getDb } from "@/lib/db";
 import { getStorage } from "@/lib/storage";
 import type { VoiceCandidateRow } from "@/lib/db";
-import { chooseLeadingVoice, demoLibraryVoice, designVoices, listCandidates, listLibraryVoices, saveDesignedVoice, VoiceStudioError } from "@/lib/services/voices";
+import { chooseLeadingVoice, demoLibraryVoice, designVoices, listCandidates, listLibraryVoices, listTtsModels, renderModelDemos, saveDesignedVoice, VOICE_DESIGN_MODELS, VoiceStudioError } from "@/lib/services/voices";
 
 export const maxDuration = 300;
 
@@ -14,7 +14,9 @@ const body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("save"), candidateId: z.string().uuid() }),
   z.object({ action: z.literal("library") }),
   z.object({ action: z.literal("demo_library"), voiceId: z.string().max(40), name: z.string().max(80) }),
-  z.object({ action: z.literal("choose"), voiceId: z.string().max(40), candidateId: z.string().uuid().optional() }),
+  z.object({ action: z.literal("choose"), voiceId: z.string().max(40), candidateId: z.string().uuid().optional(), model: z.string().max(60).nullable().optional() }),
+  z.object({ action: z.literal("tts_models") }),
+  z.object({ action: z.literal("model_demos"), candidateId: z.string().uuid(), models: z.array(z.string().max(60)).min(1).max(8) }),
   z.object({ action: z.literal("delete"), candidateId: z.string().uuid() }),
 ]);
 
@@ -27,6 +29,7 @@ async function view(c: VoiceCandidateRow) {
     voiceId: c.voice_id,
     designed: Boolean(c.generated_voice_id),
     previewUrl: c.preview_path ? await getStorage().signedUrl(c.preview_path, 6 * 3600) : null,
+    modelDemos: await Promise.all((c.model_demos ?? []).map(async (d) => ({ model: d.model, error: d.error, url: d.path ? await getStorage().signedUrl(d.path, 6 * 3600) : null }))),
     createdAt: c.created_at,
   };
 }
@@ -58,9 +61,15 @@ export async function POST(req: Request) {
         let voiceId = b.voiceId;
         // podgląd z Voice Design trzeba najpierw zapisać jako głos
         if (!voiceId && b.candidateId) voiceId = (await saveDesignedVoice(b.candidateId)).voice_id!;
-        const res = await chooseLeadingVoice(voiceId, user.email);
-        await auditLog(user, "voice.choose", res.voiceId, { version: res.version });
+        const res = await chooseLeadingVoice(voiceId, user.email, b.model ?? null);
+        await auditLog(user, "voice.choose", res.voiceId, { version: res.version, model: res.model });
         return json(res);
+      }
+      case "tts_models":
+        return json({ models: await listTtsModels(), designModels: VOICE_DESIGN_MODELS });
+      case "model_demos": {
+        const row = await renderModelDemos(b.candidateId, b.models);
+        return json({ candidate: await view(row) });
       }
       case "delete": {
         await getDb().delete("voice_candidates", { id: b.candidateId });

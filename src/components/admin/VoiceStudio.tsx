@@ -15,6 +15,7 @@ interface Candidate {
   voiceId: string | null;
   designed: boolean;
   previewUrl: string | null;
+  modelDemos?: { model: string; url: string | null; error: string | null }[];
   createdAt: string;
 }
 
@@ -45,7 +46,7 @@ export function VoiceStudio({
   initial: Candidate[];
   presets: { name: string; description: string }[];
   demoText: string;
-  current: { voiceId: string | null; version: string };
+  current: { voiceId: string | null; version: string; model: string };
   keyConfigured: boolean;
   realTts: boolean;
 }) {
@@ -88,12 +89,53 @@ export function VoiceStudio({
       setMsg({ ok: true, text: `Gotowe: ${total} kandydatów z ${presets.length} stylów. Odsłuchaj i wybierz wiodący.` });
     });
 
-  const choose = (c: Candidate) =>
-    run(`choose-${c.id}`, async () => {
-      const j = await call<{ voiceId: string; version: string }>({ action: "choose", voiceId: c.voiceId ?? "", candidateId: c.voiceId ? undefined : c.id });
-      setCurrent({ voiceId: j.voiceId, version: j.version });
+  const choose = (c: Candidate, ttsModel?: string) =>
+    run(`choose-${c.id}-${ttsModel ?? ""}`, async () => {
+      const j = await call<{ voiceId: string; version: string; model: string }>({ action: "choose", voiceId: c.voiceId ?? "", candidateId: c.voiceId ? undefined : c.id, model: ttsModel ?? null });
+      setCurrent({ voiceId: j.voiceId, version: j.version, model: j.model });
       setCandidates((list) => list.map((x) => (x.id === c.id ? { ...x, voiceId: j.voiceId } : x)));
-      setMsg({ ok: true, text: `„${c.name}” jest teraz głosem Elofika (wersja ${j.version}).` });
+      setMsg({ ok: true, text: `„${c.name}” (${j.model}) jest teraz głosem Elofika — wersja ${j.version}.` });
+    });
+
+  const replace = (c: Candidate) => setCandidates((list) => list.map((x) => (x.id === c.id ? c : x)));
+
+  const ttsModelsList = async () => (await call<{ models: { id: string; name: string }[]; designModels: string[] }>({ action: "tts_models" }));
+
+  const compareModels = (c: Candidate) =>
+    run(`cmp-${c.id}`, async () => {
+      const { models } = await ttsModelsList();
+      if (!confirm(`Demo „${c.name}” w ${models.length} modelach TTS (${models.map((m) => m.id).join(", ")})? Koszt: ok. ${models.length} × tekst demo w kredytach ElevenLabs. Głos zostanie zapisany w Twojej bibliotece.`)) return;
+      replace((await call<{ candidate: Candidate }>({ action: "model_demos", candidateId: c.id, models: models.map((m) => m.id) })).candidate);
+    });
+
+  /** Pełny test: każdy styl × każdy model Voice Design, a każdy powstały głos czyta demo w każdym modelu TTS z obsługą polskiego. */
+  const fullTest = () =>
+    run("full", async () => {
+      const { models, designModels } = await ttsModelsList();
+      const estVoices = presets.length * designModels.length * 3;
+      if (!confirm(`Pełny test głosów Elofika:\n• ${presets.length} style × ${designModels.length} modele Voice Design (${designModels.join(", ")}) ≈ ${estVoices} głosów\n• każdy przeczyta demo w ${models.length} modelach TTS: ${models.map((m) => m.id).join(", ")}\n\nSzacunkowo ${estVoices * (models.length + 1)} nagrań po ok. ${text.length} znaków (kredyty ElevenLabs). Wszystkie głosy zostaną zapisane w Twojej bibliotece ElevenLabs (sprawdź limit miejsc na głosy w planie). Kontynuować?`)) return;
+      const created: Candidate[] = [];
+      for (const p of presets) {
+        for (const dm of designModels) {
+          setMsg({ ok: true, text: `Projektuję „${p.name}” (${dm})…` });
+          try {
+            const j = await call<{ candidates: Candidate[] }>({ action: "design", name: `${p.name} · ${dm.replace("eleven_", "")}`, description: p.description, model: dm, text });
+            created.push(...j.candidates);
+            setCandidates((c) => [...j.candidates, ...c]);
+          } catch (e) {
+            setMsg({ ok: false, text: `${p.name} (${dm}): ${(e as Error).message}` });
+          }
+        }
+      }
+      for (const [i, c] of created.entries()) {
+        setMsg({ ok: true, text: `Demo w modelach TTS: ${i + 1}/${created.length} (${c.name})…` });
+        try {
+          replace((await call<{ candidate: Candidate }>({ action: "model_demos", candidateId: c.id, models: models.map((m) => m.id) })).candidate);
+        } catch (e) {
+          setMsg({ ok: false, text: `${c.name}: ${(e as Error).message}` });
+        }
+      }
+      setMsg({ ok: true, text: `Gotowe: ${created.length} głosów, każdy w ${models.length} modelach TTS. Odsłuchaj poniżej i wybierz głos + model.` });
     });
 
   return (
@@ -108,11 +150,21 @@ export function VoiceStudio({
         <p className="text-xs font-bold uppercase tracking-wide text-muted">Aktualny głos Elofika</p>
         {current.voiceId ? (
           <p className="mt-1 font-semibold text-navy">
-            {candidates.find((c) => c.voiceId === current.voiceId)?.name ?? "Głos z ustawień"} · <code className="text-sm">{current.voiceId}</code> · {current.version}
+            {candidates.find((c) => c.voiceId === current.voiceId)?.name ?? "Głos z ustawień"} · <code className="text-sm">{current.voiceId}</code> · {current.model} · {current.version}
           </p>
         ) : (
           <p className="mt-1 text-muted">Nie wybrano{realTts ? "" : " — do czasu wyboru głosu aplikacja używa dźwięku zastępczego i syntezatora przeglądarki"}.</p>
         )}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-4 rounded-2xl border-2 border-gold bg-gold/10 p-4">
+        <div className="flex-1">
+          <p className="font-display text-lg font-semibold text-navy">Pełny test głosów jednym kliknięciem</p>
+          <p className="text-sm text-muted">Wszystkie style × modele Voice Design (v2, v3), a każdy głos czyta to samo demo w każdym modelu TTS z polskim dostępnym na Twoim koncie (np. v2, v3 i nowszych). Przed startem pokażemy liczbę nagrań.</p>
+        </div>
+        <Button size="lg" onClick={fullTest} disabled={!!busy || !keyConfigured} data-testid="full-voice-test">
+          {busy === "full" ? <Loader2 className="h-5 w-5 animate-spin" /> : <Wand2 className="h-5 w-5" />} Uruchom pełny test
+        </Button>
       </div>
 
       <div className="space-y-4 rounded-2xl border border-navy/10 bg-white p-4">
@@ -178,9 +230,33 @@ export function VoiceStudio({
                   {isCurrent && <Badge tone="sage"><Star className="h-3 w-3" /> wiodący</Badge>}
                 </div>
                 {c.previewUrl ? <audio controls preload="none" src={c.previewUrl} className="mt-3 w-full" /> : <p className="mt-3 text-sm text-muted">Brak próbki.</p>}
+                {c.previewUrl && <p className="mt-1 text-xs text-muted">Podgląd z Voice Design</p>}
+                {(c.modelDemos ?? []).length > 0 && (
+                  <ul className="mt-3 space-y-2 border-t border-navy/5 pt-3">
+                    {c.modelDemos!.map((d) => {
+                      const isCur = isCurrent && current.model === d.model;
+                      return (
+                        <li key={d.model} className={`rounded-xl p-2 ${isCur ? "bg-sage/15" : "bg-navy/5"}`}>
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <code className="text-xs font-semibold">{d.model}</code>
+                            {d.url && (
+                              <Button size="sm" variant={isCur ? "sage" : "soft"} className="h-8 px-3 text-xs" disabled={!!busy || isCur} onClick={() => choose(c, d.model)}>
+                                {isCur ? "Wybrany" : "Wybierz głos + ten model"}
+                              </Button>
+                            )}
+                          </div>
+                          {d.url ? <audio controls preload="none" src={d.url} className="mt-1 h-9 w-full" /> : <p className="mt-1 text-xs text-red-700">{d.error}</p>}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Button size="sm" variant={isCurrent ? "sage" : "primary"} disabled={!!busy || isCurrent} onClick={() => choose(c)} data-testid="choose-voice">
-                    {busy === `choose-${c.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} {isCurrent ? "Wiodący głos" : "Ustaw jako głos Elofika"}
+                    {busy?.startsWith(`choose-${c.id}`) ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} {isCurrent ? "Wiodący głos" : "Ustaw jako głos Elofika"}
+                  </Button>
+                  <Button size="sm" variant="soft" disabled={!!busy || !keyConfigured} onClick={() => compareModels(c)}>
+                    {busy === `cmp-${c.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mic2 className="h-4 w-4" />} {(c.modelDemos ?? []).length ? "Odśwież modele" : "Porównaj modele v2/v3/…"}
                   </Button>
                   <Button size="sm" variant="ghost" disabled={!!busy || isCurrent} onClick={() => run(`del-${c.id}`, async () => { await call({ action: "delete", candidateId: c.id }); setCandidates((l) => l.filter((x) => x.id !== c.id)); })}>
                     <Trash2 className="h-4 w-4" />

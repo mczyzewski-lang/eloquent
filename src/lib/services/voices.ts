@@ -13,7 +13,7 @@ import { config } from "@/lib/config";
 import { getDb, nowIso, type VoiceCandidateRow } from "@/lib/db";
 import { getStorage } from "@/lib/storage";
 import { estimateTtsUsd } from "@/lib/domain/budget";
-import { DEFAULT_VOICE_SETTINGS } from "@/lib/audio/tts";
+import { ttsLanguageParam, voiceSettingsFor } from "@/lib/audio/tts";
 import { ensureRuntimeSettings, saveSetting } from "@/lib/settings/runtime";
 import { assertBudget, recordCost } from "./costs";
 
@@ -177,7 +177,7 @@ export async function demoLibraryVoice(voiceId: string, name: string): Promise<V
   const res = await el(`/v1/text-to-speech/${encodeURIComponent(voiceId)}?output_format=${config.elevenlabs.outputFormat}`, {
     method: "POST",
     headers: { accept: "audio/mpeg" },
-    body: JSON.stringify({ text: VOICE_DEMO_TEXT, model_id: config.elevenlabs.ttsModel, language_code: "pl", voice_settings: DEFAULT_VOICE_SETTINGS }),
+    body: JSON.stringify({ text: VOICE_DEMO_TEXT, model_id: config.elevenlabs.ttsModel, ...ttsLanguageParam(config.elevenlabs.ttsModel, "pl"), voice_settings: voiceSettingsFor(config.elevenlabs.ttsModel) }),
   });
   const path = `voices/demos/${voiceId}.mp3`;
   await getStorage().put(path, Buffer.from(await res.arrayBuffer()), "audio/mpeg");
@@ -186,13 +186,82 @@ export async function demoLibraryVoice(voiceId: string, name: string): Promise<V
   return existing ? (await db.update("voice_candidates", { id: existing.id }, row))[0] : db.insert("voice_candidates", row);
 }
 
-/** Ustawia głos jako wiodący. Nowa wersja głosu sprawia, że kolejne nagrania powstaną już nowym głosem. */
-export async function chooseLeadingVoice(voiceId: string, actorEmail: string) {
+export interface TtsModelInfo {
+  id: string;
+  name: string;
+  polish: boolean;
+}
+
+/** Modele Voice Design (text-to-voice). */
+export const VOICE_DESIGN_MODELS = ["eleven_multilingual_ttv_v2", "eleven_ttv_v3"];
+const FALLBACK_TTS_MODELS = ["eleven_multilingual_v2", "eleven_v3", "eleven_flash_v2_5", "eleven_turbo_v2_5"];
+
+/**
+ * Modele TTS dostępne na koncie (GET /v1/models) z obsługą polskiego — v2, v3 i każdy nowszy (np. v4), jeśli konto go ma.
+ */
+export async function listTtsModels(): Promise<TtsModelInfo[]> {
+  await ensureRuntimeSettings();
+  try {
+    const res = await el("/v1/models", { method: "GET" });
+    const models = (await res.json()) as { model_id: string; name?: string; can_do_text_to_speech?: boolean; languages?: { language_id: string }[] }[];
+    const out = models
+      .filter((m) => m.can_do_text_to_speech !== false && !/ttv|sts|scribe|music/i.test(m.model_id))
+      .map((m) => ({ id: m.model_id, name: m.name ?? m.model_id, polish: (m.languages ?? []).some((l) => l.language_id === "pl") }));
+    const pl = out.filter((m) => m.polish);
+    if (pl.length) return pl;
+    if (out.length) return out;
+  } catch (e) {
+    if (e instanceof VoiceStudioError && /Brak klucza/.test(e.message)) throw e;
+  }
+  return FALLBACK_TTS_MODELS.map((id) => ({ id, name: id, polish: true }));
+}
+
+/**
+ * Demo tego samego tekstu w kilku modelach TTS (porównanie v2 / v3 / …).
+ * Podgląd z Voice Design jest najpierw zapisywany jako głos (zwykłe TTS wymaga voice_id).
+ */
+export async function renderModelDemos(candidateId: string, models: string[]): Promise<VoiceCandidateRow> {
+  await ensureRuntimeSettings();
+  const db = getDb();
+  let c = await db.findOne("voice_candidates", { id: candidateId });
+  if (!c) throw new VoiceStudioError("Nie znaleziono kandydata.");
+  if (!c.voice_id) c = await saveDesignedVoice(c.id);
+  const voiceId = c.voice_id!;
+  const list = models.filter((m) => /^eleven_[a-z0-9_]{2,40}$/.test(m)).slice(0, 8);
+  const existing = new Map((c.model_demos ?? []).map((d) => [d.model, d]));
+  const todo = list.filter((m) => !existing.get(m)?.path);
+  apiKey();
+  if (todo.length) await assertBudget("preview", estimateTtsUsd(c.demo_text.length * todo.length, config.elevenlabs.ttsUsdPer1kChars));
+  const storage = getStorage();
+  for (const model of todo) {
+    try {
+      const res = await el(`/v1/text-to-speech/${encodeURIComponent(voiceId)}?output_format=${config.elevenlabs.outputFormat}`, {
+        method: "POST",
+        headers: { accept: "audio/mpeg" },
+        body: JSON.stringify({ text: c.demo_text || VOICE_DEMO_TEXT, model_id: model, ...ttsLanguageParam(model, "pl"), voice_settings: voiceSettingsFor(model) }),
+      });
+      const path = `voices/demos/${voiceId}-${model}.mp3`;
+      await storage.put(path, Buffer.from(await res.arrayBuffer()), "audio/mpeg");
+      await recordCost({ provider: "elevenlabs_tts", purpose: "preview", usd: estimateTtsUsd(c.demo_text.length, config.elevenlabs.ttsUsdPer1kChars), units: c.demo_text.length });
+      existing.set(model, { model, path, error: null });
+    } catch (e) {
+      existing.set(model, { model, path: null, error: (e as Error).message.slice(0, 200) });
+    }
+  }
+  const model_demos = list.map((m) => existing.get(m)!).filter(Boolean);
+  return (await db.update("voice_candidates", { id: c.id }, { model_demos }))[0];
+}
+
+/** Ustawia głos (i opcjonalnie model TTS) jako wiodący. Nowa wersja = nowe klucze cache, kolejne nagrania już nowym głosem. */
+export async function chooseLeadingVoice(voiceId: string, actorEmail: string, model?: string | null) {
   if (!/^[A-Za-z0-9]{10,40}$/.test(voiceId)) throw new VoiceStudioError("Nieprawidłowy Voice ID.");
-  const version = `VOICE_${voiceId.slice(0, 8).toUpperCase()}`;
+  if (model && !/^eleven_[a-z0-9_]{2,40}$/.test(model)) throw new VoiceStudioError("Nieprawidłowy model TTS.");
+  const modelTag = model ? `_${model.replace(/^eleven_/, "").replace(/[^a-z0-9]/gi, "").toUpperCase().slice(0, 12)}` : "";
+  const version = `VOICE_${voiceId.slice(0, 8).toUpperCase()}${modelTag}`;
   await saveSetting("elevenlabs_voice_id", voiceId, actorEmail);
   await saveSetting("elevenlabs_voice_version", version, actorEmail);
-  return { voiceId, version };
+  if (model) await saveSetting("elevenlabs_tts_model", model, actorEmail);
+  return { voiceId, version, model: model ?? config.elevenlabs.ttsModel };
 }
 
 export async function listCandidates(): Promise<VoiceCandidateRow[]> {

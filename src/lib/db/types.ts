@@ -274,6 +274,8 @@ export interface VoiceCandidateRow {
   voice_id: string | null; // zapisany głos w bibliotece ElevenLabs
   preview_path: string | null; // próbka demo w storage
   demo_text: string;
+  /** To samo demo w różnych modelach TTS (porównanie v2 / v3 / …). */
+  model_demos?: { model: string; path: string | null; error: string | null }[];
   created_at: string;
 }
 

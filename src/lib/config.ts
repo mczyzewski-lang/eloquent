@@ -58,7 +58,10 @@ export const config = {
     get voiceVersion() {
       return getOverride("elevenlabs_voice_version") ?? process.env.ELEVENLABS_VOICE_VERSION ?? "VOICE_V1";
     },
-    ttsModel: process.env.ELEVENLABS_TTS_MODEL ?? "eleven_multilingual_v2",
+    // model TTS wybierany razem z głosem w Admin → Głos Elofika
+    get ttsModel() {
+      return clean(getOverride("elevenlabs_tts_model") ?? process.env.ELEVENLABS_TTS_MODEL) || "eleven_multilingual_v2";
+    },
     outputFormat: process.env.ELEVENLABS_OUTPUT_FORMAT ?? "mp3_44100_128",
     sttModel: "scribe_v2_realtime",
     /** USD za 1000 znaków TTS (do estymacji kosztów). */
