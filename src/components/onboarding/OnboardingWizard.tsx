@@ -113,6 +113,8 @@ export function OnboardingWizard({ initialName, auth, loggedIn }: { initialName:
       const saved = localStorage.getItem(DRAFT_KEY);
       if (saved) {
         const parsed = JSON.parse(saved) as OnboardingDraft;
+        // odczyt szkicu po hydratacji (localStorage nie istnieje na serwerze)
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         if (!initialName || parsed.child.name === initialName) setDraft(parsed);
       }
     } catch {}
@@ -124,6 +126,7 @@ export function OnboardingWizard({ initialName, auth, loggedIn }: { initialName:
       localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
     } catch {}
   }, [draft]);
+
 
   const nameOk = validateName(draft.child.name).ok;
   const forms = useMemo(() => (nameOk ? getNameForms(draft.child.name) : null), [draft.child.name, nameOk]);
@@ -140,11 +143,9 @@ export function OnboardingWizard({ initialName, auth, loggedIn }: { initialName:
     return opts;
   }, [forms]);
 
-  useEffect(() => {
-    if (addressOptions.length && !addressOptions.some((o) => o.value === draft.child.address)) {
-      setDraft((d) => ({ ...d, child: { ...d.child, address: addressOptions[0].value } }));
-    }
-  }, [addressOptions, draft.child.address]);
+  // forma zwrotu wynikowa: wybór rodzica, o ile pasuje do aktualnego imienia; inaczej pierwsza dostępna
+  const address: OnboardingDraft["child"]["address"] = addressOptions.some((o) => o.value === draft.child.address) ? draft.child.address : (addressOptions[0]?.value ?? "name_only");
+  const effectiveDraft: OnboardingDraft = { ...draft, child: { ...draft.child, address } };
 
   function next() {
     track("onboarding_step_completed", { step });
@@ -156,7 +157,7 @@ export function OnboardingWizard({ initialName, auth, loggedIn }: { initialName:
     setSaving(true);
     setErr(null);
     try {
-      await submitDraft(draft);
+      await submitDraft(effectiveDraft);
       router.push("/app?witaj=1");
     } catch (e) {
       setErr((e as Error).message);
@@ -220,12 +221,12 @@ export function OnboardingWizard({ initialName, auth, loggedIn }: { initialName:
                   <Label>Jak Elofik ma się zwracać do dziecka?</Label>
                   <div className="flex flex-wrap gap-2">
                     {addressOptions.map((o) => (
-                      <button key={o.value} type="button" onClick={() => setDraft((d) => ({ ...d, child: { ...d.child, address: o.value } }))} className={cn("rounded-full border-2 px-4 py-2 font-display font-semibold transition", draft.child.address === o.value ? "border-gold-deep bg-gold/25 text-navy" : "border-navy/10 bg-white text-muted")}>
+                      <button key={o.value} type="button" onClick={() => setDraft((d) => ({ ...d, child: { ...d.child, address: o.value } }))} className={cn("rounded-full border-2 px-4 py-2 font-display font-semibold transition", address === o.value ? "border-gold-deep bg-gold/25 text-navy" : "border-navy/10 bg-white text-muted")}>
                         {o.value === "custom" ? o.label : `„Hej, ${o.label}”`}
                       </button>
                     ))}
                   </div>
-                  {draft.child.address === "custom" && (
+                  {address === "custom" && (
                     <Input className="mt-3" placeholder="np. Leoś" maxLength={30} value={draft.child.customAddress} onChange={(e) => setDraft((d) => ({ ...d, child: { ...d.child, customAddress: e.target.value } }))} />
                   )}
                   {!forms.known && <p className="mt-2 text-xs text-muted">Nie znamy jeszcze odmiany tego imienia — Elofik użyje formy, którą wybierzesz. Nie zgadujemy.</p>}

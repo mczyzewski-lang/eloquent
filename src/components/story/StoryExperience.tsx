@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { ArrowLeft, Check, Gauge, Heart, Loader2, MessageCircleHeart, Pause, Play, RotateCcw, RotateCw, Sparkles as SparklesIcon, Volume2 } from "lucide-react";
@@ -36,6 +36,20 @@ interface GreetingInfo {
   text: string;
   provider: "elevenlabs" | "mock";
   variantId: string;
+}
+
+// Operacje na elemencie audio poza komponentem (czytelniej i zgodnie z regułami React Compiler)
+function seekTo(a: HTMLAudioElement | null, sec: number) {
+  if (a) a.currentTime = Math.max(0, sec);
+}
+function seekBy(a: HTMLAudioElement | null, delta: number) {
+  if (a) seekTo(a, Math.min((a.duration || Infinity) - 0.5, a.currentTime + delta));
+}
+function setMuted(a: HTMLAudioElement, muted: boolean) {
+  a.muted = muted;
+}
+function setRateOn(a: HTMLAudioElement | null, rate: number) {
+  if (a) a.playbackRate = rate;
 }
 
 async function post(url: string, body: unknown) {
@@ -129,6 +143,9 @@ export function StoryExperience({
     await new Promise((r) => setTimeout(r, Math.min(2200, motif * 1000)));
   }, [locale, story.storyId]);
 
+  const getStoryEl = useCallback(() => storyEl.current, []);
+  const onFinished = useCallback(() => setStage("finished"), []);
+
   const startStory = useCallback(
     (from: "ritual" | "skip") => {
       setStage("player");
@@ -160,7 +177,7 @@ export function StoryExperience({
         />
       )}
       {stage !== "ritual" && (
-        <StoryPlayer story={story} childName={childName} audio={audio} audioError={audioError} el={storyEl} autoStart onFinished={() => setStage("finished")} finished={stage === "finished"} locale={locale} />
+        <StoryPlayer story={story} childName={childName} audio={audio} audioError={audioError} getEl={getStoryEl} autoStart onFinished={onFinished} finished={stage === "finished"} locale={locale} />
       )}
     </>
   );
@@ -171,7 +188,7 @@ function StoryPlayer({
   childName,
   audio,
   audioError,
-  el,
+  getEl,
   autoStart,
   onFinished,
   finished,
@@ -181,7 +198,8 @@ function StoryPlayer({
   childName: string;
   audio: AudioInfo | null;
   audioError: string | null;
-  el: React.RefObject<HTMLAudioElement | null>;
+  /** Element audio należy do rodzica (odblokowany w geście użytkownika podczas rytuału). */
+  getEl: () => HTMLAudioElement | null;
   autoStart: boolean;
   onFinished: () => void;
   finished: boolean;
@@ -189,54 +207,59 @@ function StoryPlayer({
 }) {
   const [playing, setPlaying] = useState(false);
   const [time, setTime] = useState(0);
-  const [duration, setDuration] = useState(0);
+  const [measured, setMeasured] = useState(0);
   const [rate, setRate] = useState(1);
-  const [favorite, setFavorite] = useState(false);
+  const [favOverride, setFavOverride] = useState<boolean | null>(null);
   const [discussed, setDiscussed] = useState(false);
-  const [segIdx, setSegIdx] = useState(0);
-  const [browserVoice, setBrowserVoice] = useState(false);
+  const [voiceOverride, setVoiceOverride] = useState<boolean | null>(null);
   const started = useRef(false);
   const lastSave = useRef(0);
   const stopSpeech = useRef<() => void>(() => undefined);
 
+  const duration = measured || (audio?.durationMs ?? 0) / 1000;
+  const favorite = favOverride ?? audio?.favorite ?? false;
+  const browserVoice = voiceOverride ?? audio?.provider === "mock";
+  const segIdx = useMemo(() => {
+    if (!audio) return 0;
+    const ms = time * 1000;
+    let i = 0;
+    for (let k = 0; k < audio.timeline.length; k++) if (audio.timeline[k].startMs <= ms) i = k;
+    return i;
+  }, [audio, time]);
+
   const save = useCallback(
     (ev: "start" | "progress" | "complete") => {
-      const a = el.current;
+      const a = getEl();
       if (!a) return;
       const durationSec = Number.isFinite(a.duration) && a.duration > 0 ? a.duration : (audio?.durationMs ?? 0) / 1000;
       void post("/api/progress", { action: "playback", storyId: story.storyId, positionSec: a.currentTime, durationSec, event: ev });
     },
-    [audio, el, story.storyId],
+    [audio, getEl, story.storyId],
   );
 
   useEffect(() => {
-    if (!audio) return;
-    setFavorite(audio.favorite);
-    setDuration(audio.durationMs / 1000);
-    setBrowserVoice(audio.provider === "mock");
-    const a = el.current;
-    if (!a) return;
-    if (a.src !== audio.audioUrl && !a.src.endsWith(audio.audioUrl)) a.src = audio.audioUrl;
+    const a = getEl();
+    if (!audio || !a) return;
+    if (!a.src.endsWith(audio.audioUrl)) a.src = audio.audioUrl;
     if (audio.resumeAt > 5 && audio.resumeAt < audio.durationMs / 1000 - 10) a.currentTime = audio.resumeAt;
     if (autoStart && !started.current) {
       started.current = true;
-      a.play().catch(() => setPlaying(false));
+      a.play().catch(() => undefined);
     }
-  }, [audio, autoStart, el]);
+  }, [audio, autoStart, getEl]);
 
   // Kontrolki systemowe (ekran blokady, słuchawki) — Media Session API
   useEffect(() => {
     if (!("mediaSession" in navigator)) return;
     navigator.mediaSession.metadata = new MediaMetadata({ title: story.title, artist: "Elofik", album: `Dzień ${story.dayNumber} — ${story.wordOfDay}`, artwork: [{ src: "/icons/icon-512.png", sizes: "512x512", type: "image/png" }] });
-    const a = el.current;
-    navigator.mediaSession.setActionHandler("play", () => a?.play());
-    navigator.mediaSession.setActionHandler("pause", () => a?.pause());
-    navigator.mediaSession.setActionHandler("seekbackward", () => a && (a.currentTime = Math.max(0, a.currentTime - 15)));
-    navigator.mediaSession.setActionHandler("seekforward", () => a && (a.currentTime = Math.min(a.duration, a.currentTime + 15)));
-  }, [el, story]);
+    navigator.mediaSession.setActionHandler("play", () => void getEl()?.play());
+    navigator.mediaSession.setActionHandler("pause", () => getEl()?.pause());
+    navigator.mediaSession.setActionHandler("seekbackward", () => seekBy(getEl(), -15));
+    navigator.mediaSession.setActionHandler("seekforward", () => seekBy(getEl(), 15));
+  }, [getEl, story]);
 
   useEffect(() => {
-    const a = el.current;
+    const a = getEl();
     if (!a) return;
     const onPlay = () => {
       setPlaying(true);
@@ -250,7 +273,7 @@ function StoryPlayer({
     };
     const onTime = () => {
       setTime(a.currentTime);
-      if (a.duration && Number.isFinite(a.duration)) setDuration(a.duration);
+      if (a.duration && Number.isFinite(a.duration)) setMeasured(a.duration);
       if (Date.now() - lastSave.current > 10_000) {
         lastSave.current = Date.now();
         save("progress");
@@ -272,40 +295,28 @@ function StoryPlayer({
       a.removeEventListener("timeupdate", onTime);
       a.removeEventListener("ended", onEnded);
     };
-  }, [el, onFinished, save]);
+  }, [getEl, onFinished, save]);
 
-  // napisy + tryb demo (głos przeglądarki czyta bieżący segment)
+  // tryb demo: głos przeglądarki czyta bieżący segment, nagranie zastępcze jest wyciszone
   useEffect(() => {
-    if (!audio) return;
-    const ms = time * 1000;
-    let i = 0;
-    for (let k = 0; k < audio.timeline.length; k++) if (audio.timeline[k].startMs <= ms) i = k;
-    if (i !== segIdx) setSegIdx(i);
-  }, [audio, segIdx, time]);
-
-  useEffect(() => {
-    const a = el.current;
+    const a = getEl();
     if (!a || !audio) return;
-    a.muted = browserVoice;
+    setMuted(a, browserVoice);
     stopSpeech.current();
     if (browserVoice && playing) stopSpeech.current = speakSequence([audio.timeline[segIdx]?.text ?? ""], { lang: locale, rate: rate * 1.05 });
-  }, [audio, browserVoice, el, locale, playing, rate, segIdx]);
+  }, [audio, browserVoice, getEl, locale, playing, rate, segIdx]);
 
   useEffect(() => {
-    if (el.current) el.current.playbackRate = rate;
-  }, [el, rate]);
+    setRateOn(getEl(), rate);
+  }, [getEl, rate]);
 
   useEffect(() => () => stopSpeech.current(), []);
 
   const toggle = () => {
-    const a = el.current;
+    const a = getEl();
     if (!a) return;
     if (a.paused) void a.play();
     else a.pause();
-  };
-  const seek = (d: number) => {
-    const a = el.current;
-    if (a) a.currentTime = Math.max(0, Math.min((a.duration || duration) - 0.5, a.currentTime + d));
   };
 
   if (finished) {
@@ -345,7 +356,7 @@ function StoryPlayer({
             <ArrowLeft className="h-6 w-6" />
           </Link>
           <p className="text-sm font-semibold text-cream/70">Dzień {story.dayNumber}</p>
-          <button type="button" aria-pressed={favorite} aria-label="Ulubione" onClick={() => { setFavorite(!favorite); void post("/api/progress", { action: "favorite", storyId: story.storyId, value: !favorite }); }} className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-white/10">
+          <button type="button" aria-pressed={favorite} aria-label="Ulubione" onClick={() => { setFavOverride(!favorite); void post("/api/progress", { action: "favorite", storyId: story.storyId, value: !favorite }); }} className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-white/10">
             <Heart className={cn("h-6 w-6", favorite && "fill-peach-deep text-peach-deep")} />
           </button>
         </div>
@@ -377,7 +388,7 @@ function StoryPlayer({
                 max={duration || 1}
                 step={0.5}
                 value={time}
-                onChange={(e) => el.current && (el.current.currentTime = Number(e.target.value))}
+                onChange={(e) => seekTo(getEl(), Number(e.target.value))}
                 aria-label="Pozycja odtwarzania"
                 className="w-full accent-[#F6C76D]"
                 style={{ background: `linear-gradient(to right, #F6C76D ${progress}%, rgb(255 255 255 / .2) ${progress}%)` }}
@@ -387,14 +398,14 @@ function StoryPlayer({
                 <span>{formatDuration(duration)}</span>
               </div>
               <div className="mt-4 flex items-center justify-center gap-6">
-                <button type="button" onClick={() => seek(-15)} aria-label="Cofnij 15 sekund" className="relative flex h-14 w-14 items-center justify-center rounded-full hover:bg-white/10">
+                <button type="button" onClick={() => seekBy(getEl(), -15)} aria-label="Cofnij 15 sekund" className="relative flex h-14 w-14 items-center justify-center rounded-full hover:bg-white/10">
                   <RotateCcw className="h-7 w-7" />
                   <span className="absolute text-[10px] font-bold">15</span>
                 </button>
                 <button type="button" onClick={toggle} aria-label={playing ? "Pauza" : "Odtwórz"} className="flex h-20 w-20 items-center justify-center rounded-full bg-gold text-navy shadow-[0_0_0_8px_rgb(246_199_109/0.2)] transition active:scale-95" data-testid="play-toggle">
                   {playing ? <Pause className="h-9 w-9" /> : <Play className="ml-1 h-9 w-9" />}
                 </button>
-                <button type="button" onClick={() => seek(15)} aria-label="Przewiń 15 sekund" className="relative flex h-14 w-14 items-center justify-center rounded-full hover:bg-white/10">
+                <button type="button" onClick={() => seekBy(getEl(), 15)} aria-label="Przewiń 15 sekund" className="relative flex h-14 w-14 items-center justify-center rounded-full hover:bg-white/10">
                   <RotateCw className="h-7 w-7" />
                   <span className="absolute text-[10px] font-bold">15</span>
                 </button>
@@ -409,7 +420,7 @@ function StoryPlayer({
               </div>
               {audio.provider === "mock" && (
                 <label className="mt-4 flex items-center justify-center gap-2 text-xs text-cream/60">
-                  <input type="checkbox" checked={browserVoice} onChange={(e) => setBrowserVoice(e.target.checked)} />
+                  <input type="checkbox" checked={browserVoice} onChange={(e) => setVoiceOverride(e.target.checked)} />
                   <Volume2 className="h-4 w-4" /> Tryb demo: czytaj głosem przeglądarki (brak klucza ElevenLabs)
                 </label>
               )}

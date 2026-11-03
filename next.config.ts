@@ -11,7 +11,6 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  output: "standalone",
   serverExternalPackages: ["stripe"],
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];

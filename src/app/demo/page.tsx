@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { DemoLauncher } from "@/components/site/DemoLauncher";
 
 export const metadata = { title: "Demo", robots: { index: false } };
+export const dynamic = "force-dynamic";
 
 /** Centrum demo: przykładowa rodzina Leona (5 lat): mama Monika, tata Marek, babcia Basia, dziadek Jan, pies Burek. */
 export default function DemoPage() {
