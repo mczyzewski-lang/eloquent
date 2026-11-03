@@ -1,6 +1,6 @@
 /**
  * Elofik — mały elf opowieści. Wektorowa maskotka zgodna z character sheet (docs/BRAND.md):
- * duże, delikatnie spiczaste uszy, łagodne brązowe oczy, potargane karmelowe włosy,
+ * wyraźne, delikatnie spiczaste (ale niedługie) uszy, łagodne brązowe oczy, potargane karmelowe włosy,
  * szałwiowy sweterek, brązowe buciki, torba na słowa z ciepłym, złotym blaskiem. Zero motywów świątecznych.
  */
 import { cn } from "@/lib/utils";
@@ -68,12 +68,12 @@ export function Elofik({ mood = "idle", className, title = "Elofik, mały elf op
         {/* głowa */}
         <g className="elofik-head">
           <g className="elofik-ear-l">
-            <path d="M68 100 Q34 78 8 44 Q24 86 70 142 Z" fill="url(#elo-skin)" />
-            <path d="M64 106 Q40 88 24 66 Q36 94 66 130 Z" fill="#F3A8A0" opacity="0.55" />
+            <path d="M70 102 Q46 90 32 72 Q38 100 70 136 Z" fill="url(#elo-skin)" />
+            <path d="M66 106 Q50 96 42 84 Q46 102 66 126 Z" fill="#F3A8A0" opacity="0.55" />
           </g>
           <g className="elofik-ear-r">
-            <path d="M172 100 Q206 78 232 44 Q216 86 170 142 Z" fill="url(#elo-skin)" />
-            <path d="M176 106 Q200 88 216 66 Q204 94 174 130 Z" fill="#F3A8A0" opacity="0.55" />
+            <path d="M170 102 Q194 90 208 72 Q202 100 170 136 Z" fill="url(#elo-skin)" />
+            <path d="M174 106 Q190 96 198 84 Q194 102 174 126 Z" fill="#F3A8A0" opacity="0.55" />
           </g>
 
           <circle cx="120" cy="118" r="60" fill="url(#elo-skin)" />
@@ -149,8 +149,8 @@ export function Logo({ className }: { className?: string }) {
     <span className={cn("inline-flex items-center gap-2 font-display text-2xl font-semibold text-navy", className)}>
       <span className="relative inline-block h-9 w-9">
         <svg viewBox="0 0 40 40" className="h-9 w-9" aria-hidden>
-          <path d="M9 17 Q3 12 1 4 Q6 12 11 23 Z" fill="#EDBB94" />
-          <path d="M31 17 Q37 12 39 4 Q34 12 29 23 Z" fill="#EDBB94" />
+          <path d="M9 17 Q5 14 4 10 Q6 15 11 22 Z" fill="#EDBB94" />
+          <path d="M31 17 Q35 14 36 10 Q34 15 29 22 Z" fill="#EDBB94" />
           <circle cx="20" cy="21" r="12" fill="#F3CBA8" />
           <path d="M8 20 Q8 9 20 9 Q32 9 32 20 Q28 15 24 15 Q22 18 19 17 Q16 14 12 16 Q10 18 8 20 Z" fill="#B9784A" />
           <circle cx="16" cy="23" r="2" fill="#4A2F22" />

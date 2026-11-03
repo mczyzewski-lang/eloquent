@@ -8,12 +8,12 @@
 Nie pozycjonujemy Elofika jako „generatora bajek AI”. Sprzedajemy codzienny rytuał, przygodę z udziałem dziecka, bliskość rodziny, ograniczenie biernego czasu przed ekranem i proste narzędzie dla rodziców.
 Nie obiecujemy „podnoszenia IQ” ani wymiernych efektów — komunikujemy rozwijanie słownictwa, umiejętności językowych, wyobraźni i wspieranie rozwoju poznawczego.
 
-## Character sheet — Elofik (wersja `ELF_V1`)
+## Character sheet — Elofik (wersja `ELF_V2`)
 
 | Cecha | Opis |
 |---|---|
 | Gatunek | Mały elf opowieści (nie zwierzę: nie fenek, nie słoń) |
-| Znak rozpoznawczy | **Duże, delikatnie spiczaste uszy** — wyraziste, poruszają się przy emocjach (nasłuchiwanie, radość) |
+| Znak rozpoznawczy | **Delikatnie spiczaste uszy** — wyraźnie elfie, ale krótkie i proporcjonalne (wystają ok. 1/3 szerokości głowy, nigdy długie); poruszają się przy emocjach (nasłuchiwanie, radość) |
 | Twarz | Dziecięca, okrągła; łagodne, inteligentne, duże brązowe oczy; ciepły uśmiech; rumiane policzki |
 | Włosy | Miękkie, lekko potargane, karmelowo-kasztanowe (`#B9784A`) |
 | Skóra | Ciepła brzoskwiniowo-beżowa (`#F3CBA8`) |

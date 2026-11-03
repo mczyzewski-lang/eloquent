@@ -2,11 +2,11 @@
  * Wzorzec postaci Elofika — wspólny prefiks każdego promptu ilustracji.
  * Zmiany tutaj = zmiana wyglądu bohatera w całej aplikacji (podbij CHARACTER_SHEET_VERSION).
  */
-export const CHARACTER_SHEET_VERSION = "ELF_V1";
+export const CHARACTER_SHEET_VERSION = "ELF_V2";
 
 export const ELOFIK_CHARACTER_SHEET = `
 Main character: ELOFIK — a small, cuddly storytelling ELF (not an animal, not a fennec fox, not an elephant).
-- Big, softly pointed elf ears (his signature feature), slightly larger than usual, gently expressive.
+- Softly pointed elf ears (his signature feature): clearly elfin but SHORT and proportionate — they stick out only about a third of the head width, never long or horn-like; gently expressive.
 - Gentle, intelligent, large warm-brown eyes; friendly child-like face; warm smile; rosy cheeks.
 - Soft, slightly tousled chestnut-caramel hair.
 - Warm peach-beige skin.
