@@ -1,6 +1,7 @@
 import { config } from "@/lib/config";
 import { getDb, nowIso } from "@/lib/db";
 import { checkBudget, type CostProvider, type CostPurpose } from "@/lib/domain/budget";
+import { ensureRuntimeSettings } from "@/lib/settings/runtime";
 
 export class BudgetExceededError extends Error {
   constructor(public reason: string) {
@@ -22,6 +23,7 @@ export async function spentSince(sinceIso: string, purposes?: CostPurpose[]): Pr
 
 /** Rzuca BudgetExceededError, gdy płatna operacja przekroczyłaby limit. */
 export async function assertBudget(purpose: CostPurpose, estimatedUsd: number) {
+  await ensureRuntimeSettings();
   const [month, samplesToday] = await Promise.all([spentSince(monthStart()), spentSince(dayStart(), ["sample", "gift_story"])]);
   const res = checkBudget({
     monthlyLimitUsd: config.budget.monthlyUsd,

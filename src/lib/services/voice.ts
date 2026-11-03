@@ -10,6 +10,7 @@ import { estimateSttUsd } from "@/lib/domain/budget";
 import { scribeKeyterms, type Locale } from "@/lib/domain/command-matcher";
 import { assertBudget, recordCost } from "./costs";
 import { rateLimit } from "./rate-limit";
+import { ensureRuntimeSettings } from "@/lib/settings/runtime";
 
 export class VoiceLimitError extends Error {
   constructor(public code: "daily_limit" | "attempts_limit" | "budget") {
@@ -41,6 +42,7 @@ async function fetchScribeToken(): Promise<string> {
 }
 
 export async function startVoiceSession(familyId: string, storyId: string, locale: Locale): Promise<VoiceSessionStart> {
+  await ensureRuntimeSettings();
   const db = getDb();
   const daily = await rateLimit("voice-daily", familyId, config.voice.maxSessionsPerFamilyPerDay, 86_400);
   if (!daily.ok) throw new VoiceLimitError("daily_limit");
@@ -80,6 +82,7 @@ export async function startVoiceSession(familyId: string, storyId: string, local
 }
 
 export async function finishVoiceSession(familyId: string, sessionId: string, outcome: Exclude<VoiceGreetingSessionRow["outcome"], "pending">, durationMs: number, confidence: number | null) {
+  await ensureRuntimeSettings();
   const db = getDb();
   const session = await db.findOne("voice_greeting_sessions", { id: sessionId, family_id: familyId });
   if (!session || session.outcome !== "pending") return null;

@@ -7,6 +7,7 @@ import { currentVoiceProfile } from "@/lib/audio/tts";
 import { assemblePlan, signedAudioUrl } from "@/lib/services/audio-pipeline";
 import { clientIp, rateLimit } from "@/lib/services/rate-limit";
 import { getDb } from "@/lib/db";
+import { ensureRuntimeSettings } from "@/lib/settings/runtime";
 
 const body = z.object({ name: z.string().max(40), website: z.string().max(200).optional() });
 
@@ -26,6 +27,7 @@ export async function POST(req: Request) {
     const [hour, day] = await Promise.all([rateLimit("sample-h", ip, 10, 3600), rateLimit("sample-d", ip, 30, 86_400)]);
     if (!hour.ok || !day.ok) return error("Elofik musi chwilę odpocząć. Spróbuj za jakiś czas 🙂", 429);
 
+    await ensureRuntimeSettings();
     const forms = getNameForms(v.name);
     const ctx = { child: { name: forms.nominative, address: addressForm(forms, "diminutive"), gender: forms.gender }, family: {} };
     const plan = buildRenderPlan(SAMPLE_STORY, ctx, currentVoiceProfile());

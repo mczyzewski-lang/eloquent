@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/auth/guards";
 import { Logo } from "@/components/elofik/Elofik";
 import { isDemoMode, hasElevenLabs, hasOpenAI, hasStripe } from "@/lib/config";
+import { ensureRuntimeSettings } from "@/lib/settings/runtime";
 
 export const metadata = { title: "Admin", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -11,10 +12,12 @@ const NAV = [
   ["/admin/bajki", "CMS bajek"],
   ["/admin/powitania", "Powitania Elofika"],
   ["/admin/koszty", "Koszty AI"],
+  ["/admin/ustawienia", "Ustawienia i klucze API"],
 ] as const;
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const admin = await requireAdmin();
+  await ensureRuntimeSettings();
   const flags = [
     ["Dane", isDemoMode() ? "demo (plik)" : "Supabase"],
     ["TTS/STT", hasElevenLabs() ? "ElevenLabs" : "mock"],

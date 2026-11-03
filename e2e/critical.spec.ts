@@ -125,3 +125,18 @@ test("admin: CMS i koszty widoczne dla admina", async ({ page }) => {
   await page.goto("/admin/bajki");
   await expect(page.getByText("Elofik i tajemniczy ślad")).toBeVisible();
 });
+
+test("admin: ustawienia kluczy API — walidacja i zapis bez ujawniania sekretu", async ({ page }) => {
+  await demoLogin(page, "admin");
+  await page.goto("/admin");
+  await expect(page.getByTestId("api-keys-prompt")).toBeVisible();
+  await page.getByRole("link", { name: "Uzupełnij klucze API" }).click();
+  await page.fill("#openai_api_key", "zly-klucz");
+  await page.getByRole("button", { name: /Zapisz ustawienia/ }).click();
+  await expect(page.getByText("Klucz OpenAI zaczyna się od „sk-”.")).toBeVisible();
+  await page.fill("#openai_api_key", "sk-test0123456789abcdefghijklmnop");
+  await page.getByRole("button", { name: /Zapisz ustawienia/ }).click();
+  await expect(page.getByText("sk-…mnop")).toBeVisible();
+  const api = await page.request.get("/api/admin/settings");
+  expect(await api.text()).not.toContain("sk-test0123456789abcdefghijklmnop");
+});

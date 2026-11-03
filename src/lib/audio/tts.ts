@@ -60,10 +60,12 @@ class MockTts implements TtsProvider {
   }
 }
 
-const g = globalThis as unknown as { __elofikTts?: TtsProvider };
+const g = globalThis as unknown as { __elofikTts?: TtsProvider; __elofikTtsReal?: TtsProvider; __elofikTtsMock?: TtsProvider };
+/** Dostawca wybierany przy każdym wywołaniu — klucz może zostać dodany w panelu admina bez restartu. */
 export function getTts(): TtsProvider {
-  if (!g.__elofikTts) g.__elofikTts = hasElevenLabs() ? new ElevenLabsTts() : new MockTts();
-  return g.__elofikTts;
+  if (g.__elofikTts) return g.__elofikTts; // podmiana w testach
+  if (hasElevenLabs()) return (g.__elofikTtsReal ??= new ElevenLabsTts());
+  return (g.__elofikTtsMock ??= new MockTts());
 }
 export function setTtsForTests(p: TtsProvider) {
   g.__elofikTts = p;

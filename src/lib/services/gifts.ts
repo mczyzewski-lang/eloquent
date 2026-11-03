@@ -18,6 +18,7 @@ import { createOrUpdateFamily, getFamilyByOwner } from "./families";
 import { getAccess } from "./access";
 import { track } from "./analytics";
 import { sendEmail } from "./email";
+import { ensureRuntimeSettings } from "@/lib/settings/runtime";
 
 const name = z.string().trim().min(1).max(30).refine((v) => validateName(v).ok, "Nieprawidłowe imię");
 
@@ -48,6 +49,7 @@ export function giverTitle(relation: "grandma" | "grandpa" | "other", giverName:
 const cap = (s: string) => s.charAt(0).toLocaleUpperCase("pl") + s.slice(1);
 
 export async function createFreeGiftStory(input: z.infer<typeof freeGiftSchema>) {
+  await ensureRuntimeSettings();
   const childName = (validateName(input.childName) as { name: string }).name;
   const forms = getNameForms(childName);
   const giver = giverTitle(input.giverRelation, input.giverName);

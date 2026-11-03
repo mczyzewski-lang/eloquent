@@ -2,6 +2,18 @@
 
 Aplikacja działa bez żadnych kluczy (tryb demo). Każda integracja włącza się po ustawieniu zmiennych z `.env.example`.
 
+## 0. Panel admina: Ustawienia i klucze API (`/admin/ustawienia`)
+
+Klucze **ElevenLabs** i **OpenAI**, **Voice ID** głosu Elofika oraz **miesięczny budżet AI** można wpisać w panelu zamiast w zmiennych środowiskowych:
+
+- wartości są szyfrowane AES-256-GCM (klucz z `SESSION_SECRET`) w tabeli `app_settings` (migracja `0002_app_settings.sql`), dostęp tylko dla backendu,
+- do przeglądarki trafia wyłącznie maska (np. `sk-…abcd`); log audytu zapisuje tylko nazwy pól,
+- wartość z panelu ma pierwszeństwo przed zmienną środowiskową; „Wyczyść” wraca do zmiennej,
+- zmiany działają bez restartu (cache 30 s); „Test połączenia” sprawdza klucze bez płatnego generowania,
+- **ustaw `SESSION_SECRET` przed zapisaniem kluczy** — jego zmiana unieważnia zapisane sekrety.
+
+Dostęp do panelu: e-mail z `ADMIN_EMAILS` + logowanie linkiem (`/logowanie`). W trybie demo: `/demo` → „Wejdź jako admin”.
+
 ## 1. Supabase (PostgreSQL, Auth, Storage, RLS)
 
 1. Utwórz projekt (region UE, np. Frankfurt).

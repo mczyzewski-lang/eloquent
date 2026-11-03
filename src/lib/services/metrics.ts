@@ -3,6 +3,7 @@ import { config } from "@/lib/config";
 import { getDb } from "@/lib/db";
 import { PRICING } from "@/lib/domain/pricing";
 import { estimateTtsUsd, estimateSttUsd } from "@/lib/domain/budget";
+import { ensureRuntimeSettings } from "@/lib/settings/runtime";
 
 const DAY = 86_400_000;
 
@@ -83,6 +84,7 @@ export async function businessMetrics(now = new Date()) {
 }
 
 export async function costMetrics(now = new Date()) {
+  await ensureRuntimeSettings();
   const db = getDb();
   const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
   const logs = await db.find("ai_cost_logs", { created_at: { gte: monthStart } });

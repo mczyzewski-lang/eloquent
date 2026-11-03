@@ -3,6 +3,7 @@
  * Kanoniczny adres produkcyjny: https://elofik.com — w dev/staging adres pochodzi z APP_URL.
  */
 import "server-only";
+import { getOverride } from "@/lib/settings/overrides";
 
 function bool(v: string | undefined, fallback = false) {
   if (v === undefined || v === "") return fallback;
@@ -39,8 +40,13 @@ export const config = {
     couponReferralMonth: process.env.STRIPE_COUPON_REFERRAL_MONTH ?? "",
   },
   elevenlabs: {
-    apiKey: process.env.ELEVENLABS_API_KEY ?? "",
-    voiceId: process.env.ELEVENLABS_VOICE_ID ?? "",
+    // wartość z panelu admina (Ustawienia → Klucze API) ma pierwszeństwo przed zmienną środowiskową
+    get apiKey() {
+      return getOverride("elevenlabs_api_key") ?? process.env.ELEVENLABS_API_KEY ?? "";
+    },
+    get voiceId() {
+      return getOverride("elevenlabs_voice_id") ?? process.env.ELEVENLABS_VOICE_ID ?? "";
+    },
     voiceVersion: process.env.ELEVENLABS_VOICE_VERSION ?? "VOICE_V1",
     ttsModel: process.env.ELEVENLABS_TTS_MODEL ?? "eleven_multilingual_v2",
     outputFormat: process.env.ELEVENLABS_OUTPUT_FORMAT ?? "mp3_44100_128",
@@ -51,7 +57,9 @@ export const config = {
     sttUsdPerMinute: num(process.env.ELEVENLABS_STT_USD_PER_MINUTE, 0.0067),
   },
   openai: {
-    apiKey: process.env.OPENAI_API_KEY ?? "",
+    get apiKey() {
+      return getOverride("openai_api_key") ?? process.env.OPENAI_API_KEY ?? "";
+    },
     textModel: process.env.OPENAI_TEXT_MODEL ?? "gpt-5-mini",
     imageModel: process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1",
   },
@@ -61,7 +69,9 @@ export const config = {
   },
   budget: {
     /** Miesięczny limit wszystkich płatnych wywołań AI (USD). 0 = brak płatnych wywołań. */
-    monthlyUsd: num(process.env.AI_MONTHLY_BUDGET_USD, 0),
+    get monthlyUsd() {
+      return num(getOverride("ai_monthly_budget_usd") ?? process.env.AI_MONTHLY_BUDGET_USD, 0);
+    },
     /** Dzienny limit kosztu próbek z landing page (USD). */
     sampleDailyUsd: num(process.env.AI_SAMPLE_DAILY_BUDGET_USD, 5),
   },
@@ -74,7 +84,7 @@ export const config = {
   defaultTimezone: process.env.DEFAULT_TIMEZONE ?? "Europe/Warsaw",
   adminEmails: (process.env.ADMIN_EMAILS ?? "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean),
   forceDemo: bool(process.env.ELOFIK_DEMO_MODE),
-} as const;
+};
 
 /** Tryb demo: brak Supabase lub wymuszony flagą. Dane w pamięci/pliku, dostawcy AI mockowani. */
 export const isDemoMode = () => config.forceDemo || !config.supabase.url || !config.supabase.serviceRoleKey;

@@ -4,8 +4,10 @@ import { getNameForms } from "@/lib/domain/names";
 import { config } from "@/lib/config";
 import { PRONUNCIATION_VERSION } from "@/lib/domain/pronunciation";
 import { GreetingsAdmin } from "@/components/admin/GreetingsAdmin";
+import { ensureRuntimeSettings } from "@/lib/settings/runtime";
 
 export default async function AdminGreetings() {
+  await ensureRuntimeSettings();
   const db = getDb();
   const [bank, cache, children] = await Promise.all([getGreetingBank(), db.find("greeting_audio_cache"), db.find("child_profiles")]);
   const byVoice = cache.reduce<Record<string, number>>((acc, c) => ((acc[c.voice_version] = (acc[c.voice_version] ?? 0) + 1), acc), {});

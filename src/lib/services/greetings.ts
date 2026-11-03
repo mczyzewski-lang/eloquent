@@ -12,6 +12,7 @@ import type { Locale } from "@/lib/domain/command-matcher";
 import { currentVoiceProfile, getTts } from "@/lib/audio/tts";
 import { ensureSegmentAudio, signedAudioUrl } from "./audio-pipeline";
 import { lastListenedAt } from "./progress";
+import { ensureRuntimeSettings } from "@/lib/settings/runtime";
 
 export function greetingCacheKey(text: string, locale: string) {
   const v = currentVoiceProfile();
@@ -41,6 +42,7 @@ export interface PreparedGreeting {
 
 /** Zapewnia audio wariantu (z cache lub nowe TTS). */
 export async function ensureGreetingAudio(ctx: TemplateContext, variant: GreetingVariant, familyId: string | null): Promise<PreparedGreeting> {
+  await ensureRuntimeSettings();
   const db = getDb();
   const voice = currentVoiceProfile();
   const text = applyPronunciation(renderTemplate(variant.template, ctx));

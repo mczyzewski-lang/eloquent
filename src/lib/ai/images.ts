@@ -5,10 +5,12 @@ import { getStorage } from "@/lib/storage";
 import { sha256 } from "@/lib/domain/hash";
 import { illustrationPrompt, CHARACTER_SHEET_VERSION } from "./character";
 import { assertBudget, recordCost } from "@/lib/services/costs";
+import { ensureRuntimeSettings } from "@/lib/settings/runtime";
 
 export const IMAGE_USD_ESTIMATE = 0.07;
 
 export async function generateIllustration(scene: string, purpose: "cover" | "scene" | "onboarding" | "gift" = "cover") {
+  await ensureRuntimeSettings();
   const prompt = illustrationPrompt(scene);
   const key = `images/${purpose}/${CHARACTER_SHEET_VERSION}-${sha256(prompt).slice(0, 24)}.png`;
   const storage = getStorage();

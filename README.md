@@ -22,6 +22,8 @@ W trybie demo: dane w `.data/db.json`, TTS generuje dźwięk zastępczy (tekst c
 
 Konfiguracja usług: [`docs/SETUP.md`](docs/SETUP.md) · zmienne: [`.env.example`](.env.example).
 
+**Panel admina:** lokalnie `/demo` → „Wejdź jako admin” (konto `admin.demo@elofik.com`, bez hasła). Na produkcji: dodaj swój e-mail do `ADMIN_EMAILS` i zaloguj się linkiem na `/logowanie`. Klucze ElevenLabs/OpenAI, Voice ID i budżet AI wpiszesz w **Admin → Ustawienia i klucze API** (`/admin/ustawienia`) — są szyfrowane i nigdy nie wracają do przeglądarki.
+
 ## Najważniejsze mechanizmy
 
 | Mechanizm | Gdzie |

@@ -2,6 +2,10 @@ import { businessMetrics } from "@/lib/services/metrics";
 import { getDb } from "@/lib/db";
 import { formatPln } from "@/lib/domain/pricing";
 import { Funnel, pct, Stat } from "@/components/admin/Stat";
+import Link from "next/link";
+import { KeyRound } from "lucide-react";
+import { config, hasElevenLabs, hasOpenAI } from "@/lib/config";
+import { buttonVariants } from "@/components/ui/button";
 
 export default async function AdminDashboard() {
   const m = await businessMetrics();
@@ -11,6 +15,18 @@ export default async function AdminDashboard() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-semibold">Dashboard biznesowy</h1>
+      {(!hasElevenLabs() || !hasOpenAI() || config.budget.monthlyUsd <= 0) && (
+        <div className="flex flex-wrap items-center gap-4 rounded-2xl border-2 border-gold bg-gold/15 p-4" data-testid="api-keys-prompt">
+          <KeyRound className="h-8 w-8 flex-none text-gold-deep" />
+          <div className="flex-1">
+            <p className="font-display text-lg font-semibold text-navy">Podaj klucze API, aby Elofik zaczął mówić prawdziwym głosem</p>
+            <p className="text-sm text-muted">
+              Brakuje: {[!config.elevenlabs.apiKey && "klucza ElevenLabs", !config.elevenlabs.voiceId && "Voice ID głosu Elofika", !hasOpenAI() && "klucza OpenAI", config.budget.monthlyUsd <= 0 && "miesięcznego budżetu AI"].filter(Boolean).join(", ")}. Do tego czasu głos, rozpoznawanie mowy i generator działają w trybie zastępczym.
+            </p>
+          </div>
+          <Link href="/admin/ustawienia" className={buttonVariants({ size: "md" })}>Uzupełnij klucze API</Link>
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
         <Stat label="Konta" value={m.accounts} />
         <Stat label="Rodziny" value={m.families} />

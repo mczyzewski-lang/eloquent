@@ -9,6 +9,7 @@ import { config, hasOpenAI } from "@/lib/config";
 import type { StoryVersion } from "@/lib/domain/story";
 import { validateStory } from "@/lib/domain/story";
 import { assertBudget, recordCost } from "@/lib/services/costs";
+import { ensureRuntimeSettings } from "@/lib/settings/runtime";
 
 export const generationRequestSchema = z.object({
   dayNumber: z.number().int().min(1).max(365),
@@ -113,6 +114,7 @@ function mockOutput(req: z.infer<typeof generationRequestSchema>): z.infer<typeo
 
 export async function generateStoryDraft(raw: unknown): Promise<GeneratedDraft> {
   const req = generationRequestSchema.parse(raw);
+  await ensureRuntimeSettings();
   if (!hasOpenAI()) {
     const story = toStory(req, mockOutput(req));
     return { story, issues: validateStory(story), provider: "mock" };

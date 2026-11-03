@@ -12,6 +12,7 @@ import { estimateTtsUsd, type CostPurpose } from "@/lib/domain/budget";
 import { buildRenderPlan, type PlannedSegment, type RenderPlan, type StoryVersion } from "@/lib/domain/story";
 import type { TemplateContext } from "@/lib/domain/templates";
 import { assertBudget, recordCost } from "./costs";
+import { ensureRuntimeSettings } from "@/lib/settings/runtime";
 
 const inflight = new Map<string, Promise<unknown>>();
 
@@ -34,6 +35,7 @@ export interface SegmentContext {
 }
 
 export async function ensureSegmentAudio(text: string, cacheKey: string, ctx: SegmentContext): Promise<AudioCacheRow> {
+  await ensureRuntimeSettings();
   const db = getDb();
   const hit = await db.findOne("audio_cache", { cache_key: cacheKey });
   if (hit) {
@@ -147,6 +149,7 @@ export async function assemblePlan(plan: RenderPlan, opts: { familyId?: string |
 
 /** Renderuje bajkę dla rodziny (lub wersję bez personalizacji, gdy ctx = null). */
 export async function renderStoryForFamily(story: StoryVersion, ctx: TemplateContext | null, familyId: string | null): Promise<AssemblyResult> {
+  await ensureRuntimeSettings();
   const plan = buildRenderPlan(story, ctx, currentVoiceProfile());
   const res = await assemblePlan(plan, { familyId, language: story.locale });
   if (familyId) {
@@ -157,6 +160,7 @@ export async function renderStoryForFamily(story: StoryVersion, ctx: TemplateCon
 
 /** Generuje wyłącznie wspólne segmenty (CORE/EDUCATIONAL/fallback) — uruchamiane raz przy publikacji. */
 export async function generateCore(story: StoryVersion) {
+  await ensureRuntimeSettings();
   const plan = buildRenderPlan(story, null, currentVoiceProfile());
   let generated = 0;
   for (const seg of plan.segments.filter((s) => s.shared)) {

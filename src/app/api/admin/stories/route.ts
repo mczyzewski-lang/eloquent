@@ -10,6 +10,7 @@ import { addressForm, getNameForms } from "@/lib/domain/names";
 import { currentVoiceProfile } from "@/lib/audio/tts";
 import { assemblePlan, generateCore, signedAudioUrl } from "@/lib/services/audio-pipeline";
 import { getStoryVersion } from "@/lib/services/stories";
+import { ensureRuntimeSettings } from "@/lib/settings/runtime";
 
 const segment = z.object({
   id: z.string().regex(/^[a-z0-9-]{2,30}$/),
@@ -63,6 +64,7 @@ export async function POST(req: Request) {
     const user = await getSessionUser();
     if (!user?.isAdmin) return error("Brak uprawnień", 403);
     const b = body.parse(await readJson(req, 200_000));
+    await ensureRuntimeSettings();
     const db = getDb();
 
     switch (b.action) {

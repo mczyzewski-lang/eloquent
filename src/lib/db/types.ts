@@ -259,6 +259,9 @@ export interface NotificationPreferencesRow {
 
 export interface AdminAuditLogRow { id: string; actor_user_id: string; action: string; target: string | null; meta: Record<string, unknown>; created_at: string }
 
+/** Ustawienia z panelu admina. Sekrety zaszyfrowane (AES-256-GCM), nigdy nie wracają do przeglądarki. */
+export interface AppSettingRow { id: string; key: string; value_encrypted: string; updated_by: string | null; updated_at: string }
+
 export interface RateLimitRow { id: string; key: string; window_start: string; count: number }
 
 export interface Tables {
@@ -291,6 +294,7 @@ export interface Tables {
   notification_preferences: NotificationPreferencesRow;
   admin_audit_logs: AdminAuditLogRow;
   rate_limits: RateLimitRow;
+  app_settings: AppSettingRow;
 }
 
 export type TableName = keyof Tables;
