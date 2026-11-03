@@ -25,6 +25,7 @@ export function IllustrationStudio({
   references: initialRefs,
   illustrations: initialIll,
   mascotPoses,
+  landingScenes,
   testScenes,
   costs,
   openaiReady,
@@ -32,6 +33,7 @@ export function IllustrationStudio({
   references: ReferenceView[];
   illustrations: IllustrationView[];
   mascotPoses: { slot: string; label: string; scene: SceneSpec }[];
+  landingScenes: { slot: string; label: string; where: string; type: ImageType; scene: SceneSpec }[];
   testScenes: { id: string; title: string; type: ImageType; scene: SceneSpec }[];
   costs: Record<Quality, number>;
   openaiReady: boolean;
@@ -195,6 +197,36 @@ export function IllustrationStudio({
                 {cur && <Badge tone={cur.status === "approved" ? "sage" : cur.status === "pending" ? "gold" : "muted"}>{cur.status}</Badge>}
                 <button type="button" disabled={!!busy || !master || !openaiReady} className="mt-1 block w-full text-muted underline disabled:opacity-40" onClick={() => run(`m-${p.slot}`, async () => { await generate("__mascot__", "CHARACTER_ONLY", p.scene, p.slot, Boolean(cur)); })}>
                   {busy === `m-${p.slot}` ? "generuję…" : cur ? "nowa wersja" : "generuj"}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* 3b. Grafiki strony */}
+      <section className="space-y-3 rounded-2xl border border-navy/10 bg-white p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-xl font-semibold">Grafiki strony głównej (sceny z Elofikiem)</h2>
+          <Button size="sm" disabled={!!busy || !master || !openaiReady} onClick={() => batch("landing", landingScenes.map((t) => ({ storyId: "__landing__", type: t.type, scene: t.scene, slot: t.slot })))} data-testid="gen-landing">
+            {busy === "landing" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />} Wygeneruj wszystkie ({landingScenes.length})
+          </Button>
+        </div>
+        <p className="text-sm text-muted">Generowane z zatwierdzoną referencją i stałym opisem postaci. Po akceptacji (sekcja „Do akceptacji”) pojawiają się na stronie w ciągu kilku minut; do tego czasu strona pokazuje wersję wektorową.</p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          {landingScenes.map((t) => {
+            const cur = latest.get(`__landing__|${t.type}|${t.slot}`);
+            return (
+              <div key={t.slot} className="rounded-xl border border-navy/10 p-2 text-xs">
+                <div className="flex aspect-[3/2] items-center justify-center overflow-hidden rounded-lg bg-cream">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  {cur?.url ? <img src={cur.url} alt={t.label} className="h-full w-full object-cover" /> : <ImageIcon className="h-6 w-6 text-muted" />}
+                </div>
+                <p className="mt-1 font-semibold">{t.label}</p>
+                <p className="text-muted">{t.where}</p>
+                {cur && <Badge tone={cur.status === "approved" ? "sage" : cur.status === "pending" ? "gold" : "muted"}>{cur.status}</Badge>}
+                <button type="button" disabled={!!busy || !master || !openaiReady} className="mt-1 block text-muted underline disabled:opacity-40" onClick={() => run(`l-${t.slot}`, async () => { await generate("__landing__", t.type, t.scene, t.slot, Boolean(cur)); })}>
+                  {busy === `l-${t.slot}` ? "generuję…" : cur ? "nowa wersja" : "generuj"}
                 </button>
               </div>
             );

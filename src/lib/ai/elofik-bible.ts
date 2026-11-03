@@ -148,6 +148,48 @@ export const MASCOT_POSES: Record<"idle" | "waving" | "happy" | "listening" | "t
 
 export type MascotPose = keyof typeof MASCOT_POSES;
 
+/**
+ * Grafiki strony głównej i strony dla dziadków (Admin → Ilustracje → Grafiki strony).
+ * Zatwierdzone zastępują wektorowe ilustracje; do czasu akceptacji strona pokazuje wersję wektorową.
+ */
+export const LANDING_SCENES: { slot: "hero" | "ritual" | "words" | "family" | "goodnight"; label: string; where: string; type: ImageType; scene: SceneSpec }[] = [
+  {
+    slot: "hero",
+    label: "Hero — zaproszenie do opowieści",
+    where: "Strona główna, pierwszy ekran",
+    type: "INTERIOR",
+    scene: { location: "The edge of an enchanted forest on a soft grassy hill at dusk, ancient friendly trees with glowing lanterns hanging from branches, a winding path leading into the woods, distant rolling hills.", action: "Elofik sits on a mossy stone holding his open navy-and-gold storybook, from which warm golden light and tiny sparkles rise; he looks toward the viewer with a welcoming smile, as if inviting the child into the story.", mood: "Magical, cozy, inviting, full of wonder.", timeAndLighting: "Blue-hour twilight sky with the first stars and a gentle crescent moon; warm golden glow from the book and lanterns.", supportingCharacters: "A tiny curious firefly or two; no other characters.", props: "Open storybook with abstract golden swirls only (no readable text), satchel, fireflies.", composition: "Wide cinematic composition, Elofik in the right third, calm darker sky in the upper left, whole silhouette and face clearly readable." },
+  },
+  {
+    slot: "ritual",
+    label: "Rytuał „Hej Elofik!” — nasłuchuje",
+    where: "Strona główna, sekcja rytuału (nocne tło)",
+    type: "INTERIOR",
+    scene: { location: "A cozy child's bedroom at night seen from a soft rug, a round window with a starry sky and a big gentle moon, a small bookshelf, a moon-shaped night lamp.", action: "Elofik tilts his head and cups one hand behind his big pointed ear, listening attentively with a delighted, expectant smile, as if he just heard someone call his name.", mood: "Warm anticipation, intimate, safe.", timeAndLighting: "Deep navy night with cool moonlight from the window and a warm golden lamp glow.", supportingCharacters: "None; a plush toy on the bed at most.", props: "Satchel with a soft golden glow, storybook resting nearby.", composition: "Medium full-body shot, Elofik centered-left, window with moon on the right." },
+  },
+  {
+    slot: "words",
+    label: "Słowo dnia — torba na słowa",
+    where: "Strona główna, sekcja „Jak uczymy nowych słów”",
+    type: "INTERIOR",
+    scene: { location: "A magical meadow of tall flowers at golden hour with floating dandelion seeds.", action: "Elofik gently opens his satchel and a single glowing golden orb of light (a 'new word') floats out; he watches it with gentle wonder.", mood: "Curiosity, gentle discovery.", timeAndLighting: "Warm golden hour sunlight, soft bokeh.", supportingCharacters: "A small butterfly.", props: "Satchel, one glowing orb of light, NO letters or text anywhere.", composition: "Medium shot, Elofik and the glowing orb as the clear focal point." },
+  },
+  {
+    slot: "family",
+    label: "Rodzina i dziadkowie słuchają bajki",
+    where: "Strona dla dziadków i sekcja „Dla rodziców i dziadków”",
+    type: "INTERIOR",
+    scene: { location: "A warm, cozy living room in the evening with a big soft armchair, a knitted blanket, a bookshelf and a window with a starry sky.", action: "Elofik stands on the armrest telling a story with an expressive smile and one hand gesturing, while a stylized grandmother and grandfather sit together on the sofa with a small child between them, all listening happily.", mood: "Closeness, warmth, family joy.", timeAndLighting: "Warm golden lamp light with a cool blue window.", supportingCharacters: "A stylized kind grandmother with silver hair and round glasses, a smiling grandfather with grey hair, and a small stylized child seen mostly from the side; all in the same storybook style, not realistic portraits.", props: "Storybook, knitted blanket, cups of tea.", composition: "Wide shot, Elofik clearly the hero on the left, family on the right." },
+  },
+  {
+    slot: "goodnight",
+    label: "Na dobranoc — Elofik macha z leśnej ścieżki",
+    where: "Strona główna, końcowe wezwanie do działania",
+    type: "INTERIOR",
+    scene: { location: "A moonlit forest path with glowing mushrooms, fireflies and a small wooden signpost without any text, a starry sky above the treetops.", action: "Elofik waves goodbye with one raised hand (waving with the hand, the arm stays relaxed), holding his storybook under the other arm, smiling warmly.", mood: "Gentle, calm, promise of tomorrow's adventure.", timeAndLighting: "Calm night, soft silver moonlight with warm golden firefly glow.", supportingCharacters: "Fireflies only.", props: "Storybook, satchel, blank signpost.", composition: "Wide composition, Elofik centered in the lower half, plenty of calm sky above." },
+  },
+];
+
 /** Dziesięć scen testowych spójności (sekcja 5 specyfikacji). */
 export const TEST_SCENES: { id: string; title: string; type: ImageType; scene: SceneSpec }[] = [
   { id: "01", title: "Ciepły dom / powitanie", type: "COVER", scene: { location: "A cozy magical home reading nook with warm windows, wooden shelves, soft cushions, plants, and a welcoming lamp.", action: "Elofik holds an open navy-and-gold storybook and waves hello to the viewer.", mood: "Joyful, welcoming, reassuring.", timeAndLighting: "Gentle golden afternoon light.", supportingCharacters: "None.", props: "A few books and subtle golden sparkles.", composition: "Medium full-body shot; the face and hands are clear." } },

@@ -2,7 +2,7 @@ import { hasOpenAI } from "@/lib/config";
 import { getDb } from "@/lib/db";
 import { ensureProposedReference, IMAGE_COST_USD, listIllustrations } from "@/lib/services/illustrations";
 import { illustrationView, referenceView } from "@/lib/services/illustration-views";
-import { MASCOT_POSES, TEST_SCENES, PROMPT_VERSION } from "@/lib/ai/elofik-bible";
+import { LANDING_SCENES, MASCOT_POSES, TEST_SCENES, PROMPT_VERSION } from "@/lib/ai/elofik-bible";
 import { ensureRuntimeSettings } from "@/lib/settings/runtime";
 import { IllustrationStudio } from "@/components/admin/IllustrationStudio";
 import type { IllustrationView } from "@/components/admin/IllustrationCard";
@@ -25,6 +25,7 @@ export default async function AdminIllustrationsPage() {
         illustrations={(await Promise.all(ills.map(illustrationView))) as IllustrationView[]}
         mascotPoses={Object.entries(MASCOT_POSES).map(([slot, p]) => ({ slot, label: p.label, scene: p.scene }))}
         testScenes={TEST_SCENES}
+        landingScenes={LANDING_SCENES}
         costs={IMAGE_COST_USD}
         openaiReady={hasOpenAI()}
       />

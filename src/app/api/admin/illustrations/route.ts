@@ -4,7 +4,7 @@ import { error, adminHandleError, handleError, json, readJson, sameOrigin } from
 import { getSessionUser } from "@/lib/auth/session";
 import { auditLog } from "@/lib/auth/guards";
 import {
-  approveReference, ensureProposedReference, generateIllustrationAsset, IllustrationError, IMAGE_COST_USD, listIllustrations, MASCOT_STORY_ID,
+  approveReference, ensureProposedReference, generateIllustrationAsset, IllustrationError, IMAGE_COST_USD, LANDING_STORY_ID, listIllustrations, MASCOT_STORY_ID,
   retireReference, reviewIllustration, uploadReference,
 } from "@/lib/services/illustrations";
 import { getDb } from "@/lib/db";
@@ -27,7 +27,7 @@ const body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("retire_reference"), id: z.string().uuid() }),
   z.object({
     action: z.literal("generate"),
-    storyId: z.string().regex(/^(__mascot__|__test__|[a-z0-9-]{3,80})$/),
+    storyId: z.string().regex(/^(__mascot__|__test__|__landing__|[a-z0-9-]{3,80})$/),
     imageType: z.enum(["COVER", "INTERIOR", "CHARACTER_ONLY"]),
     slot: z.string().regex(/^[a-z0-9_-]{1,30}$/).nullable().optional(),
     scene,
@@ -88,6 +88,7 @@ export async function POST(req: Request) {
         const row = await reviewIllustration(b.id, b.decision, user.email);
         await auditLog(user, `illustration.${b.decision}`, b.id, { storyId: row.story_id, type: row.image_type });
         if (row.story_id === MASCOT_STORY_ID) revalidateTag("mascots", "max");
+        if (row.story_id === LANDING_STORY_ID) revalidateTag("landing", "max");
         revalidatePath("/", "layout");
         return json({ illustration: await illustrationView(row) });
       }

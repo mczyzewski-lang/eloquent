@@ -207,7 +207,7 @@ export function SampleExperience({ variant = "parents" }: { variant?: "parents" 
       </AnimatePresence>
 
       {phase === "idle" && (
-        <p className="mt-4 flex items-center justify-center gap-1.5 text-sm text-muted">
+        <p className="mt-4 flex items-center justify-center gap-1.5 text-sm text-cream/75">
           <Play className="h-4 w-4" /> Elofik wypowie imię dziecka w bajce
         </p>
       )}

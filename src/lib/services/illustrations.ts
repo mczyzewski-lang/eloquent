@@ -21,6 +21,7 @@ import { getStoryVersion } from "./stories";
 
 export const MASCOT_STORY_ID = "__mascot__";
 export const TEST_STORY_ID = "__test__";
+export const LANDING_STORY_ID = "__landing__";
 /** Szacunkowy koszt jednej ilustracji wg jakości (USD) — do kontroli budżetu i potwierdzeń w panelu. */
 export const IMAGE_COST_USD: Record<"low" | "medium" | "high", number> = { low: 0.03, medium: 0.08, high: 0.25 };
 
@@ -222,6 +223,14 @@ export async function mascotMapUncached(): Promise<Record<string, string>> {
   const rows = await getDb().find("illustrations", { story_id: MASCOT_STORY_ID, status: "approved" }, { orderBy: { column: "reviewed_at", ascending: true } });
   const out: Record<string, string> = {};
   for (const r of rows) if (r.slot) out[r.slot] = publicIllustrationUrl(r); // późniejsza akceptacja nadpisuje
+  return out;
+}
+
+/** Zatwierdzone grafiki strony (landing): slot → URL. */
+export async function landingArtUncached(): Promise<Record<string, string>> {
+  const rows = await getDb().find("illustrations", { story_id: LANDING_STORY_ID, status: "approved" }, { orderBy: { column: "reviewed_at", ascending: true } });
+  const out: Record<string, string> = {};
+  for (const r of rows) if (r.slot) out[r.slot] = publicIllustrationUrl(r);
   return out;
 }
 

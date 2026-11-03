@@ -248,3 +248,48 @@
 .admin-ui th { font-weight: 500; color: #787774; text-align: left; }
 .admin-ui th, .admin-ui td { border-bottom: 1px solid var(--admin-border); }
 .admin-ui code, .admin-ui kbd { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85em; background: rgb(135 131 120 / 0.15); color: #eb5757; border-radius: 3px; padding: 0.1em 0.35em; }
+
+/* ==========================================================================
+   Bajkowe dekoracje strony (landing): gwiazdy, świetliki, ramki z książki
+   ========================================================================== */
+.sky-twilight {
+  background:
+    radial-gradient(1100px 520px at 78% 108%, rgb(246 199 109 / 0.38) 0%, transparent 60%),
+    radial-gradient(900px 600px at 10% 0%, #3c4f86 0%, transparent 60%),
+    linear-gradient(180deg, #1c2747 0%, #2c3b6a 45%, #5a5a8c 78%, #b9879a 100%);
+}
+.sky-night {
+  background: radial-gradient(900px 500px at 70% 0%, #3c4f86 0%, transparent 60%), linear-gradient(180deg, #1b2540 0%, #26344a 60%, #2a3a5e 100%);
+}
+.star-twinkle { animation: twinkle 3.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.firefly {
+  position: absolute; width: 6px; height: 6px; border-radius: 999px;
+  background: #ffe9a3; box-shadow: 0 0 10px 3px rgb(255 214 110 / 0.7), 0 0 24px 8px rgb(255 214 110 / 0.25);
+  animation: firefly 9s ease-in-out infinite;
+}
+@keyframes firefly {
+  0%, 100% { transform: translate(0, 0); opacity: 0; }
+  15% { opacity: 1; }
+  50% { transform: translate(24px, -36px); opacity: 0.8; }
+  85% { opacity: 0.9; }
+}
+.story-frame {
+  box-shadow: 0 0 0 3px #fff9f0, 0 0 0 5px rgb(233 172 60 / 0.75), 0 24px 60px -18px rgb(28 39 71 / 0.55);
+}
+.storybook-card {
+  position: relative;
+  background: linear-gradient(180deg, #fffdf8 0%, #fff6e8 100%);
+  border-radius: var(--radius-2xl);
+  box-shadow: 0 14px 34px -16px rgb(38 52 74 / 0.28), inset 0 0 0 1px rgb(233 172 60 / 0.18);
+}
+.storybook-card::after {
+  content: ""; position: absolute; inset: 8px; border-radius: calc(var(--radius-2xl) - 6px);
+  border: 1.5px dashed rgb(233 172 60 / 0.35); pointer-events: none;
+}
+.paper-grain {
+  background-image:
+    radial-gradient(800px 380px at 0% 0%, rgb(248 221 208 / 0.55) 0%, transparent 60%),
+    radial-gradient(700px 380px at 100% 30%, rgb(157 184 154 / 0.22) 0%, transparent 60%),
+    radial-gradient(700px 420px at 30% 100%, rgb(246 199 109 / 0.18) 0%, transparent 60%);
+}
+.text-glow { text-shadow: 0 2px 24px rgb(246 199 109 / 0.35); }

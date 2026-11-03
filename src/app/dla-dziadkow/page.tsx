@@ -7,6 +7,8 @@ import { Card, SectionTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { PageView } from "@/components/site/PageView";
 import { cn } from "@/lib/utils";
+import { getLandingArt } from "@/lib/services/mascots";
+import { StoryFrame } from "@/components/landing/Magic";
 
 export const metadata = {
   title: "Prezent od babci i dziadka",
@@ -16,6 +18,7 @@ export const metadata = {
 
 export default async function GrandparentsPage({ searchParams }: { searchParams: Promise<{ anulowano?: string }> }) {
   const sp = await searchParams;
+  const art = await getLandingArt().catch(() => ({}) as Record<string, string>);
   return (
     <div className="paper">
       <PageView event="grandparents_landing_viewed" />
@@ -33,7 +36,7 @@ export default async function GrandparentsPage({ searchParams }: { searchParams:
           </div>
           {sp.anulowano && <p className="mt-4 rounded-2xl bg-peach p-3 text-sm">Płatność została przerwana — nic nie pobraliśmy.</p>}
         </div>
-        <GrandparentsIllustration />
+        {art.family ? <StoryFrame src={art.family} alt="Elofik opowiada bajkę babci, dziadkowi i wnukowi" className="aspect-[3/2] w-full" /> : <GrandparentsIllustration />}
       </section>
 
       <section className="container-page py-12">
