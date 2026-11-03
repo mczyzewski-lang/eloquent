@@ -39,7 +39,7 @@ function ConfigHelp() {
       <p>Logowanie hasłem nie jest jeszcze skonfigurowane na serwerze. Stan zmiennych środowiskowych:</p>
       <ul className="space-y-1">
         {row(st.emails, "ADMIN_EMAILS", "brak (np. admin@elofik.com)")}
-        {row(st.hash && st.hashFormatOk, "ADMIN_PASSWORD_HASH", st.hash ? "nieprawidłowy format — wklej całą wartość zaczynającą się od scrypt:" : "brak")}
+        {row((st.hash && st.hashFormatOk) || st.plain, "ADMIN_PASSWORD_HASH lub ADMIN_PASSWORD", st.hash ? "nieprawidłowy format skrótu — wklej całą wartość zaczynającą się od scrypt:" : "brak (najprościej: ADMIN_PASSWORD=Twoje hasło, min. 12 znaków)")}
         {row(st.sessionSecret, "SESSION_SECRET", "brak lub krótszy niż 32 znaki")}
       </ul>
       <p>

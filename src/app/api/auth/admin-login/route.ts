@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { error, handleError, json, readJson, sameOrigin } from "@/lib/api";
-import { adminPasswordConfigured, adminUserId, verifyAdminCredentials } from "@/lib/auth/admin-password";
+import { adminConfigFingerprint, adminPasswordConfigured, adminUserId, checkAdminCredentials } from "@/lib/auth/admin-password";
 import { adminSignIn } from "@/lib/auth/session";
 import { auditLog } from "@/lib/auth/guards";
 import { clientIp, hit, isLimited } from "@/lib/services/rate-limit";
@@ -16,8 +16,11 @@ export async function POST(req: Request) {
     // liczymy wyłącznie NIEUDANE próby: 5 / 15 min na IP, 10 / godz. na konto
     const [ipBlocked, acctBlocked] = await Promise.all([isLimited("admin-fail-ip", ip, 5, 900), isLimited("admin-fail-acct", normalized, 10, 3600)]);
     if (ipBlocked || acctBlocked) return error("Za dużo nieudanych prób logowania. Spróbuj za 15 minut.", 429);
-    if (!verifyAdminCredentials(normalized, password)) {
+    const check = checkAdminCredentials(normalized, password);
+    if (!check.ok) {
       await Promise.all([hit("admin-fail-ip", ip, 900), hit("admin-fail-acct", normalized, 3600)]);
+      // przyczyna tylko w logach serwera (Railway → Deployments → Logs), nigdy w odpowiedzi dla przeglądarki
+      console.warn("[admin-login] odmowa:", check.reason, JSON.stringify({ ...adminConfigFingerprint(), passwordLength: password.length }));
       return error("Nieprawidłowy e-mail lub hasło.", 401);
     }
     await adminSignIn(normalized);

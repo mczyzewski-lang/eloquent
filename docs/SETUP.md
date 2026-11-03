@@ -14,7 +14,8 @@ Klucze **ElevenLabs** i **OpenAI**, **Voice ID** głosu Elofika oraz **miesięcz
 
 Dostęp do panelu:
 
-- **Hasło (zalecane):** `ADMIN_EMAILS=admin@elofik.com` i `ADMIN_PASSWORD_HASH=…` (wygeneruj: `node scripts/hash-password.mjs` — losowe hasło, albo `node scripts/hash-password.mjs "własne hasło"`), logowanie na **`/logowanie/admin`**. Sesja 12 h (cookie HttpOnly, SameSite=Strict), limit 5 prób / 15 min na IP, log audytu. Zmiana hasła = nowy skrót w zmiennej + restart.
+- **Hasło najprościej:** `ADMIN_EMAILS=admin@elofik.com` i `ADMIN_PASSWORD=<hasło, min. 12 znaków>` (hasło przechowywane tylko w zmiennych Railway).
+- **Hasło jako skrót (bezpieczniej):** `ADMIN_EMAILS=admin@elofik.com` i `ADMIN_PASSWORD_HASH=…` (wygeneruj: `node scripts/hash-password.mjs` — losowe hasło, albo `node scripts/hash-password.mjs "własne hasło"`), logowanie na **`/logowanie/admin`**. Sesja 12 h (cookie HttpOnly, SameSite=Strict), limit 5 prób / 15 min na IP, log audytu. Zmiana hasła = nowa wartość zmiennej + Deploy. Przy nieudanym logowaniu przyczyna (`email_not_admin` / `wrong_password`) i odcisk konfiguracji (bez hasła) trafiają do logów serwera.
 - **Magic link (Supabase):** e-mail z `ADMIN_EMAILS` + `/logowanie`.
 - **Lokalne demo:** `/demo` → „Wejdź jako admin” — działa tylko, gdy `ADMIN_PASSWORD_HASH` nie jest ustawiony i `APP_ENV` ≠ `production`. Po ustawieniu hasła wejście demo i logowanie demo e-mailem admina są blokowane.
 

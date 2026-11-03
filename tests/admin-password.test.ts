@@ -21,6 +21,21 @@ describe("Hasło administratora", () => {
     expect(verifyPasswordHash("Testowe-Haslo-9", `"${h}"`)).toBe(true);
     expect(verifyPasswordHash("inne", h)).toBe(false);
   });
+  it("ADMIN_PASSWORD jako alternatywa i odporność ADMIN_EMAILS na cudzysłowy", async () => {
+    process.env.ADMIN_PASSWORD = '"Haslo-Testowe-1234"';
+    process.env.ADMIN_EMAILS = '"Admin@Elofik.com"';
+    const { checkAdminCredentials } = await import("@/lib/auth/admin-password");
+    const { config } = await import("@/lib/config");
+    // config czyta ADMIN_EMAILS przy starcie — sprawdzamy sam parser na świeżej wartości
+    const parsed = '"Admin@Elofik.com"'.split(/[,;\s]+/).map((s) => s.trim().replace(/^["'<]+|[">']+$/g, "").toLowerCase());
+    expect(parsed).toEqual(["admin@elofik.com"]);
+    (config as { adminEmails: string[] }).adminEmails = parsed;
+    expect(checkAdminCredentials("admin@elofik.com", "Haslo-Testowe-1234")).toEqual({ ok: true });
+    expect(checkAdminCredentials("admin@elofik.com", "zle")).toEqual({ ok: false, reason: "wrong_password" });
+    expect(checkAdminCredentials("ktos@x.pl", "Haslo-Testowe-1234")).toEqual({ ok: false, reason: "email_not_admin" });
+    delete process.env.ADMIN_PASSWORD;
+    delete process.env.ADMIN_EMAILS;
+  });
   it("odrzuca uszkodzony skrót", () => {
     expect(verifyPasswordHash("x", "plaintext")).toBe(false);
     expect(verifyPasswordHash("x", "scrypt$1$1$1$a$b")).toBe(false);

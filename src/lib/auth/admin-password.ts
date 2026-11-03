@@ -18,20 +18,38 @@ function storedHash(): string {
   return (process.env.ADMIN_PASSWORD_HASH ?? "").trim().replace(/^["']|["']$/g, "");
 }
 
+/** Alternatywa dla skrótu: hasło wprost w zmiennej ADMIN_PASSWORD (min. 12 znaków), przechowywane tylko w Railway. */
+function plainPassword(): string {
+  return (process.env.ADMIN_PASSWORD ?? "").trim().replace(/^["']|["']$/g, "");
+}
+
 /** Diagnostyka bez ujawniania wartości: czego brakuje w konfiguracji. */
 export function adminConfigStatus() {
   const hash = storedHash();
+  const plain = plainPassword();
   return {
     emails: config.adminEmails.length > 0,
     hash: Boolean(hash),
     hashFormatOk: HASH_RE.test(hash),
+    plain: plain.length >= 12,
     sessionSecret: (process.env.SESSION_SECRET ?? "").length >= 32,
   };
 }
 
 export function adminPasswordConfigured(): boolean {
   const st = adminConfigStatus();
-  return st.emails && st.hash && st.hashFormatOk;
+  return st.emails && ((st.hash && st.hashFormatOk) || st.plain);
+}
+
+/** Odcisk konfiguracji do logów serwera (nie ujawnia hasła): pozwala porównać, czy wklejony skrót jest kompletny. */
+export function adminConfigFingerprint() {
+  const parts = storedHash().split(/[:$]/);
+  return {
+    emails: config.adminEmails,
+    hashSaltPrefix: parts[4]?.slice(0, 6) ?? null,
+    hashLength: parts[5]?.length ?? 0, // poprawny skrót ma 43 znaki
+    plainPasswordSet: plainPassword().length >= 12,
+  };
 }
 
 export function verifyPasswordHash(password: string, stored: string): boolean {
@@ -47,12 +65,29 @@ export function verifyPasswordHash(password: string, stored: string): boolean {
   }
 }
 
-export function verifyAdminCredentials(email: string, password: string): boolean {
+export type AdminLoginCheck = { ok: true } | { ok: false; reason: "email_not_admin" | "wrong_password" };
+
+function plainMatches(password: string): boolean {
+  const plain = plainPassword();
+  if (plain.length < 12) return false;
+  const a = createHash("sha256").update(password).digest();
+  const b = createHash("sha256").update(plain).digest();
+  return timingSafeEqual(a, b);
+}
+
+export function checkAdminCredentials(email: string, password: string): AdminLoginCheck {
   const stored = storedHash();
   const emailOk = config.adminEmails.includes(email.trim().toLowerCase());
   // weryfikujemy hasło zawsze (stały czas odpowiedzi niezależnie od poprawności e-maila)
-  const passOk = stored ? verifyPasswordHash(password, stored) : false;
-  return emailOk && passOk;
+  const hashOk = stored ? verifyPasswordHash(password, stored) : false;
+  const passOk = hashOk || plainMatches(password);
+  if (!emailOk) return { ok: false, reason: "email_not_admin" };
+  if (!passOk) return { ok: false, reason: "wrong_password" };
+  return { ok: true };
+}
+
+export function verifyAdminCredentials(email: string, password: string): boolean {
+  return checkAdminCredentials(email, password).ok;
 }
 
 /** Stabilny identyfikator konta admina (UUID v5-podobny z e-maila) — bez wiersza w auth.users. */

@@ -55,7 +55,7 @@ async function adminFromCookie(): Promise<SessionUser | null> {
   const [email, exp] = value.split("|");
   if (!email || Number(exp) < Date.now() / 1000) return null;
   // e-mail musi wciąż być na liście ADMIN_EMAILS (usunięcie z listy = natychmiastowe odebranie dostępu)
-  if (!config.adminEmails.includes(email) || !process.env.ADMIN_PASSWORD_HASH) return null;
+  if (!config.adminEmails.includes(email) || !adminPasswordConfigured()) return null;
   return { id: adminUserId(email), email, isAdmin: true };
 }
 

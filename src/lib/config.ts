@@ -85,7 +85,8 @@ export const config = {
   },
   unlockHour: num(process.env.UNLOCK_HOUR, 6),
   defaultTimezone: process.env.DEFAULT_TIMEZONE ?? "Europe/Warsaw",
-  adminEmails: (process.env.ADMIN_EMAILS ?? "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean),
+  // odporne na wklejone cudzysłowy, spacje i średniki: "admin@elofik.com" → admin@elofik.com
+  adminEmails: (process.env.ADMIN_EMAILS ?? "").split(/[,;\s]+/).map((s) => s.trim().replace(/^["'<]+|[">']+$/g, "").toLowerCase()).filter(Boolean),
   forceDemo: bool(process.env.ELOFIK_DEMO_MODE),
 };
 
