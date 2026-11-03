@@ -10,13 +10,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start -p ${PORT:-3000}",
-    "worker": "tsx worker/index.ts",
+    "worker": "tsx --conditions=react-server worker/index.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "seed:demo": "tsx scripts/seed-demo.ts"
+    "seed:demo": "tsx --conditions=react-server scripts/seed-demo.ts",
+    "assets": "node scripts/generate-assets.mjs"
   },
   "dependencies": {
     "@elevenlabs/client": "^1.33.0",

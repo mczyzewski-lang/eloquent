@@ -1,0 +1,134 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   Elofik — design system
+   Kremowe tło, ciepły granat, złoto, brzoskwinia, szałwia. Miękko, czytelnie, premium.
+   ========================================================================== */
+
+@theme {
+  --color-cream: #fff9f0;
+  --color-cream-deep: #fbefdc;
+  --color-navy: #26344a;
+  --color-navy-soft: #3a4b66;
+  --color-ink: #1d2738;
+  --color-gold: #f6c76d;
+  --color-gold-deep: #e9ac3c;
+  --color-peach: #f8ddd0;
+  --color-peach-deep: #f1c2ac;
+  --color-sage: #9db89a;
+  --color-sage-deep: #6f9270;
+  --color-teal: #6fb7b0;
+  --color-skin: #f3cba8;
+  --color-hair: #b9784a;
+  --color-muted: #6b7486;
+
+  --font-sans: var(--font-nunito), ui-rounded, system-ui, sans-serif;
+  --font-display: var(--font-fredoka), var(--font-nunito), ui-rounded, system-ui, sans-serif;
+
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.75rem;
+  --radius-3xl: 2.25rem;
+
+  --shadow-soft: 0 10px 30px -12px rgb(38 52 74 / 0.22);
+  --shadow-glow: 0 0 0 6px rgb(246 199 109 / 0.25), 0 12px 32px -10px rgb(233 172 60 / 0.55);
+
+  --animate-float: float 5s ease-in-out infinite;
+  --animate-twinkle: twinkle 2.4s ease-in-out infinite;
+  --animate-pulse-ring: pulse-ring 1.6s ease-out infinite;
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.25; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.1); }
+  }
+  @keyframes pulse-ring {
+    0% { transform: scale(0.9); opacity: 0.7; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+  body {
+    background: var(--color-cream);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+    color: var(--color-navy);
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-gold-deep);
+    outline-offset: 3px;
+    border-radius: 0.75rem;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  .paper {
+    background: radial-gradient(1200px 600px at 10% -10%, #fff4e2 0%, transparent 60%), radial-gradient(900px 500px at 110% 10%, #fde6da 0%, transparent 55%), var(--color-cream);
+  }
+  .night {
+    background: radial-gradient(900px 500px at 50% 0%, #3a4b66 0%, #26344a 55%, #1b2537 100%);
+  }
+  .card-soft {
+    background: white;
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-soft);
+    border: 1px solid rgb(38 52 74 / 0.06);
+  }
+  .container-page {
+    width: 100%;
+    max-width: 72rem;
+    margin-inline: auto;
+    padding-inline: 1.25rem;
+  }
+}
+
+/* Uszy Elofika — animacje sterowane klasą nastroju */
+.elofik-ear-l, .elofik-ear-r { transform-box: fill-box; transition: transform 0.4s cubic-bezier(.34,1.56,.64,1); }
+.elofik-ear-l { transform-origin: 100% 70%; }
+.elofik-ear-r { transform-origin: 0% 70%; }
+.elofik-blink { transform-box: fill-box; transform-origin: center; animation: blink 5.5s infinite; }
+@keyframes blink { 0%, 94%, 100% { transform: scaleY(1); } 96% { transform: scaleY(0.1); } }
+
+.mood-idle .elofik-ear-l { animation: ear-l-idle 6s ease-in-out infinite; }
+.mood-idle .elofik-ear-r { animation: ear-r-idle 6s ease-in-out infinite 0.3s; }
+@keyframes ear-l-idle { 0%, 80%, 100% { transform: rotate(0); } 85% { transform: rotate(-7deg); } 90% { transform: rotate(2deg); } }
+@keyframes ear-r-idle { 0%, 80%, 100% { transform: rotate(0); } 85% { transform: rotate(7deg); } 90% { transform: rotate(-2deg); } }
+
+.mood-listening .elofik-ear-l { transform: rotate(-14deg); animation: ear-listen-l 1.2s ease-in-out infinite; }
+.mood-listening .elofik-ear-r { transform: rotate(14deg); animation: ear-listen-r 1.2s ease-in-out infinite; }
+.mood-listening .elofik-head { transform-box: view-box; transform-origin: 120px 200px; transform: rotate(-6deg); transition: transform .5s; }
+@keyframes ear-listen-l { 0%, 100% { transform: rotate(-14deg); } 50% { transform: rotate(-20deg); } }
+@keyframes ear-listen-r { 0%, 100% { transform: rotate(14deg); } 50% { transform: rotate(20deg); } }
+
+.mood-happy .elofik-ear-l { animation: ear-happy-l .5s ease-in-out infinite alternate; }
+.mood-happy .elofik-ear-r { animation: ear-happy-r .5s ease-in-out infinite alternate; }
+.mood-happy .elofik-body-all { animation: hop .7s ease-in-out infinite; transform-box: view-box; transform-origin: 120px 270px; }
+@keyframes ear-happy-l { from { transform: rotate(-4deg); } to { transform: rotate(-16deg); } }
+@keyframes ear-happy-r { from { transform: rotate(4deg); } to { transform: rotate(16deg); } }
+@keyframes hop { 0%, 100% { transform: translateY(0) scaleY(1); } 40% { transform: translateY(-10px) scaleY(1.02); } 60% { transform: translateY(-6px); } }
+
+.mood-waving .elofik-arm-r { transform-box: fill-box; transform-origin: 10% 90%; animation: wave .6s ease-in-out infinite alternate; }
+@keyframes wave { from { transform: rotate(-10deg); } to { transform: rotate(-45deg); } }
+
+.mood-telling .elofik-mouth { transform-box: fill-box; transform-origin: center top; animation: talk .35s ease-in-out infinite alternate; }
+@keyframes talk { from { transform: scaleY(0.7); } to { transform: scaleY(1.15); } }

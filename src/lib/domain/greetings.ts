@@ -61,17 +61,28 @@ export function pickGreetingKind(h: GreetingHistory): GreetingKind {
   return "RETURNING_AFTER_BREAK";
 }
 
-export function variantsFor(kind: GreetingKind, locale: Locale): GreetingVariant[] {
-  const list = GREETINGS.filter((g) => g.kind === kind && g.locale === locale);
+export function variantsFor(kind: GreetingKind, locale: Locale, bank: GreetingVariant[] = GREETINGS): GreetingVariant[] {
+  const list = bank.filter((g) => g.kind === kind && g.locale === locale);
   if (list.length) return list;
-  return GREETINGS.filter((g) => g.kind === kind && g.locale === "pl");
+  return bank.filter((g) => g.kind === kind && g.locale === "pl");
 }
 
 /** Deterministyczny wybór wariantu: rotacja po numerze dnia — przewidywalna, łatwa do prefetchu. */
-export function pickGreeting(h: GreetingHistory, locale: Locale): GreetingVariant {
+export function pickGreeting(h: GreetingHistory, locale: Locale, bank: GreetingVariant[] = GREETINGS): GreetingVariant {
   const kind = pickGreetingKind(h);
-  const list = variantsFor(kind, locale);
+  const list = variantsFor(kind, locale, bank);
   return list[(Math.max(1, h.storyDay) - 1) % list.length];
+}
+
+/** Łączy bank z kodu z nadpisaniami z bazy (edycja w panelu admina). Nieaktywne warianty są pomijane. */
+export function mergeGreetingBank(overrides: { variant_id: string; locale: string; kind: GreetingKind; template: string; active: boolean }[]): GreetingVariant[] {
+  const map = new Map(GREETINGS.map((g) => [`${g.id}:${g.locale}`, { ...g }]));
+  for (const o of overrides) {
+    const key = `${o.variant_id}:${o.locale}`;
+    if (!o.active) map.delete(key);
+    else map.set(key, { id: o.variant_id, kind: o.kind, locale: o.locale as Locale, template: o.template });
+  }
+  return [...map.values()];
 }
 
 /** Czytelny identyfikator assetu: LEON + RETURNING_GREETING_03 + VOICE_V1 */

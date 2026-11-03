@@ -88,6 +88,16 @@ export interface AudioAssemblyRow {
 
 export interface FamilyAssemblyRow { id: string; family_id: string; story_id: string; assembly_key: string; created_at: string }
 
+export interface GreetingTemplateRow {
+  id: string;
+  variant_id: string;
+  locale: string;
+  kind: "FIRST_MEETING" | "RETURNING_NEXT_DAY" | "RETURNING_SAME_DAY" | "RETURNING_AFTER_BREAK";
+  template: string;
+  active: boolean;
+  updated_at: string;
+}
+
 export interface GreetingAudioRow {
   id: string;
   child_name_key: string;
@@ -263,6 +273,7 @@ export interface Tables {
   audio_cache: AudioCacheRow;
   audio_assemblies: AudioAssemblyRow;
   family_assemblies: FamilyAssemblyRow;
+  greetings: GreetingTemplateRow;
   greeting_audio_cache: GreetingAudioRow;
   voice_greeting_sessions: VoiceGreetingSessionRow;
   listening_progress: ListeningProgressRow;

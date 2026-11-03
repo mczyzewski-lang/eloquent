@@ -149,14 +149,16 @@ create table if not exists public.family_assemblies (
   unique (family_id, story_id)
 );
 
+-- Nadpisania tekstów powitań z panelu admina (domyślny bank jest w kodzie: src/lib/domain/greetings.ts)
 create table if not exists public.greetings (
-  id text not null, -- np. RETURNING_GREETING_03
+  id uuid primary key default gen_random_uuid(),
+  variant_id text not null, -- np. RETURNING_GREETING_03
   locale text not null,
   kind text not null check (kind in ('FIRST_MEETING','RETURNING_NEXT_DAY','RETURNING_SAME_DAY','RETURNING_AFTER_BREAK')),
   template text not null,
   active boolean not null default true,
   updated_at timestamptz not null default now(),
-  primary key (id, locale)
+  unique (variant_id, locale)
 );
 
 create table if not exists public.greeting_audio_cache (
