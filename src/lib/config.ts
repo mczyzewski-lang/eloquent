@@ -10,6 +10,11 @@ function bool(v: string | undefined, fallback = false) {
   return ["1", "true", "yes", "on"].includes(v.toLowerCase());
 }
 
+/** Usuwa przypadkowe spacje, znaki nowej linii i cudzysłowy z wklejonych kluczy. */
+function clean(v: string | undefined): string {
+  return (v ?? "").trim().replace(/^["'\s]+|["'\s]+$/g, "");
+}
+
 function num(v: string | undefined, fallback: number) {
   const n = Number(v);
   return Number.isFinite(n) && v !== undefined && v !== "" ? n : fallback;
@@ -44,10 +49,10 @@ export const config = {
   elevenlabs: {
     // wartość z panelu admina (Ustawienia → Klucze API) ma pierwszeństwo przed zmienną środowiskową
     get apiKey() {
-      return getOverride("elevenlabs_api_key") ?? process.env.ELEVENLABS_API_KEY ?? "";
+      return clean(getOverride("elevenlabs_api_key") ?? process.env.ELEVENLABS_API_KEY);
     },
     get voiceId() {
-      return getOverride("elevenlabs_voice_id") ?? process.env.ELEVENLABS_VOICE_ID ?? "";
+      return clean(getOverride("elevenlabs_voice_id") ?? process.env.ELEVENLABS_VOICE_ID);
     },
     // ustawiana automatycznie przy wyborze głosu w Admin → Głos Elofika (nowy głos = nowe klucze cache)
     get voiceVersion() {
@@ -63,7 +68,7 @@ export const config = {
   },
   openai: {
     get apiKey() {
-      return getOverride("openai_api_key") ?? process.env.OPENAI_API_KEY ?? "";
+      return clean(getOverride("openai_api_key") ?? process.env.OPENAI_API_KEY);
     },
     textModel: process.env.OPENAI_TEXT_MODEL ?? "gpt-5-mini",
     // gpt-image-1 wyłączony 23.10.2026 — domyślnie gpt-image-2.5-sunburst (można zmienić w panelu)

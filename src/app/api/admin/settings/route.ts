@@ -24,19 +24,59 @@ export async function GET() {
   return json({ settings: await describeSettings() }, { headers: { "cache-control": "no-store" } });
 }
 
+/** Wyciąga czytelny powód odmowy z odpowiedzi ElevenLabs (detail.message / detail.status). */
+async function elReason(res: Response): Promise<string> {
+  const text = await res.text().catch(() => "");
+  try {
+    const j = JSON.parse(text) as { detail?: string | { message?: string; status?: string } };
+    const d = j.detail;
+    if (typeof d === "string") return d.slice(0, 200);
+    return [d?.status, d?.message].filter(Boolean).join(": ").slice(0, 200) || text.slice(0, 200);
+  } catch {
+    return text.slice(0, 200);
+  }
+}
+
+/**
+ * Test klucza ElevenLabs na endpointach odpowiadających uprawnieniom, których używa Elofik.
+ * Klucze z ograniczonymi uprawnieniami (restricted) mogą nie mieć dostępu do /v1/user — to nie znaczy, że klucz jest zły.
+ */
 async function testElevenLabs() {
   const key = config.elevenlabs.apiKey;
   if (!key) return { ok: false, message: "Brak klucza ElevenLabs." };
-  const user = await fetch("https://api.elevenlabs.io/v1/user", { headers: { "xi-api-key": key }, signal: AbortSignal.timeout(8000) });
-  if (!user.ok) return { ok: false, message: `ElevenLabs odrzucił klucz (HTTP ${user.status}).` };
-  const info = (await user.json()) as { subscription?: { tier?: string; character_count?: number; character_limit?: number } };
-  const sub = info.subscription;
-  let voice = "Brak Voice ID — TTS nie ruszy, dopóki go nie podasz.";
-  if (config.elevenlabs.voiceId) {
-    const v = await fetch(`https://api.elevenlabs.io/v1/voices/${encodeURIComponent(config.elevenlabs.voiceId)}`, { headers: { "xi-api-key": key }, signal: AbortSignal.timeout(8000) });
-    voice = v.ok ? `Głos: ${((await v.json()) as { name?: string }).name ?? "OK"}` : `Nie znaleziono głosu o tym Voice ID (HTTP ${v.status}).`;
+  const get = (path: string) => fetch(`https://api.elevenlabs.io${path}`, { headers: { "xi-api-key": key }, signal: AbortSignal.timeout(10_000) });
+  const checks: { name: string; path: string }[] = [
+    { name: "Głosy (Voices — odczyt)", path: "/v1/voices" },
+    { name: "Modele (TTS)", path: "/v1/models" },
+    { name: "Konto (User — odczyt)", path: "/v1/user" },
+  ];
+  const results: string[] = [];
+  let anyOk = false;
+  let authFailed = false;
+  let plan = "";
+  for (const c of checks) {
+    const res = await get(c.path);
+    if (res.ok) {
+      anyOk = true;
+      if (c.path === "/v1/user") {
+        const sub = ((await res.json()) as { subscription?: { tier?: string; character_count?: number; character_limit?: number } }).subscription;
+        if (sub?.tier) plan = ` · plan ${sub.tier}${sub.character_limit ? `, znaki ${sub.character_count ?? 0}/${sub.character_limit}` : ""}`;
+      }
+      results.push(`✓ ${c.name}`);
+    } else {
+      const reason = await elReason(res);
+      if (res.status === 401 && /invalid_api_key|invalid api key/i.test(reason)) authFailed = true;
+      results.push(`✗ ${c.name}: HTTP ${res.status}${reason ? ` — ${reason}` : ""}`);
+    }
   }
-  return { ok: true, message: `Klucz działa${sub?.tier ? ` · plan ${sub.tier}` : ""}${sub?.character_limit ? ` · znaki: ${sub.character_count ?? 0}/${sub.character_limit}` : ""}. ${voice}` };
+  let voice = "Brak Voice ID — wybierz głos w „Głos Elofika”.";
+  if (config.elevenlabs.voiceId && anyOk) {
+    const v = await get(`/v1/voices/${encodeURIComponent(config.elevenlabs.voiceId)}`);
+    voice = v.ok ? `Głos: ${((await v.json()) as { name?: string }).name ?? "OK"}` : `Głos ${config.elevenlabs.voiceId}: HTTP ${v.status} — ${await elReason(v)}`;
+  }
+  if (authFailed && !anyOk) return { ok: false, message: `ElevenLabs nie rozpoznaje klucza (sprawdź, czy wklejono cały klucz, bez spacji). ${results.join(" · ")}` };
+  if (!anyOk) return { ok: false, message: `Klucz nie ma potrzebnych uprawnień. ${results.join(" · ")}. W ElevenLabs → API Keys włącz: Text to Speech, Speech to Text, Text to Voice, Voices (zapis i odczyt), Models (odczyt), User (odczyt).` };
+  return { ok: true, message: `Klucz działa${plan}. ${results.join(" · ")}. ${voice}` };
 }
 
 async function testOpenAI() {
