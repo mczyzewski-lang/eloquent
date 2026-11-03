@@ -1,11 +1,9 @@
 import { z } from "zod";
-import { revalidatePath } from "next/cache";
 import { error, handleError, json, readJson, sameOrigin } from "@/lib/api";
 import { getSessionUser } from "@/lib/auth/session";
 import { auditLog } from "@/lib/auth/guards";
 import { getDb, nowIso } from "@/lib/db";
 import { generateStoryDraft } from "@/lib/ai/story-generator";
-import { generateStoryCover, ImageGenerationUnavailable } from "@/lib/ai/images";
 import { buildRenderPlan, validateStory, type StoryVersion } from "@/lib/domain/story";
 import { addressForm, getNameForms } from "@/lib/domain/names";
 import { currentVoiceProfile } from "@/lib/audio/tts";
@@ -43,7 +41,6 @@ const body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("generate_core"), storyId: z.string() }),
   z.object({ action: z.literal("publish"), storyId: z.string(), scheduledFor: z.string().nullable().optional() }),
   z.object({ action: z.literal("archive"), storyId: z.string() }),
-  z.object({ action: z.literal("illustration"), storyId: z.string(), force: z.boolean().optional() }),
   z.object({ action: z.literal("preview"), storyId: z.string(), childName: z.string().max(30), family: z.record(z.string(), z.string().max(30)).optional(), audio: z.boolean().optional() }),
 ]);
 
@@ -117,21 +114,6 @@ export async function POST(req: Request) {
         await db.update("stories", { id: b.storyId }, { status: "archived", updated_at: nowIso() });
         await auditLog(user, "story.archive", b.storyId);
         return json({ ok: true });
-      }
-      case "illustration": {
-        try {
-          const res = await generateStoryCover(b.storyId, { force: b.force });
-          await auditLog(user, "story.cover", b.storyId, { provider: res.provider, force: Boolean(b.force) });
-          revalidatePath("/"); // landing pokazuje nową okładkę od razu (zamiast po 5 min)
-          const row = await db.findOne("stories", { id: b.storyId });
-          return json({ ...res, coverUrl: row?.cover_path ? `/api/covers/${b.storyId}?v=${Date.now()}` : null });
-        } catch (e) {
-          if (e instanceof ImageGenerationUnavailable) return error(e.message, 422);
-          if ((e as Error).name === "BudgetExceededError") return error("Brak budżetu AI — ustaw miesięczny budżet w Ustawieniach.", 422);
-          const status = (e as { status?: number }).status;
-          if (status) return error(`OpenAI: ${(e as Error).message}`.slice(0, 300), 502);
-          throw e;
-        }
       }
       case "preview": {
         const story = await getStoryVersion(b.storyId);

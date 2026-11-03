@@ -1,13 +1,36 @@
+"use client";
+
 /**
- * Elofik — mały elf opowieści. Wektorowa maskotka zgodna z character sheet (docs/BRAND.md):
+ * Elofik — mały elf opowieści.
+ * Jeśli w panelu (Admin → Ilustracje → Elofik na stronie) zatwierdzono pozy maskotki wygenerowane
+ * z character bible, komponent pokazuje je w całym serwisie. W przeciwnym razie — wektorowa maskotka zgodna z character sheet (docs/BRAND.md):
  * wyraźne, delikatnie spiczaste (ale niedługie) uszy, łagodne brązowe oczy, potargane karmelowe włosy,
  * szałwiowy sweterek, brązowe buciki, torba na słowa z ciepłym, złotym blaskiem. Zero motywów świątecznych.
  */
+import { createContext, useContext } from "react";
 import { cn } from "@/lib/utils";
+
+/** mood → URL zatwierdzonej ilustracji (dostarczane przez <MascotProvider> w layoucie). */
+const MascotContext = createContext<Record<string, string>>({});
+
+export function MascotProvider({ map, children }: { map: Record<string, string>; children: React.ReactNode }) {
+  return <MascotContext.Provider value={map}>{children}</MascotContext.Provider>;
+}
 
 export type ElofikMood = "idle" | "listening" | "happy" | "waving" | "telling" | "sleepy";
 
 export function Elofik({ mood = "idle", className, title = "Elofik, mały elf opowieści" }: { mood?: ElofikMood; className?: string; title?: string }) {
+  const mascots = useContext(MascotContext);
+  const src = mascots[mood] ?? mascots.idle;
+  if (src) {
+    // zatwierdzona ilustracja z panelu; animacje nastroju realizowane na całej postaci
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={src} alt={title} draggable={false} className={cn("mascot-img block h-auto w-full select-none object-contain", `mascot-${mood}`, className)} />;
+  }
+  return <ElofikVector mood={mood} className={className} title={title} />;
+}
+
+function ElofikVector({ mood, className, title }: { mood: ElofikMood; className?: string; title: string }) {
   const happy = mood === "happy" || mood === "waving";
   const sleepy = mood === "sleepy";
   return (
@@ -156,4 +179,3 @@ export function Sparkles({ className, count = 7 }: { className?: string; count?:
   );
 }
 
-export { Logo } from "./Logo";

@@ -5,24 +5,28 @@ import { STORY_ROADMAP } from "@/content/stories";
 import { Badge } from "@/components/ui/card";
 import { GenerateStoryForm } from "@/components/admin/GenerateStoryForm";
 import { BulkCovers } from "@/components/admin/BulkCovers";
-import { IMAGE_USD_ESTIMATE } from "@/lib/ai/images";
+import { activeMaster, IMAGE_COST_USD, sceneForStory } from "@/lib/services/illustrations";
+import { hasOpenAI } from "@/lib/config";
+import { ensureRuntimeSettings } from "@/lib/settings/runtime";
 
 const STATUS_TONE = { draft: "muted", in_review: "peach", approved: "gold", core_generated: "gold", published: "sage", archived: "muted" } as const;
 
 export default async function AdminStories() {
   const stories = await getAllStoriesForAdmin();
+  await ensureRuntimeSettings();
+  const ready = hasOpenAI() && Boolean(await activeMaster());
+  const coverItems = await Promise.all(
+    stories
+      .filter(({ row, data }) => data && row.status !== "archived" && row.status !== "draft")
+      .map(async ({ row, data }) => ({ storyId: row.id, title: data!.title, dayNumber: row.day_number, coverUrl: row.cover_path ? `/api/covers/${row.id}?v=${encodeURIComponent(row.updated_at)}` : null, scene: await sceneForStory(row.id) })),
+  );
   const nextDay = Math.max(0, ...stories.filter((s) => s.row.status !== "archived").map((s) => s.row.day_number)) + 1;
   const suggestion = STORY_ROADMAP.find((r) => r.day === nextDay);
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-semibold">CMS bajek</h1>
       <p className="text-muted">Przepływ: generowanie scenariusza → edycja i segmentacja → zatwierdzenie → generowanie CORE (raz) → publikacja. Scenariusze nie są publikowane bez zatwierdzenia przez administratora.</p>
-      <BulkCovers
-        estimateUsd={IMAGE_USD_ESTIMATE}
-        items={stories
-          .filter(({ row, data }) => data && row.status !== "archived" && row.status !== "draft")
-          .map(({ row, data }) => ({ storyId: row.id, title: data!.title, dayNumber: row.day_number, coverUrl: row.cover_path ? `/api/covers/${row.id}?v=${encodeURIComponent(row.updated_at)}` : null }))}
-      />
+      <BulkCovers items={coverItems} costMedium={IMAGE_COST_USD.medium} ready={ready} />
       <GenerateStoryForm defaultDay={nextDay} defaultWord={suggestion?.word ?? ""} defaultTheme={suggestion?.title ?? ""} />
       <div className="overflow-x-auto rounded-2xl border border-navy/10 bg-white">
         <table className="w-full text-left text-sm">

@@ -11,7 +11,7 @@ import { Faq } from "@/components/landing/Faq";
 import { PREMIUM_FEATURES } from "@/lib/domain/pricing";
 import { STORY_CATALOG } from "@/content/stories";
 import { cn } from "@/lib/utils";
-import { getCoverMap } from "@/lib/ai/images";
+import { getCoverMap } from "@/lib/services/illustrations";
 
 export const revalidate = 300; // okładki z panelu pojawiają się bez nowego wdrożenia
 

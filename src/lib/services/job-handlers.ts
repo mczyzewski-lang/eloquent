@@ -3,7 +3,6 @@ import { getStoryVersion } from "./stories";
 import { buildTemplateContext, getFamilyBundle } from "./families";
 import { generateCore, renderStoryForFamily } from "./audio-pipeline";
 import { prefetchGreetings } from "./greetings";
-import { generateIllustration } from "@/lib/ai/images";
 import { sendDailyEmails } from "./notifications";
 
 registerJobHandler("render_story", async (p) => {
@@ -25,8 +24,9 @@ registerJobHandler("generate_core", async (p) => {
   if (story) await generateCore(story);
 });
 
-registerJobHandler("generate_illustration", async (p) => {
-  await generateIllustration(String(p.scene), "cover");
+// Ilustracje generuje wyłącznie admin w panelu (z podglądem i akceptacją) — bez zadań w tle.
+registerJobHandler("generate_illustration", async () => {
+  throw new Error("Ilustracje generuje się w Admin → Ilustracje");
 });
 
 registerJobHandler("send_daily_email", async () => {

@@ -20,7 +20,7 @@ async function call(body: unknown) {
 }
 
 export function StoryEditor({ initial, status, issues: initialIssues, versions, coverUrl: initialCover }: { initial: StoryVersion; status: string; issues: string[]; versions: { version: number; reviewedBy: string | null; createdAt: string }[]; coverUrl?: string | null }) {
-  const [coverUrl, setCoverUrl] = useState(initialCover ?? null);
+  const coverUrl = initialCover ?? null;
   const router = useRouter();
   const [s, setS] = useState(initial);
   const [issues, setIssues] = useState(initialIssues);
@@ -60,15 +60,16 @@ export function StoryEditor({ initial, status, issues: initialIssues, versions, 
         <Button size="sm" onClick={() => run("save", async () => { const j = await call({ action: "save", story: s }); setS(j.story); setIssues(j.issues); setMsg("Zapisano nową wersję."); })} disabled={!!busy}>{busy === "save" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Zapisz wersję</Button>
         <Button size="sm" variant="sage" onClick={() => run("approve", async () => { await call({ action: "approve", storyId: s.storyId }); setMsg("Zatwierdzono."); })} disabled={!!busy}><CheckCircle2 className="h-4 w-4" /> Zatwierdź</Button>
         <Button size="sm" variant="soft" onClick={() => run("core", async () => { const j = await call({ action: "generate_core", storyId: s.storyId }); setMsg(`CORE: wygenerowano ${j.generated} z ${j.total} wspólnych segmentów (reszta z cache).`); })} disabled={!!busy}><Mic2 className="h-4 w-4" /> Generuj CORE</Button>
-        <Button size="sm" variant="soft" onClick={() => run("img", async () => { const j = await call({ action: "illustration", storyId: s.storyId, force: Boolean(coverUrl) }); setCoverUrl(j.coverUrl); setMsg(j.cached ? "Okładka z cache (bez kosztu)." : "Okładka gotowa — zapisana przy bajce."); })} disabled={!!busy}>{busy === "img" ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />} {coverUrl ? "Wygeneruj okładkę ponownie" : "Wygeneruj okładkę"}</Button>
         <Button size="sm" variant="navy" onClick={() => run("publish", async () => { await call({ action: "publish", storyId: s.storyId }); setMsg("Opublikowano."); })} disabled={!!busy}><Rocket className="h-4 w-4" /> Publikuj</Button>
         <Button size="sm" variant="ghost" onClick={() => run("archive", async () => { await call({ action: "archive", storyId: s.storyId }); })} disabled={!!busy}>Archiwizuj</Button>
       </div>
       {msg && <p className="rounded-2xl bg-white p-3 text-sm font-semibold" role="status">{msg}</p>}
-      {busy === "img" && <p className="text-sm text-muted">OpenAI rysuje okładkę z arkuszem referencyjnym Elofika — to trwa zwykle 30–90 sekund…</p>}
       {coverUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={coverUrl} alt={`Okładka: ${s.title}`} className="w-full max-w-xl rounded-2xl border border-navy/10" />
+        <div className="max-w-sm">
+          <p className="text-xs font-bold uppercase text-muted">Zatwierdzona okładka</p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={coverUrl} alt={`Okładka: ${s.title}`} className="mt-1 w-full rounded-2xl border border-navy/10" />
+        </div>
       )}
       {issues.length > 0 && (
         <ul className="rounded-2xl bg-peach/60 p-4 text-sm">

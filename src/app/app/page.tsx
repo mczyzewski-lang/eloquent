@@ -13,7 +13,7 @@ import { Badge, Card } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { PageView } from "@/components/site/PageView";
 import { cn, minutesLabel } from "@/lib/utils";
-import { getCoverMap } from "@/lib/ai/images";
+import { getCoverMap } from "@/lib/services/illustrations";
 
 export const metadata = { title: "Bajki", robots: { index: false } };
 export const dynamic = "force-dynamic";

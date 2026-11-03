@@ -66,8 +66,13 @@ Ochrona przed podwójną subskrypcją: sprawdzenie w aplikacji + w Stripe (`subs
 - Klucz i model ustawisz w **Admin → Ustawienia i klucze API** (albo `OPENAI_API_KEY`, `OPENAI_TEXT_MODEL`, `OPENAI_IMAGE_MODEL`).
 - **Model ilustracji:** domyślnie `gpt-image-2.5-sunburst` (`gpt-image-1` został wyłączony 23.10.2026; alternatywa `gpt-image-2.5-flare`).
 - Generator scenariuszy (`src/lib/ai/story-generator.ts`): dane admina trafiają do modelu jako JSON-dane (ochrona przed prompt injection), wynik walidowany schematem zod i regułami redakcyjnymi, status zawsze `draft`.
-- **Okładki bajek (spójna postać):** Admin → CMS bajek → „Wygeneruj brakujące” (lub w edytorze bajki „Wygeneruj okładkę”). Każde wywołanie to `images.edit` z dołączonym **arkuszem referencyjnym Elofika** (`public/brand/elofik-reference.png`, 4 pozy renderowane z kodu maskotki) i stałym opisem postaci (`src/lib/ai/character.ts`, wersja `ELF_V3`). Model odwzorowuje tę postać zamiast wymyślać nowego elfa. Rozmiar 1536×1024, `webp`, ok. 0,08 USD/okładkę (budżet AI musi być > 0).
-- Po zmianie wyglądu maskotki: `npx tsx scripts/render-reference.tsx` (nowy arkusz), podbij `CHARACTER_SHEET_VERSION` i wygeneruj okładki ponownie.
+- **Ilustracje (spójna postać) — Admin → Ilustracje**, wg `ELOFIK_Prompt_Ilustracje`:
+  - kanoniczny `CHARACTER_AND_STYLE_PROMPT` (bez zmian między bajkami) + wariant formatu (`COVER` 3:4, `INTERIOR` 3:2, `CHARACTER_ONLY` z przezroczystym tłem) + zmienna scena — `src/lib/ai/elofik-bible.ts`, wersja promptu `PROMPT_VERSION`;
+  - **master reference**: startowa propozycja to postać z logo; zatwierdź ją albo wgraj własną (PNG/WEBP/JPEG) — bez zatwierdzonej referencji generowanie jest zablokowane; opcjonalnie character sheet (dołączany razem z masterem);
+  - każde wywołanie to `images.edit` z obrazami referencyjnymi; cache po hashu (referencja + wersja, prompt, bajka + wersja, typ, scena, model, ustawienia) — ponowne generowanie tylko świadomie („nowa wersja”);
+  - wszystko trafia do „Do akceptacji” z checklistą; publiczne są wyłącznie zatwierdzone (`/api/illustrations/[id]`, okładki `/api/covers/[id]`);
+  - pozy maskotki (CHARACTER_ONLY) po akceptacji zastępują wektorowego Elofika w całym serwisie; 10 scen testowych spójności;
+  - okładki/sceny bajki: CMS → bajka → „Ilustracje” (edycja sceny); masowo: CMS → „Wygeneruj brakujące” (z potwierdzeniem kosztu).
 - Okładka jest jedna na bajkę (wspólna dla wszystkich rodzin), imię dziecka nakłada UI. Serwowana publicznie z `/api/covers/[id]` (bez danych dzieci).
 - OpenAI nigdy nie otrzymuje danych dzieci (imion, wieku).
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Logo } from "@/components/elofik/Elofik";
+import { Logo } from "@/components/elofik/Logo";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 

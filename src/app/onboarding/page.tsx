@@ -5,7 +5,7 @@ import { authConfig } from "@/lib/auth/public-config";
 import { getSessionUser } from "@/lib/auth/session";
 import { getFamilyByOwner } from "@/lib/services/families";
 import { validateName } from "@/lib/domain/names";
-import { getCoverMap } from "@/lib/ai/images";
+import { getCoverMap } from "@/lib/services/illustrations";
 
 export const metadata = { title: "Stwórz świat Elofika", robots: { index: false } };
 

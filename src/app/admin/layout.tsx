@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth/guards";
-import { Logo } from "@/components/elofik/Elofik";
+import { Logo } from "@/components/elofik/Logo";
 import { dataStorageInfo, hasElevenLabs, hasOpenAI, hasStripe } from "@/lib/config";
 import { ensureRuntimeSettings } from "@/lib/settings/runtime";
 
@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 const NAV = [
   ["/admin", "Dashboard"],
   ["/admin/bajki", "CMS bajek"],
+  ["/admin/ilustracje", "Ilustracje"],
   ["/admin/glos", "Głos Elofika"],
   ["/admin/powitania", "Powitania Elofika"],
   ["/admin/koszty", "Koszty AI"],

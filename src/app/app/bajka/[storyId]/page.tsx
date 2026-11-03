@@ -3,7 +3,7 @@ import { requireFamily } from "@/lib/auth/guards";
 import { AccessDeniedError, assertStoryAccessible } from "@/lib/services/access";
 import { addressForm } from "@/lib/domain/names";
 import { StoryExperience } from "@/components/story/StoryExperience";
-import { getCoverMap } from "@/lib/ai/images";
+import { getCoverMap } from "@/lib/services/illustrations";
 
 export const metadata = { title: "Bajka", robots: { index: false } };
 

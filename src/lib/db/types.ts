@@ -277,6 +277,47 @@ export interface VoiceCandidateRow {
   created_at: string;
 }
 
+/** Wersjonowane, niezmienne obrazy referencyjne Elofika (master reference + character sheet). */
+export interface ReferenceAssetRow {
+  id: string;
+  kind: "master" | "sheet";
+  version: number;
+  label: string;
+  storage_path: string;
+  status: "proposed" | "approved" | "retired";
+  approved_by: string | null;
+  approved_at: string | null;
+  created_at: string;
+}
+
+/** Ilustracje (okładki, sceny, maskotki) — każda wersja osobno, publikacja dopiero po akceptacji. */
+export interface IllustrationRow {
+  id: string;
+  /** storyId bajki lub "__mascot__" (pozy maskotki do UI) lub "__test__" (sceny testowe spójności) */
+  story_id: string;
+  story_version: number;
+  image_type: "COVER" | "INTERIOR" | "CHARACTER_ONLY";
+  slot: string | null; // np. poza maskotki: idle/waving/…, id sceny testowej
+  version: number;
+  scene: Record<string, string>;
+  prompt: string;
+  prompt_version: string;
+  reference_id: string;
+  reference_version: number;
+  model: string;
+  size: string;
+  quality: string;
+  cache_key: string;
+  storage_path: string | null;
+  status: "pending" | "approved" | "rejected" | "failed";
+  est_usd: number;
+  error: string | null;
+  created_by: string;
+  created_at: string;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+}
+
 export interface RateLimitRow { id: string; key: string; window_start: string; count: number }
 
 export interface Tables {
@@ -311,6 +352,8 @@ export interface Tables {
   rate_limits: RateLimitRow;
   app_settings: AppSettingRow;
   voice_candidates: VoiceCandidateRow;
+  reference_assets: ReferenceAssetRow;
+  illustrations: IllustrationRow;
 }
 
 export type TableName = keyof Tables;
