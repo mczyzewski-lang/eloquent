@@ -40,6 +40,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             {flags.map(([k, v]) => (
               <span key={k} className="rounded-full bg-navy/5 px-2 py-1">{k}: <strong>{v}</strong></span>
             ))}
+            <span className="rounded-full bg-navy/5 px-2 py-1" title="Wdrożona wersja (commit)">wersja: <strong>{(process.env.RAILWAY_GIT_COMMIT_SHA ?? process.env.SOURCE_COMMIT ?? "lokalna").slice(0, 7)}</strong></span>
             <span className="rounded-full bg-gold/30 px-2 py-1">{admin.email}</span>
           </div>
         </div>

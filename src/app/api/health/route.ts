@@ -9,6 +9,7 @@ export async function GET() {
   await ensureRuntimeSettings();
   return Response.json({
     ok: true,
+    version: (process.env.RAILWAY_GIT_COMMIT_SHA ?? process.env.SOURCE_COMMIT ?? "local").slice(0, 7),
     mode: isDemoMode() ? "demo" : "production",
     ffmpeg: await hasFfmpeg(),
     integrations: { elevenlabs: hasElevenLabs(), openai: hasOpenAI(), stripe: hasStripe() },
