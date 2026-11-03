@@ -18,9 +18,10 @@ export default defineConfig({
     // { name: "ios-safari", use: { ...devices["iPhone 15"] } },
   ],
   webServer: {
-    command: `npx next start -p ${PORT}`,
+    // świeże dane przy każdym starcie (limity i sesje nie przechodzą między przebiegami)
+    command: `node -e "require('fs').rmSync('.data-e2e',{recursive:true,force:true})" && npx next start -p ${PORT}`,
     port: PORT,
-    reuseExistingServer: true,
+    reuseExistingServer: false,
     env: { ELOFIK_DEMO_MODE: "1", ELOFIK_DATA_DIR: ".data-e2e", SESSION_SECRET: "e2e-session-secret-e2e-session-secret-0123" },
   },
 });

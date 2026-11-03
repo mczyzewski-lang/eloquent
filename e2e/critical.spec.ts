@@ -56,8 +56,8 @@ test("5. rytuał: „Hej Elofik” → powitanie → bajka; mikrofon zamknięty"
 });
 
 test("9. brak mikrofonu nie blokuje bajki — po 2 próbach fallback dotykiem", async ({ page }) => {
-  await demoLogin(page, "family");
-  await page.goto("/app/bajka/dzien-02-most-z-kamykow");
+  await demoLogin(page, "fresh");
+  await page.goto("/app/bajka/dzien-01-tajemniczy-slad");
   for (let i = 0; i < 2; i++) {
     await page.getByTestId("mic-button").click();
     await page.getByRole("button", { name: "Hałas w tle" }).click();
