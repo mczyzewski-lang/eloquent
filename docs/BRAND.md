@@ -8,6 +8,11 @@
 Nie pozycjonujemy Elofika jako „generatora bajek AI”. Sprzedajemy codzienny rytuał, przygodę z udziałem dziecka, bliskość rodziny, ograniczenie biernego czasu przed ekranem i proste narzędzie dla rodziców.
 Nie obiecujemy „podnoszenia IQ” ani wymiernych efektów — komunikujemy rozwijanie słownictwa, umiejętności językowych, wyobraźni i wspieranie rozwoju poznawczego.
 
+## Logo
+
+Źródło: `public/brand/elofik-logo-source.png` (oryginał, przezroczyste tło). Pochodne:
+`elofik-logo.png` (pełne — stopka, OG), `elofik-mark.png` (postać z książką) + `elofik-wordmark.png` (napis) — logo poziome w nagłówku (`src/components/elofik/Logo.tsx`), `elofik-head.png` — ikony PWA i favicona (`npm run assets`).
+
 ## Character sheet — Elofik (wersja `ELF_V2`)
 
 | Cecha | Opis |

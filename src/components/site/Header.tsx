@@ -8,7 +8,7 @@ export function SiteHeader({ variant = "parents" }: { variant?: "parents" | "gra
     <header className="sticky top-0 z-40 border-b border-navy/5 bg-cream/85 backdrop-blur-md">
       <div className="container-page flex h-16 items-center justify-between">
         <Link href={variant === "app" ? "/app" : "/"} aria-label="Elofik — strona główna">
-          <Logo />
+          <Logo priority />
         </Link>
         <nav className="flex items-center gap-1 sm:gap-2">
           {variant === "app" ? (
@@ -35,7 +35,7 @@ export function SiteFooter() {
     <footer className="mt-20 border-t border-navy/5 bg-cream-deep/50 py-12 text-sm text-muted">
       <div className="container-page grid gap-8 sm:grid-cols-3">
         <div>
-          <Logo className="text-xl" />
+          <Logo variant="full" className="w-32" />
           <p className="mt-3 max-w-xs">Elofik — codziennie jedno mądre słowo.<br />Little stories. Big words.</p>
         </div>
         <ul className="space-y-2">

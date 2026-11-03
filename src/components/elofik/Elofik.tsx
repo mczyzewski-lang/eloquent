@@ -156,21 +156,4 @@ export function Sparkles({ className, count = 7 }: { className?: string; count?:
   );
 }
 
-export function Logo({ className }: { className?: string }) {
-  return (
-    <span className={cn("inline-flex items-center gap-2 font-display text-2xl font-semibold text-navy", className)}>
-      <span className="relative inline-block h-9 w-9">
-        <svg viewBox="0 0 40 40" className="h-9 w-9" aria-hidden>
-          <path d="M9 16 Q5 15 3 12 Q5 18 11 23 Z" fill="#EDBB94" />
-          <path d="M31 16 Q35 15 37 12 Q35 18 29 23 Z" fill="#EDBB94" />
-          <circle cx="20" cy="21" r="12" fill="#F3CBA8" />
-          <path d="M8 20 Q8 9 20 9 Q32 9 32 20 Q28 15 24 15 Q22 18 19 17 Q16 14 12 16 Q10 18 8 20 Z" fill="#B9784A" />
-          <circle cx="16" cy="23" r="2" fill="#4A2F22" />
-          <circle cx="24" cy="23" r="2" fill="#4A2F22" />
-          <path d="M17 27 Q20 29.5 23 27" stroke="#B5524A" strokeWidth="1.6" fill="none" strokeLinecap="round" />
-        </svg>
-      </span>
-      Elofik
-    </span>
-  );
-}
+export { Logo } from "./Logo";

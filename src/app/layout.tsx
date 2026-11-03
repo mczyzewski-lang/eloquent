@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   },
   twitter: { card: "summary_large_image", title: "Elofik — codziennie jedno mądre słowo", description: SITE.description, images: ["/og.png"] },
   appleWebApp: { capable: true, title: "Elofik", statusBarStyle: "default" },
-  icons: { icon: [{ url: "/icons/icon.svg", type: "image/svg+xml" }], apple: "/icons/apple-touch-icon.png" },
+  icons: { icon: [{ url: "/icons/favicon-48.png", type: "image/png", sizes: "48x48" }, { url: "/icons/icon-192.png", type: "image/png", sizes: "192x192" }], apple: "/icons/apple-touch-icon.png" },
   formatDetection: { telephone: false },
 };
 

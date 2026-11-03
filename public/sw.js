@@ -1,7 +1,7 @@
 /* Elofik — service worker (PWA). Cache statyki; audio i API zawsze z sieci (prywatne, podpisane URL-e). */
-const CACHE = "elofik-static-v1";
+const CACHE = "elofik-static-v2";
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(["/", "/icons/icon.svg"])).catch(() => undefined));
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(["/", "/icons/icon-192.png"])).catch(() => undefined));
   self.skipWaiting();
 });
 self.addEventListener("activate", (e) => {
