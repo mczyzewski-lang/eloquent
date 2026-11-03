@@ -19,8 +19,9 @@ export async function requireFamily(next = "/app"): Promise<{ user: SessionUser;
 }
 
 export async function requireAdmin(): Promise<SessionUser> {
-  const user = await requireUser("/admin");
-  if (!user.isAdmin) redirect("/app");
+  const user = await getSessionUser();
+  if (!user) redirect("/logowanie/admin");
+  if (!user.isAdmin) redirect("/logowanie/admin");
   return user;
 }
 

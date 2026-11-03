@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { error, handleError, json, readJson, sameOrigin } from "@/lib/api";
-import { isDemoMode } from "@/lib/config";
+import { config, isDemoMode } from "@/lib/config";
+import { adminPasswordConfigured } from "@/lib/auth/admin-password";
 import { demoSignIn } from "@/lib/auth/session";
 import { DEMO_FAMILY, seedDemoFamily } from "@/lib/demo/seed";
 import { ensureStoriesSeeded } from "@/lib/services/stories";
@@ -12,6 +13,8 @@ export async function POST(req: Request) {
     const { kind } = z.object({ kind: z.enum(["family", "fresh", "admin"]) }).parse(await readJson(req));
     await ensureStoriesSeeded(true);
     if (kind === "admin") {
+      // publiczne wejście „jako admin” tylko na lokalnym demo — nigdy po skonfigurowaniu hasła ani na produkcji
+      if (adminPasswordConfigured() || config.appEnv === "production") return error("Wejście demo jako admin jest wyłączone. Zaloguj się na /logowanie/admin.", 403);
       const u = await demoSignIn("admin.demo@elofik.com", { admin: true });
       await seedDemoFamily(u.id, { daysAgo: 6 });
       return json({ redirect: "/admin" });

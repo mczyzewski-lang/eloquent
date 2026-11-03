@@ -6,6 +6,14 @@ import { expect, test, type Page } from "@playwright/test";
  */
 
 async function demoLogin(page: Page, kind: "family" | "fresh" | "admin" = "family") {
+  if (kind === "admin") {
+    await page.goto("/logowanie/admin");
+    await page.fill("#admin-email", "admin@elofik.com");
+    await page.fill("#admin-password", "e2e-Admin-Haslo-2026");
+    await page.getByTestId("admin-login").click();
+    await page.waitForURL((u) => u.pathname === "/admin");
+    return "/admin";
+  }
   await page.goto("/demo");
   const res = await page.request.post("/api/demo/seed", { data: { kind }, headers: { origin: new URL(page.url()).origin } });
   expect(res.ok()).toBeTruthy();
@@ -139,4 +147,20 @@ test("admin: ustawienia kluczy API — walidacja i zapis bez ujawniania sekretu"
   await expect(page.getByText("sk-…mnop")).toBeVisible();
   const api = await page.request.get("/api/admin/settings");
   expect(await api.text()).not.toContain("sk-test0123456789abcdefghijklmnop");
+});
+
+test("admin: zabezpieczenia logowania", async ({ page, request }) => {
+  await page.goto("/logowanie/admin");
+  await page.fill("#admin-email", "admin@elofik.com");
+  await page.fill("#admin-password", "zle-haslo");
+  await page.getByTestId("admin-login").click();
+  await expect(page.getByText("Nieprawidłowy e-mail lub hasło.")).toBeVisible();
+  // po skonfigurowaniu hasła wejście demo „jako admin” jest wyłączone
+  const origin = { origin: new URL(page.url()).origin };
+  expect((await request.post("/api/demo/seed", { data: { kind: "admin" }, headers: origin })).status()).toBe(403);
+  // logowanie demo e-mailem administratora nie daje dostępu
+  expect((await request.post("/api/auth/demo", { data: { email: "admin@elofik.com" }, headers: origin })).status()).toBe(403);
+  // niezalogowany → strona logowania admina
+  await page.goto("/admin");
+  await expect(page).toHaveURL(/logowanie\/admin/);
 });

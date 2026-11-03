@@ -8,8 +8,11 @@ import { createServerClient } from "@supabase/ssr";
 import { config, getSessionSecret, isDemoMode } from "@/lib/config";
 import { getDb, nowIso } from "@/lib/db";
 import { sign, unsign } from "@/lib/domain/tokens";
+import { adminPasswordConfigured, adminUserId } from "./admin-password";
 
 export const DEMO_COOKIE = "elofik_session";
+export const ADMIN_COOKIE = "elofik_admin";
+const ADMIN_SESSION_HOURS = 12;
 
 export interface SessionUser {
   id: string;
@@ -44,13 +47,40 @@ async function ensureUserRow(id: string, email: string) {
   return db.insert("users", { id, email: email.toLowerCase(), is_admin: isAdmin, created_at: nowIso() });
 }
 
+/** Sesja admina zalogowanego hasłem: podpisane cookie „email|wygaśnięcie”, ważne 12 h. */
+async function adminFromCookie(): Promise<SessionUser | null> {
+  const raw = (await cookies()).get(ADMIN_COOKIE)?.value;
+  const value = raw ? unsign(raw, getSessionSecret()) : null;
+  if (!value) return null;
+  const [email, exp] = value.split("|");
+  if (!email || Number(exp) < Date.now() / 1000) return null;
+  // e-mail musi wciąż być na liście ADMIN_EMAILS (usunięcie z listy = natychmiastowe odebranie dostępu)
+  if (!config.adminEmails.includes(email) || !process.env.ADMIN_PASSWORD_HASH) return null;
+  return { id: adminUserId(email), email, isAdmin: true };
+}
+
+export async function adminSignIn(email: string) {
+  const exp = Math.floor(Date.now() / 1000) + ADMIN_SESSION_HOURS * 3600;
+  (await cookies()).set(ADMIN_COOKIE, sign(`${email.toLowerCase()}|${exp}`, getSessionSecret()), {
+    httpOnly: true,
+    sameSite: "strict",
+    secure: config.appEnv === "production",
+    path: "/",
+    maxAge: ADMIN_SESSION_HOURS * 3600,
+  });
+}
+
 export async function getSessionUser(): Promise<SessionUser | null> {
+  const admin = await adminFromCookie();
+  if (admin) return admin;
   if (isDemoMode()) {
     const raw = (await cookies()).get(DEMO_COOKIE)?.value;
     const userId = raw ? unsign(raw, getSessionSecret()) : null;
     if (!userId) return null;
     const user = await getDb().findOne("users", { id: userId });
-    return user ? { id: user.id, email: user.email, isAdmin: user.is_admin || config.adminEmails.includes(user.email) } : null;
+    // gdy skonfigurowano hasło admina, konto demo NIGDY nie daje uprawnień admina — tylko logowanie hasłem
+    const demoAdmin = !adminPasswordConfigured() && config.appEnv !== "production" && (user?.is_admin || config.adminEmails.includes(user?.email ?? ""));
+    return user ? { id: user.id, email: user.email, isAdmin: Boolean(demoAdmin) } : null;
   }
   const supabase = await supabaseServerClient();
   const { data } = await supabase.auth.getUser();
@@ -78,6 +108,7 @@ export async function demoSignIn(email: string, opts: { admin?: boolean } = {}):
 }
 
 export async function signOut() {
+  (await cookies()).delete(ADMIN_COOKIE);
   if (isDemoMode()) {
     (await cookies()).delete(DEMO_COOKIE);
     return;

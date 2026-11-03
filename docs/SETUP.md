@@ -12,7 +12,11 @@ Klucze **ElevenLabs** i **OpenAI**, **Voice ID** głosu Elofika oraz **miesięcz
 - zmiany działają bez restartu (cache 30 s); „Test połączenia” sprawdza klucze bez płatnego generowania,
 - **ustaw `SESSION_SECRET` przed zapisaniem kluczy** — jego zmiana unieważnia zapisane sekrety.
 
-Dostęp do panelu: e-mail z `ADMIN_EMAILS` + logowanie linkiem (`/logowanie`). W trybie demo: `/demo` → „Wejdź jako admin”.
+Dostęp do panelu:
+
+- **Hasło (zalecane):** `ADMIN_EMAILS=admin@elofik.com` i `ADMIN_PASSWORD_HASH=…` (wygeneruj: `node scripts/hash-password.mjs` — losowe hasło, albo `node scripts/hash-password.mjs "własne hasło"`), logowanie na **`/logowanie/admin`**. Sesja 12 h (cookie HttpOnly, SameSite=Strict), limit 5 prób / 15 min na IP, log audytu. Zmiana hasła = nowy skrót w zmiennej + restart.
+- **Magic link (Supabase):** e-mail z `ADMIN_EMAILS` + `/logowanie`.
+- **Lokalne demo:** `/demo` → „Wejdź jako admin” — działa tylko, gdy `ADMIN_PASSWORD_HASH` nie jest ustawiony i `APP_ENV` ≠ `production`. Po ustawieniu hasła wejście demo i logowanie demo e-mailem admina są blokowane.
 
 ## 1. Supabase (PostgreSQL, Auth, Storage, RLS)
 
