@@ -63,6 +63,9 @@ export interface PlannedSegment {
   /** true = segment wspólny dla wszystkich rodzin (CORE, EDUCATIONAL, fallback) */
   shared: boolean;
   pauseAfterMs: number;
+  /** Sąsiedni tekst (ElevenLabs previous_text/next_text) — płynniejsze sklejanie krótkich fragmentów */
+  previousText?: string;
+  nextText?: string;
 }
 
 export interface RenderPlan {

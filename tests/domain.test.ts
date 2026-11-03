@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { matchGreetingCommand } from "@/lib/domain/command-matcher";
 import { computeUnlockState, zonedTimeToUtc } from "@/lib/domain/unlock";
 import { addressForm, getNameForms, sampleCtaLabel, validateName } from "@/lib/domain/names";
-import { pickGreeting, pickGreetingKind, GREETINGS } from "@/lib/domain/greetings";
+import { pickGreeting, pickGreetingKind, GREETINGS, splitGreetingTemplate } from "@/lib/domain/greetings";
 import { buildRenderPlan, validateStory } from "@/lib/domain/story";
 import { qualifyReferral, rewardsDue } from "@/lib/domain/referral";
 import { checkBudget } from "@/lib/domain/budget";
@@ -187,5 +187,24 @@ describe("Odmiana zdrobnień (np. Kasia)", () => {
 describe("Reguły nie łapią imion obcych", () => {
   it.each(["Aurelio", "Antonio", "Mario", "Antonia", "Paula", "Erik"])("%s → mianownik", (n) => {
     expect(getNameForms(n).genitive).toBeNull();
+  });
+});
+
+describe("Powitania: podział na część z imieniem i część wspólną", () => {
+  it("imię tylko w krótkim fragmencie, reszta wspólna", () => {
+    const parts = splitGreetingTemplate(GREETINGS.find((g) => g.id === "FIRST_GREETING_01" && g.locale === "pl")!.template);
+    expect(parts).toEqual([
+      { template: "Heeej, {child}!", personal: true },
+      { template: "Ale super, że się poznajemy! Jestem Elofik i przygotowałem dla Ciebie naprawdę wyjątkową historię. Chodź ze mną!", personal: false },
+    ]);
+  });
+  it("imię w środku i zdanie zależne tylko od rodzaju (wspólne)", () => {
+    const parts = splitGreetingTemplate("Hura! {child}, to Ty! Dzisiaj przygoda. {g:Gotowy|Gotowa|Gotowi}?");
+    expect(parts.map((p) => p.personal)).toEqual([false, true, false]);
+    expect(parts[2].template).toBe("Dzisiaj przygoda. {g:Gotowy|Gotowa|Gotowi}?");
+  });
+  it("każdy wariant z banku ma część z imieniem", () => {
+    for (const g of GREETINGS) expect([`${g.id}:${g.locale}`, splitGreetingTemplate(g.template).some((p) => p.personal)]).toEqual([`${g.id}:${g.locale}`, true]);
+    expect(splitGreetingTemplate("Hey, {child.name}! Come.")).toEqual([{ template: "Hey, {child.name}!", personal: true }, { template: "Come.", personal: false }]);
   });
 });

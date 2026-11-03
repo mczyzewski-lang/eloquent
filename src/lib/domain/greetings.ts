@@ -17,6 +17,33 @@ export interface GreetingVariant {
 
 export const GREETING_TEMPLATE_VERSION = "GREET_V1";
 
+export interface GreetingPart {
+  template: string;
+  /** true = zawiera imię/osobę rodziny → nagrywane osobno dla dziecka; false = wspólne dla wszystkich dzieci (tego samego rodzaju) */
+  personal: boolean;
+}
+
+// znaki interpunkcyjne wewnątrz {…} (np. {child.name}, {g:…}) nie kończą zdania
+const SENTENCE_RE = /(?:\{[^}]*\}|[^.!?…{])+(?:[.!?…]+|$)\s*/g;
+const PERSON_VAR_RE = /\{[a-z]+(?:\.[a-z]+)?\}/;
+
+/**
+ * Dzieli powitanie na zdania: zdania z imieniem są personalizowane, reszta jest wspólna
+ * i nagrywana raz dla wszystkich dzieci. Sąsiednie zdania tego samego rodzaju są łączone (lepsza intonacja).
+ * Zdania z samym {g:…} zależą tylko od rodzaju gramatycznego, więc także są wspólne (najwyżej 3 wersje).
+ */
+export function splitGreetingTemplate(template: string): GreetingPart[] {
+  const sentences = template.match(SENTENCE_RE)?.map((x) => x.trim()).filter(Boolean) ?? [template];
+  const parts: GreetingPart[] = [];
+  for (const sentence of sentences) {
+    const personal = PERSON_VAR_RE.test(sentence);
+    const last = parts[parts.length - 1];
+    if (last && last.personal === personal) last.template = `${last.template} ${sentence}`;
+    else parts.push({ template: sentence, personal });
+  }
+  return parts;
+}
+
 export const GREETINGS: GreetingVariant[] = [
   // Pierwsze spotkanie
   { id: "FIRST_GREETING_01", kind: "FIRST_MEETING", locale: "pl", template: "Heeej, {child}! Ale super, że się poznajemy! Jestem Elofik i przygotowałem dla Ciebie naprawdę wyjątkową historię. Chodź ze mną!" },

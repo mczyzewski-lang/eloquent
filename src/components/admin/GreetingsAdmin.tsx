@@ -6,7 +6,7 @@ import { Loader2, Play, Save, Trash2, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
-import type { GreetingVariant } from "@/lib/domain/greetings";
+import { splitGreetingTemplate, type GreetingVariant } from "@/lib/domain/greetings";
 import { speakSequence } from "@/lib/client/speech";
 
 async function call(body: unknown) {
@@ -70,6 +70,12 @@ export function GreetingsAdmin({ bank, cacheCounts, unknownNames }: { bank: Gree
                 <span className="text-xs text-muted">cache: {cacheCounts[key] ?? 0}</span>
               </div>
               <textarea className="mt-2 min-h-20 w-full rounded-xl border border-navy/10 p-3 text-sm" value={value} onChange={(e) => setEdits({ ...edits, [key]: e.target.value })} aria-label={`Tekst ${g.id}`} />
+              <p className="mt-1 text-xs leading-relaxed text-muted" data-testid="greeting-split">
+                {splitGreetingTemplate(value).map((p, i) => (
+                  <span key={i} className={p.personal ? "rounded bg-gold/20 px-1 text-navy" : "px-0.5"} title={p.personal ? "nagrywane osobno dla każdego imienia" : "nagrywane raz, wspólne dla wszystkich dzieci"}>{p.template} </span>
+                ))}
+                <span className="ml-1 whitespace-nowrap">· <span className="rounded bg-gold/20 px-1 text-navy">zaznaczone</span> = nagranie dla imienia, reszta wspólna dla wszystkich</span>
+              </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 <Button size="sm" variant="soft" onClick={() => run(`p-${key}`, async () => { const j = await call({ action: "preview", variantId: g.id, locale: g.locale, childName: testName }); setAudio({ url: j.audioUrl, text: j.text, provider: j.provider, label: j.assetLabel }); })}>
                   {busy === `p-${key}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />} Podgląd TTS

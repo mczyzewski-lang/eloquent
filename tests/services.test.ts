@@ -111,6 +111,26 @@ describe("Rytuał „Hej Elofik!” (scenariusze 5, 6, 7, 10)", () => {
     expect(again.assetLabel).toMatch(/^LEON \+ RETURNING_GREETING_\d+ \+ VOICE_V1$/);
   });
 
+  it("powitanie dla drugiego dziecka nagrywa tylko fragment z imieniem", async () => {
+    const variant = pickGreeting({ totalGreetings: 0, lastListenedAt: null, now: new Date(), storyDay: 1 }, "pl");
+    const ctxFor = (name: string) => {
+      const f = getNameForms(name);
+      return { child: { name: f.nominative, address: addressForm(f), gender: f.gender }, family: {} };
+    };
+    const a = await ensureGreetingAudio(ctxFor("Leon"), variant, null);
+    expect(a.text).toContain("Leonku");
+    const sharedRows = await env.db.find("audio_cache", { shared: true });
+    const before = env.tts.calls;
+    const b = await ensureGreetingAudio(ctxFor("Kasia"), variant, null);
+    expect(b.text).toContain("Kasiu");
+    expect(b.audioUrl).not.toBe(a.audioUrl);
+    // tylko jedno nowe nagranie (fragment z imieniem), wspólna reszta z cache
+    expect(env.tts.calls - before).toBe(1);
+    expect(await env.db.find("audio_cache", { shared: true })).toHaveLength(sharedRows.length);
+    const personal = (await env.db.find("audio_cache", { shared: false })).filter((r) => r.segment_type === "PERSONALIZED_CHILD");
+    expect(personal.every((r) => r.chars < 25)).toBe(true);
+  });
+
   it("sesja głosowa nie zapisuje transkrypcji i ma limit prób", async () => {
     const { family } = await makeFamily("a@x.pl");
     const storyId = STORY_CATALOG[0].storyId;

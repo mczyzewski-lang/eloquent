@@ -32,6 +32,8 @@ export interface SegmentContext {
   segmentType?: string;
   shared?: boolean;
   language?: string;
+  previousText?: string;
+  nextText?: string;
 }
 
 export async function ensureSegmentAudio(text: string, cacheKey: string, ctx: SegmentContext): Promise<AudioCacheRow> {
@@ -50,7 +52,7 @@ export async function ensureSegmentAudio(text: string, cacheKey: string, ctx: Se
     const estimated = estimateTtsUsd(text.length, config.elevenlabs.ttsUsdPer1kChars);
     if (tts.name !== "mock") await assertBudget(ctx.purpose, estimated);
     const voice = currentVoiceProfile();
-    const res = await tts.synthesize(text, voice, ctx.language ?? "pl");
+    const res = await tts.synthesize(text, voice, ctx.language ?? "pl", { previousText: ctx.previousText, nextText: ctx.nextText });
     const storagePath = `tts/${cacheKey.slice(0, 2)}/${cacheKey}.${res.ext}`;
     await getStorage().put(storagePath, res.audio, res.contentType);
     const row = await db.upsert(
@@ -106,6 +108,8 @@ export async function assemblePlan(plan: RenderPlan, opts: { familyId?: string |
         segmentType: seg.type,
         shared: seg.shared,
         language: opts.language,
+        previousText: seg.previousText,
+        nextText: seg.nextText,
       });
       if (before) reused++;
       else generated++;

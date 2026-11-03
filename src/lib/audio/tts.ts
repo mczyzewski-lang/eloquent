@@ -15,7 +15,18 @@ export interface TtsResult {
 
 export interface TtsProvider {
   readonly name: "elevenlabs" | "mock";
-  synthesize(text: string, voice: VoiceProfile, language: string): Promise<TtsResult>;
+  synthesize(text: string, voice: VoiceProfile, language: string, context?: TtsContext): Promise<TtsResult>;
+}
+
+export interface TtsContext {
+  previousText?: string;
+  nextText?: string;
+}
+
+/** previous_text/next_text (sklejanie fragmentów) — tylko modele v2/flash/turbo; v3+ ich nie przyjmują. */
+export function ttsStitchingParams(model: string, context?: TtsContext): { previous_text?: string; next_text?: string } {
+  if (!context || /^eleven_v\d+/.test(model)) return {};
+  return { ...(context.previousText ? { previous_text: context.previousText.slice(-300) } : {}), ...(context.nextText ? { next_text: context.nextText.slice(0, 300) } : {}) };
 }
 
 export const DEFAULT_VOICE_SETTINGS = { stability: 0.55, similarity_boost: 0.8, style: 0.35, use_speaker_boost: true, speed: 0.95 };
@@ -41,14 +52,14 @@ export function currentVoiceProfile(): VoiceProfile {
 
 class ElevenLabsTts implements TtsProvider {
   readonly name = "elevenlabs" as const;
-  async synthesize(text: string, voice: VoiceProfile, language: string): Promise<TtsResult> {
+  async synthesize(text: string, voice: VoiceProfile, language: string, context?: TtsContext): Promise<TtsResult> {
     const url = `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voice.voiceId)}?output_format=${config.elevenlabs.outputFormat}`;
     let lastErr: unknown;
     for (let attempt = 0; attempt < 3; attempt++) {
       const res = await fetch(url, {
         method: "POST",
         headers: { "xi-api-key": config.elevenlabs.apiKey, "content-type": "application/json", accept: "audio/mpeg" },
-        body: JSON.stringify({ text, model_id: voice.modelId, ...ttsLanguageParam(voice.modelId, language), voice_settings: voice.settings }),
+        body: JSON.stringify({ text, model_id: voice.modelId, ...ttsLanguageParam(voice.modelId, language), ...ttsStitchingParams(voice.modelId, context), voice_settings: voice.settings }),
         signal: AbortSignal.timeout(60_000),
       });
       if (res.ok) return { audio: Buffer.from(await res.arrayBuffer()), contentType: "audio/mpeg", ext: "mp3", chars: text.length };

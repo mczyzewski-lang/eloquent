@@ -5,12 +5,14 @@
 import { getDb, nowIso } from "@/lib/db";
 import { ttsCacheKey } from "@/lib/domain/hash";
 import { applyPronunciation, PRONUNCIATION_VERSION } from "@/lib/domain/pronunciation";
-import { GREETING_TEMPLATE_VERSION, mergeGreetingBank, pickGreeting, pickGreetingKind, variantsFor, type GreetingVariant } from "@/lib/domain/greetings";
+import { createHash } from "node:crypto";
+import { MASTERING_VERSION, type PlannedSegment, type RenderPlan } from "@/lib/domain/story";
+import { GREETING_TEMPLATE_VERSION, mergeGreetingBank, splitGreetingTemplate, pickGreeting, pickGreetingKind, variantsFor, type GreetingVariant } from "@/lib/domain/greetings";
 import { nameCacheKey } from "@/lib/domain/names";
 import { renderTemplate, type TemplateContext } from "@/lib/domain/templates";
 import type { Locale } from "@/lib/domain/command-matcher";
 import { currentVoiceProfile, getTts } from "@/lib/audio/tts";
-import { ensureSegmentAudio, signedAudioUrl } from "./audio-pipeline";
+import { assemblePlan, ensureSegmentAudio, signedAudioUrl } from "./audio-pipeline";
 import { lastListenedAt } from "./progress";
 import { ensureRuntimeSettings } from "@/lib/settings/runtime";
 
@@ -40,32 +42,62 @@ export interface PreparedGreeting {
   assetLabel: string;
 }
 
-/** Zapewnia audio wariantu (z cache lub nowe TTS). */
+/** Przerwa między sklejanymi fragmentami powitania (koniec zdania). */
+const GREETING_JOIN_PAUSE_MS = 220;
+
+/**
+ * Plan nagrania powitania: zdania z imieniem → krótkie nagranie dla dziecka,
+ * pozostałe zdania → wspólne nagranie (raz dla wszystkich dzieci, klucz zależy tylko od tekstu i głosu).
+ */
+export function buildGreetingPlan(ctx: TemplateContext, variant: GreetingVariant): RenderPlan & { text: string } {
+  const parts = splitGreetingTemplate(variant.template).map((p) => ({ ...p, text: applyPronunciation(renderTemplate(p.template, ctx)) }));
+  const segments: PlannedSegment[] = parts.map((p, i) => ({
+    segmentId: `${variant.id}#${i + 1}`,
+    type: p.personal ? "PERSONALIZED_CHILD" : "CORE",
+    text: p.text,
+    cacheKey: greetingCacheKey(p.text, variant.locale),
+    shared: !p.personal,
+    pauseAfterMs: i < parts.length - 1 ? GREETING_JOIN_PAUSE_MS : 0,
+    previousText: parts[i - 1]?.text,
+    nextText: parts[i + 1]?.text,
+  }));
+  const assemblyKey = createHash("sha256").update(["GREETING", ...segments.map((x) => x.cacheKey), MASTERING_VERSION].join("|")).digest("hex");
+  return { storyId: "greetings", version: 1, segments, assemblyKey, text: parts.map((p) => p.text).join(" ") };
+}
+
+/** Zapewnia audio wariantu: wspólne zdania z cache (raz dla wszystkich), nowe TTS tylko dla fragmentu z imieniem. */
 export async function ensureGreetingAudio(ctx: TemplateContext, variant: GreetingVariant, familyId: string | null): Promise<PreparedGreeting> {
   await ensureRuntimeSettings();
   const db = getDb();
   const voice = currentVoiceProfile();
-  const text = applyPronunciation(renderTemplate(variant.template, ctx));
+  const plan = buildGreetingPlan(ctx, variant);
   const nameKey = nameCacheKey(ctx.child.name);
-  const found = await db.findOne("greeting_audio_cache", { child_name_key: nameKey, variant_id: variant.id, voice_version: voice.voiceVersion, locale: variant.locale, address: ctx.child.address });
-  // po edycji tekstu w panelu admina stary plik nie pasuje — generujemy nowy
-  const existing = found && found.text === text ? found : null;
-  const cacheKey = existing?.cache_key ?? greetingCacheKey(text, variant.locale);
-  const audio = await ensureSegmentAudio(text, cacheKey, { purpose: "greeting", familyId, segmentType: "GREETING", shared: false, language: variant.locale });
-  if (!existing) {
+  const where = { child_name_key: nameKey, variant_id: variant.id, voice_version: voice.voiceVersion, locale: variant.locale, address: ctx.child.address };
+  let storagePath: string;
+  let provider: "elevenlabs" | "mock";
+  if (plan.segments.length === 1) {
+    const seg = plan.segments[0];
+    const row = await ensureSegmentAudio(seg.text, seg.cacheKey, { purpose: "greeting", familyId, segmentType: "GREETING", shared: seg.shared, language: variant.locale });
+    storagePath = row.storage_path;
+    provider = row.provider;
+  } else {
+    const { assembly } = await assemblePlan(plan, { familyId, purposeShared: "greeting", purposePersonal: "greeting", language: variant.locale });
+    storagePath = assembly.storage_path;
+    const personal = plan.segments.find((x) => !x.shared) ?? plan.segments[0];
+    provider = (await db.findOne("audio_cache", { cache_key: personal.cacheKey }))?.provider ?? getTts().name;
+  }
+  const found = await db.findOne("greeting_audio_cache", where);
+  const indexKey = plan.segments.length === 1 ? plan.segments[0].cacheKey : plan.assemblyKey;
+  if (!found || found.cache_key !== indexKey || found.text !== plan.text) {
     if (found) await db.delete("greeting_audio_cache", { id: found.id });
-    await db.upsert(
-      "greeting_audio_cache",
-      { child_name_key: nameKey, variant_id: variant.id, voice_version: voice.voiceVersion, locale: variant.locale, address: ctx.child.address, cache_key: cacheKey, text, created_at: nowIso() },
-      ["child_name_key", "variant_id", "voice_version", "locale", "address"],
-    );
+    await db.upsert("greeting_audio_cache", { ...where, cache_key: indexKey, text: plan.text, created_at: nowIso() }, ["child_name_key", "variant_id", "voice_version", "locale", "address"]);
   }
   return {
     variantId: variant.id,
     kind: variant.kind,
-    text,
-    audioUrl: await signedAudioUrl(audio.storage_path),
-    provider: audio.provider,
+    text: plan.text,
+    audioUrl: await signedAudioUrl(storagePath),
+    provider,
     assetLabel: `${nameKey.toUpperCase()} + ${variant.id} + ${voice.voiceVersion}`,
   };
 }
