@@ -102,7 +102,7 @@ const g = globalThis as unknown as { __elofikStorage?: Storage };
 export function getStorage(): Storage {
   if (!g.__elofikStorage) {
     g.__elofikStorage = isDemoMode()
-      ? new LocalStorage(path.join(process.cwd(), config.dataDir, "storage"))
+      ? new LocalStorage(path.resolve(process.cwd(), config.dataDir, "storage"))
       : new SupabaseStorage(config.supabase.audioBucket);
   }
   return g.__elofikStorage;

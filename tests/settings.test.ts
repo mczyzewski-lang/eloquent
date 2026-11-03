@@ -58,3 +58,18 @@ describe("Klucze API z panelu admina", () => {
     expect(getTts().name).toBe("mock");
   });
 });
+
+describe("Trwałość danych na Railway", () => {
+  it("z wolumenem dane trafiają na wolumen", async () => {
+    const { vi } = await import("vitest");
+    vi.resetModules();
+    const prev = { ...process.env };
+    delete process.env.ELOFIK_DATA_DIR;
+    process.env.RAILWAY_VOLUME_MOUNT_PATH = "/data";
+    const mod = await import("@/lib/config");
+    expect(mod.config.dataDir).toBe("/data/elofik");
+    expect(mod.dataStorageInfo().kind).toBe("volume");
+    process.env = prev;
+    vi.resetModules();
+  });
+});

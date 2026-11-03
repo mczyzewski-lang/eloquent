@@ -24,7 +24,10 @@ export default async function AdminDashboard() {
               Brakuje: {[!config.elevenlabs.apiKey && "klucza ElevenLabs", !config.elevenlabs.voiceId && "Voice ID głosu Elofika", !hasOpenAI() && "klucza OpenAI", config.budget.monthlyUsd <= 0 && "miesięcznego budżetu AI"].filter(Boolean).join(", ")}. Do tego czasu głos, rozpoznawanie mowy i generator działają w trybie zastępczym.
             </p>
           </div>
-          <Link href="/admin/ustawienia" className={buttonVariants({ size: "md" })}>Uzupełnij klucze API</Link>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/admin/ustawienia" className={buttonVariants({ size: "md" })}>Uzupełnij klucze API</Link>
+            {config.elevenlabs.apiKey && !config.elevenlabs.voiceId && <Link href="/admin/glos" className={buttonVariants({ size: "md", variant: "soft" })}>Wybierz głos Elofika</Link>}
+          </div>
         </div>
       )}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">

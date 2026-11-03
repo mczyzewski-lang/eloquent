@@ -13,7 +13,7 @@ Obraz (`Dockerfile`) zawiera **FFmpeg** — wymagany do składania segmentów MP
 ## Trwałość danych (ważne!)
 
 Bez Supabase aplikacja działa w trybie demo i trzyma **wszystkie dane w plikach** (`.data/db.json` — konta, klucze API z panelu, postępy — oraz `.data/storage/` — audio i okładki). System plików kontenera Railway jest **ulotny**: każde wdrożenie go czyści.
-Dopóki nie podłączysz Supabase, dodaj w Railway **Volume** zamontowany pod `/app/.data` (Service → Settings → Volumes). Docelowo: Supabase (baza + Storage).
+Dopóki nie podłączysz Supabase, dodaj w Railway **Volume** (Service → Settings → Volumes → Add Volume, dowolny mount path, np. `/data`). Aplikacja sama wykrywa wolumen (`RAILWAY_VOLUME_MOUNT_PATH`) i trzyma dane w `<mount>/elofik`. Panel admina pokazuje stan zapisu („plik na wolumenie” / „znika przy wdrożeniu”). Docelowo: Supabase (baza + Storage).
 
 ## Środowiska
 

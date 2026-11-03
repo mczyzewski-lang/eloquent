@@ -264,6 +264,19 @@ export interface AdminAuditLogRow { id: string; actor_user_id: string; action: s
 /** Ustawienia z panelu admina. Sekrety zaszyfrowane (AES-256-GCM), nigdy nie wracają do przeglądarki. */
 export interface AppSettingRow { id: string; key: string; value_encrypted: string; updated_by: string | null; updated_at: string }
 
+/** Kandydaci na głos Elofika (Voice Design ElevenLabs lub głos z biblioteki) z próbką demo. */
+export interface VoiceCandidateRow {
+  id: string;
+  source: "design" | "library";
+  name: string;
+  description: string;
+  generated_voice_id: string | null; // podgląd z Voice Design (przed zapisaniem)
+  voice_id: string | null; // zapisany głos w bibliotece ElevenLabs
+  preview_path: string | null; // próbka demo w storage
+  demo_text: string;
+  created_at: string;
+}
+
 export interface RateLimitRow { id: string; key: string; window_start: string; count: number }
 
 export interface Tables {
@@ -297,6 +310,7 @@ export interface Tables {
   admin_audit_logs: AdminAuditLogRow;
   rate_limits: RateLimitRow;
   app_settings: AppSettingRow;
+  voice_candidates: VoiceCandidateRow;
 }
 
 export type TableName = keyof Tables;

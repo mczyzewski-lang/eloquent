@@ -23,7 +23,9 @@ export const config = {
   appEnv,
   appUrl: (process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\/$/, ""),
   sessionSecret: process.env.SESSION_SECRET ?? "",
-  dataDir: process.env.ELOFIK_DATA_DIR ?? ".data",
+  // Bez Supabase dane (konta, zaszyfrowane klucze API, nagrania) są w plikach. Na Railway z dołączonym
+  // Volume trafiają automatycznie na wolumen (RAILWAY_VOLUME_MOUNT_PATH) i przetrwają kolejne wdrożenia.
+  dataDir: process.env.ELOFIK_DATA_DIR ?? (process.env.RAILWAY_VOLUME_MOUNT_PATH ? `${process.env.RAILWAY_VOLUME_MOUNT_PATH.replace(/\/$/, "")}/elofik` : ".data"),
 
   supabase: {
     url: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
@@ -47,7 +49,10 @@ export const config = {
     get voiceId() {
       return getOverride("elevenlabs_voice_id") ?? process.env.ELEVENLABS_VOICE_ID ?? "";
     },
-    voiceVersion: process.env.ELEVENLABS_VOICE_VERSION ?? "VOICE_V1",
+    // ustawiana automatycznie przy wyborze głosu w Admin → Głos Elofika (nowy głos = nowe klucze cache)
+    get voiceVersion() {
+      return getOverride("elevenlabs_voice_version") ?? process.env.ELEVENLABS_VOICE_VERSION ?? "VOICE_V1";
+    },
     ttsModel: process.env.ELEVENLABS_TTS_MODEL ?? "eleven_multilingual_v2",
     outputFormat: process.env.ELEVENLABS_OUTPUT_FORMAT ?? "mp3_44100_128",
     sttModel: "scribe_v2_realtime",
@@ -95,6 +100,14 @@ export const isDemoMode = () => config.forceDemo || !config.supabase.url || !con
 export const hasElevenLabs = () => Boolean(config.elevenlabs.apiKey && config.elevenlabs.voiceId);
 export const hasOpenAI = () => Boolean(config.openai.apiKey);
 export const hasStripe = () => Boolean(config.stripe.secretKey);
+
+/** Czy pliki danych przetrwają wdrożenie: Supabase, wolumen Railway lub jawnie ustawiony katalog (lokalnie zawsze tak). */
+export function dataStorageInfo(): { kind: "supabase" | "volume" | "local" | "ephemeral"; path: string | null } {
+  if (!isDemoMode()) return { kind: "supabase", path: null };
+  if (process.env.RAILWAY_VOLUME_MOUNT_PATH) return { kind: "volume", path: config.dataDir };
+  if (process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID || process.env.RAILWAY_SERVICE_ID) return { kind: "ephemeral", path: config.dataDir };
+  return { kind: "local", path: config.dataDir };
+}
 
 export function absoluteUrl(path = "/") {
   return `${config.appUrl}${path.startsWith("/") ? path : `/${path}`}`;

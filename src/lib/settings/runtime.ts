@@ -18,8 +18,9 @@ export interface SettingMeta {
 }
 
 export const SETTINGS: SettingMeta[] = [
-  { key: "elevenlabs_api_key", label: "ElevenLabs — klucz API", secret: true, envVar: "ELEVENLABS_API_KEY", help: "ElevenLabs → Developers → API Keys. Uprawnienia: Text to Speech, Speech to Text, Voices (odczyt), User (odczyt).", placeholder: "sk_…" },
+  { key: "elevenlabs_api_key", label: "ElevenLabs — klucz API", secret: true, envVar: "ELEVENLABS_API_KEY", help: "ElevenLabs → Developers → API Keys. Uprawnienia: Text to Speech, Speech to Text, Text to Voice, Voices (odczyt i zapis), User (odczyt).", placeholder: "sk_…" },
   { key: "elevenlabs_voice_id", label: "ElevenLabs — Voice ID głosu Elofika", secret: false, envVar: "ELEVENLABS_VOICE_ID", help: "ElevenLabs → Voices → wybrany głos → „Copy voice ID”.", placeholder: "np. 21m00Tcm4TlvDq8ikWAM" },
+  { key: "elevenlabs_voice_version", label: "ElevenLabs — wersja głosu", secret: false, envVar: "ELEVENLABS_VOICE_VERSION", help: "Ustawiana automatycznie przy wyborze głosu w „Głos Elofika”. Zmiana = nowe nagrania (stare zostają w cache).", placeholder: "VOICE_V1" },
   { key: "openai_api_key", label: "OpenAI — klucz API", secret: true, envVar: "OPENAI_API_KEY", help: "platform.openai.com → API keys. Używany do scenariuszy i ilustracji (bez danych dzieci).", placeholder: "sk-…" },
   { key: "openai_image_model", label: "OpenAI — model ilustracji", secret: false, envVar: "OPENAI_IMAGE_MODEL", help: "Domyślnie gpt-image-2.5-sunburst (gpt-image-1 został wyłączony 23.10.2026). Alternatywa: gpt-image-2.5-flare.", placeholder: "gpt-image-2.5-sunburst" },
   { key: "ai_monthly_budget_usd", label: "Miesięczny budżet AI (USD)", secret: false, envVar: "AI_MONTHLY_BUDGET_USD", help: "Bez budżetu > 0 płatne generowanie (TTS, Scribe, OpenAI) jest zablokowane, nawet z kluczami.", placeholder: "np. 20" },
@@ -66,6 +67,7 @@ export function validateSetting(key: RuntimeSettingKey, value: string): string |
   if (key === "openai_api_key" && !/^sk-[A-Za-z0-9_-]{20,}$/.test(v)) return "Klucz OpenAI zaczyna się od „sk-”.";
   if (key === "elevenlabs_api_key" && !/^[A-Za-z0-9_-]{20,}$/.test(v)) return "To nie wygląda na klucz ElevenLabs.";
   if (key === "openai_image_model" && !/^(gpt-image|chatgpt-image)[a-z0-9.-]*$/.test(v)) return "Podaj nazwę modelu obrazów OpenAI, np. gpt-image-2.5-sunburst.";
+  if (key === "elevenlabs_voice_version" && !/^[A-Z0-9_]{3,40}$/.test(v)) return "Wersja głosu: wielkie litery, cyfry i _ (np. VOICE_V2).";
   if (key === "elevenlabs_voice_id" && !/^[A-Za-z0-9]{10,40}$/.test(v)) return "Voice ID składa się z liter i cyfr (ok. 20 znaków).";
   return null;
 }
@@ -76,6 +78,9 @@ export async function saveSetting(key: RuntimeSettingKey, value: string, actorEm
   const v = value.trim();
   if (!v) await db.delete("app_settings", { key });
   else await db.upsert("app_settings", { key, value_encrypted: encryptSecret(v, getSessionSecret()), updated_by: actorEmail, updated_at: nowIso() }, ["key"]);
+  // zapis plikowy: od razu na dysk (bez opóźnienia), żeby restart kontenera nie zgubił kluczy
+  const flushable = db as unknown as { flushSync?: () => void };
+  flushable.flushSync?.();
   await ensureRuntimeSettings(true);
 }
 

@@ -11,7 +11,7 @@ const g = globalThis as unknown as { __elofikDb?: Db };
 export function getDb(): Db {
   if (!g.__elofikDb) {
     g.__elofikDb = isDemoMode()
-      ? new MemoryDb({ file: path.join(process.cwd(), config.dataDir, "db.json") })
+      ? new MemoryDb({ file: path.resolve(process.cwd(), config.dataDir, "db.json") })
       : SupabaseDb.fromEnv(config.supabase.url, config.supabase.serviceRoleKey);
   }
   return g.__elofikDb;

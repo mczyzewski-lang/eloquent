@@ -7,6 +7,7 @@ export type RuntimeSettingKey =
   | "elevenlabs_voice_id"
   | "openai_api_key"
   | "openai_image_model"
+  | "elevenlabs_voice_version"
   | "ai_monthly_budget_usd";
 
 const g = globalThis as unknown as { __elofikOverrides?: Partial<Record<RuntimeSettingKey, string>> };

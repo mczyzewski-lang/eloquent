@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth/guards";
 import { Logo } from "@/components/elofik/Elofik";
-import { isDemoMode, hasElevenLabs, hasOpenAI, hasStripe } from "@/lib/config";
+import { dataStorageInfo, hasElevenLabs, hasOpenAI, hasStripe } from "@/lib/config";
 import { ensureRuntimeSettings } from "@/lib/settings/runtime";
 
 export const metadata = { title: "Admin", robots: { index: false } };
@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 const NAV = [
   ["/admin", "Dashboard"],
   ["/admin/bajki", "CMS bajek"],
+  ["/admin/glos", "Głos Elofika"],
   ["/admin/powitania", "Powitania Elofika"],
   ["/admin/koszty", "Koszty AI"],
   ["/admin/ustawienia", "Ustawienia i klucze API"],
@@ -19,7 +20,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const admin = await requireAdmin();
   await ensureRuntimeSettings();
   const flags = [
-    ["Dane", isDemoMode() ? "demo (plik)" : "Supabase"],
+    ["Dane", { supabase: "Supabase", volume: "plik na wolumenie", local: "plik lokalny", ephemeral: "plik — znika przy wdrożeniu!" }[dataStorageInfo().kind]],
     ["TTS/STT", hasElevenLabs() ? "ElevenLabs" : "mock"],
     ["OpenAI", hasOpenAI() ? "tak" : "mock"],
     ["Stripe", hasStripe() ? "tak" : "symulacja"],
