@@ -3,20 +3,39 @@
  *
  * Konfiguracja (Railway → Variables):
  *   ADMIN_EMAILS=admin@elofik.com
- *   ADMIN_PASSWORD_HASH=scrypt$16384$8$1$<salt>$<hash>   ← `node scripts/hash-password.mjs "hasło"`
+ *   ADMIN_PASSWORD_HASH=scrypt:16384:8:1:<salt>:<hash>   ← `node scripts/hash-password.mjs "hasło"`
  *
  * W repozytorium i bazie nie ma hasła — tylko jego skrót scrypt w zmiennej środowiskowej.
+ * Akceptowane separatory: „:” (zalecany) lub „$” (starszy format).
  */
 import { createHash, scryptSync, timingSafeEqual } from "node:crypto";
 import { config } from "@/lib/config";
 
-export function adminPasswordConfigured(): boolean {
-  return Boolean(process.env.ADMIN_PASSWORD_HASH) && config.adminEmails.length > 0;
+const HASH_RE = /^scrypt[:$]\d+[:$]\d+[:$]\d+[:$][A-Za-z0-9_-]+[:$][A-Za-z0-9_-]+$/;
+
+/** Usuwa przypadkowe cudzysłowy i spacje dodane przy wklejaniu zmiennej. */
+function storedHash(): string {
+  return (process.env.ADMIN_PASSWORD_HASH ?? "").trim().replace(/^["']|["']$/g, "");
 }
 
-/** Format: scrypt$N$r$p$saltB64url$hashB64url */
+/** Diagnostyka bez ujawniania wartości: czego brakuje w konfiguracji. */
+export function adminConfigStatus() {
+  const hash = storedHash();
+  return {
+    emails: config.adminEmails.length > 0,
+    hash: Boolean(hash),
+    hashFormatOk: HASH_RE.test(hash),
+    sessionSecret: (process.env.SESSION_SECRET ?? "").length >= 32,
+  };
+}
+
+export function adminPasswordConfigured(): boolean {
+  const st = adminConfigStatus();
+  return st.emails && st.hash && st.hashFormatOk;
+}
+
 export function verifyPasswordHash(password: string, stored: string): boolean {
-  const parts = stored.trim().split("$");
+  const parts = stored.trim().replace(/^["']|["']$/g, "").split(/[:$]/);
   if (parts.length !== 6 || parts[0] !== "scrypt") return false;
   const [, n, r, p, salt, hash] = parts;
   const expected = Buffer.from(hash, "base64url");
@@ -29,7 +48,7 @@ export function verifyPasswordHash(password: string, stored: string): boolean {
 }
 
 export function verifyAdminCredentials(email: string, password: string): boolean {
-  const stored = process.env.ADMIN_PASSWORD_HASH ?? "";
+  const stored = storedHash();
   const emailOk = config.adminEmails.includes(email.trim().toLowerCase());
   // weryfikujemy hasło zawsze (stały czas odpowiedzi niezależnie od poprawności e-maila)
   const passOk = stored ? verifyPasswordHash(password, stored) : false;

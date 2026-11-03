@@ -14,6 +14,13 @@ describe("Hasło administratora", () => {
     expect(verifyPasswordHash("dobre-haslo-123", h)).toBe(false);
     expect(verifyPasswordHash("", h)).toBe(false);
   });
+  it("akceptuje format z separatorem „:” i przypadkowe cudzysłowy", () => {
+    const h = hash("Testowe-Haslo-9").replace(/\$/g, ":");
+    expect(h.startsWith("scrypt:")).toBe(true);
+    expect(verifyPasswordHash("Testowe-Haslo-9", h)).toBe(true);
+    expect(verifyPasswordHash("Testowe-Haslo-9", `"${h}"`)).toBe(true);
+    expect(verifyPasswordHash("inne", h)).toBe(false);
+  });
   it("odrzuca uszkodzony skrót", () => {
     expect(verifyPasswordHash("x", "plaintext")).toBe(false);
     expect(verifyPasswordHash("x", "scrypt$1$1$1$a$b")).toBe(false);
