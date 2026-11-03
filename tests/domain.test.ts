@@ -151,3 +151,41 @@ describe("Polecenia i budżet", () => {
     expect(checkBudget({ monthlyLimitUsd: 10, spentThisMonthUsd: 1, estimatedUsd: 0.05, purpose: "core" }).allowed).toBe(true);
   });
 });
+
+describe("Odmiana zdrobnień (np. Kasia)", () => {
+  it.each([
+    ["Kasia", "Posłuchaj bajki dla Kasi", "Kasiu"],
+    ["kasia", "Posłuchaj bajki dla Kasi", "Kasiu"],
+    ["Gosia", "Posłuchaj bajki dla Gosi", "Gosiu"],
+    ["Zuzia", "Posłuchaj bajki dla Zuzi", "Zuziu"],
+    ["Lusia", "Posłuchaj bajki dla Lusi", "Lusiu"],
+    ["Sonia", "Posłuchaj bajki dla Soni", "Soniu"],
+    ["Julka", "Posłuchaj bajki dla Julki", "Julko"],
+    ["Natka", "Posłuchaj bajki dla Natki", "Natko"],
+    ["Kuba", "Posłuchaj bajki dla Kuby", "Kubo"],
+    ["Franek", "Posłuchaj bajki dla Franka", "Franku"],
+    ["Mareczek", "Posłuchaj bajki dla Mareczka", "Mareczku"],
+    ["Antoś", "Posłuchaj bajki dla Antosia", "Antosiu"],
+    ["Kubuś", "Posłuchaj bajki dla Kubusia", "Kubusiu"],
+    ["Józio", "Posłuchaj bajki dla Józia", "Józiu"],
+    ["Ola", "Posłuchaj bajki dla Oli", "Olu"],
+  ])("%s", (name, cta, address) => {
+    expect(sampleCtaLabel(name)).toBe(cta);
+    expect(addressForm(getNameForms(name))).toBe(address);
+  });
+  it("nie zgaduje dla imion spoza wzorców", () => {
+    expect(sampleCtaLabel("Antonia")).toBe("Posłuchaj bajki, w której gra Antonia");
+    expect(sampleCtaLabel("Paula")).toBe("Posłuchaj bajki, w której gra Paula");
+    expect(sampleCtaLabel("Noah")).toBe("Posłuchaj bajki, w której gra Noah");
+  });
+  it("rodzaj gramatyczny ze wzorca", () => {
+    expect(getNameForms("Lusia").gender).toBe("f");
+    expect(getNameForms("Franek").gender).toBe("m");
+  });
+});
+
+describe("Reguły nie łapią imion obcych", () => {
+  it.each(["Aurelio", "Antonio", "Mario", "Antonia", "Paula", "Erik"])("%s → mianownik", (n) => {
+    expect(getNameForms(n).genitive).toBeNull();
+  });
+});

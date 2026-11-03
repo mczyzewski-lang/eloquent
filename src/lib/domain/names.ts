@@ -134,6 +134,34 @@ const DICTIONARY: Row[] = [
   ["Stefania", "Stefanii", "Stefanio", "Stefcia", "Stefciu", "f"],
   ["Róża", "Róży", "Różo", "Różyczka", "Różyczko", "f"],
   ["Jadwiga", "Jadwigi", "Jadwigo", "Jadzia", "Jadziu", "f"],
+  // zdrobnienia używane na co dzień jako imiona (formą podstawową jest samo zdrobnienie)
+  ["Kasia", "Kasi", "Kasiu", "Kasia", "Kasiu", "f"],
+  ["Gosia", "Gosi", "Gosiu", "Gosia", "Gosiu", "f"],
+  ["Asia", "Asi", "Asiu", "Asia", "Asiu", "f"],
+  ["Madzia", "Madzi", "Madziu", "Madzia", "Madziu", "f"],
+  ["Ala", "Ali", "Alu", "Ala", "Alu", "f"],
+  ["Ela", "Eli", "Elu", "Ela", "Elu", "f"],
+  ["Iza", "Izy", "Izo", "Iza", "Izo", "f"],
+  ["Ula", "Uli", "Ulu", "Ula", "Ulu", "f"],
+  ["Mila", "Mili", "Milu", "Mila", "Milu", "f"],
+  ["Lila", "Lili", "Lilu", "Lila", "Lilu", "f"],
+  ["Wika", "Wiki", "Wiko", "Wika", "Wiko", "f"],
+  ["Kuba", "Kuby", "Kubo", "Kuba", "Kubo", "m"],
+  ["Kubuś", "Kubusia", "Kubusiu", "Kubuś", "Kubusiu", "m"],
+  ["Olek", "Olka", "Olku", "Olek", "Olku", "m"],
+  ["Antek", "Antka", "Antku", "Antek", "Antku", "m"],
+  ["Franek", "Franka", "Franku", "Franek", "Franku", "m"],
+  ["Bartek", "Bartka", "Bartku", "Bartek", "Bartku", "m"],
+  ["Wojtek", "Wojtka", "Wojtku", "Wojtek", "Wojtku", "m"],
+  ["Tymek", "Tymka", "Tymku", "Tymek", "Tymku", "m"],
+  ["Janek", "Janka", "Janku", "Janek", "Janku", "m"],
+  ["Julek", "Julka", "Julku", "Julek", "Julku", "m"],
+  ["Staś", "Stasia", "Stasiu", "Staś", "Stasiu", "m"],
+  ["Antoś", "Antosia", "Antosiu", "Antoś", "Antosiu", "m"],
+  ["Ignaś", "Ignasia", "Ignasiu", "Ignaś", "Ignasiu", "m"],
+  ["Krzyś", "Krzysia", "Krzysiu", "Krzyś", "Krzysiu", "m"],
+  ["Adaś", "Adasia", "Adasiu", "Adaś", "Adasiu", "m"],
+  ["Tosia", "Tosi", "Tosiu", "Tosia", "Tosiu", "f"],
 ];
 
 const INDEX = new Map<string, Row>(DICTIONARY.map((r) => [r[0].toLocaleLowerCase("pl"), r]));
@@ -174,9 +202,47 @@ export interface NameOverrides {
   gender?: GrammaticalGender | null;
 }
 
+/**
+ * Reguły dla zdrobnień o w pełni regularnej odmianie (używane, gdy imienia nie ma w słowniku).
+ * Celowo wąskie: obejmują tylko wzorce, które w polszczyźnie odmieniają się zawsze tak samo.
+ *   -sia/-zia/-cia/-dzia (Kasia, Zuzia, Kacia, Madzia) → Kasi, Kasiu
+ *   -nia w krótkich imionach (Hania, Sonia; ≤ 5 liter — „Antonia” odmienia się inaczej) → Hani, Haniu
+ *   -ka (Julka, Ninka, Oliwka, Majka) → Julki, Julko
+ *   -ek (Franek, Bartek, Leonek; e ruchome) → Franka, Franku
+ *   -ś (Antoś, Staś, Kubuś) → Antosia, Antosiu
+ *   -zio/-sio/-cio/-nio/-dzio w krótkich imionach (Józio, Henio, Tadzio; nie „Aurelio”, „Antonio”) → Józia, Józiu
+ */
+export function ruleBasedForms(nominative: string): Row | null {
+  const n = nominative;
+  if (n.length < 3 || /[\s-]/.test(n)) return null;
+  const low = n.toLocaleLowerCase("pl");
+  const stem = (k: number) => n.slice(0, n.length - k);
+  if (/(?:s|z|c|dz)ia$/.test(low) || (/nia$/.test(low) && n.length <= 5)) {
+    const b = stem(1); // Kasi
+    return [n, b, `${b}u`, n, `${b}u`, "f"];
+  }
+  if (/[^aeiouyąęó]ka$/.test(low)) {
+    const b = stem(1); // Julk
+    return [n, `${b}i`, `${b}o`, n, `${b}o`, "f"];
+  }
+  if (/[^aeiouyąęó]ek$/.test(low) && n.length >= 4) {
+    const b = `${stem(2)}k`; // Frank
+    return [n, `${b}a`, `${b}u`, n, `${b}u`, "m"];
+  }
+  if (/[aeiouyąęó]ś$/.test(low)) {
+    const b = `${stem(1)}s`; // Antos
+    return [n, `${b}ia`, `${b}iu`, n, `${b}iu`, "m"];
+  }
+  if (/(?:s|z|c|dz|n)io$/.test(low) && n.length <= 6) {
+    const b = stem(1); // Józi
+    return [n, `${b}a`, `${b}u`, n, `${b}u`, "m"];
+  }
+  return null;
+}
+
 export function getNameForms(name: string, overrides: NameOverrides = {}): NameForms {
   const nominative = normalizeName(name);
-  const row = INDEX.get(nominative.toLocaleLowerCase("pl"));
+  const row = INDEX.get(nominative.toLocaleLowerCase("pl")) ?? ruleBasedForms(nominative);
   const base: NameForms = row
     ? { nominative, genitive: row[1], vocative: row[2], diminutive: row[3], diminutiveVocative: row[4], gender: row[5], known: true }
     : { nominative, genitive: null, vocative: null, diminutive: null, diminutiveVocative: null, gender: null, known: false };
