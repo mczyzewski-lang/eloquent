@@ -35,7 +35,7 @@ Prompt bazowy ilustracji: `src/lib/ai/character.ts` (`ELOFIK_CHARACTER_SHEET`) �
 | `sage` | `#9DB89A` | sweterek Elofika, akcenty sukcesu |
 | `teal` | `#6FB7B0` | akcent dodatkowy |
 
-Typografia: **Fredoka** (nagłówki — miękka, okrągła), **Nunito** (tekst — bardzo czytelna). Oba kroje z polskimi znakami.
+Typografia: **Baloo 2** (nagłówki — miękka, zaokrąglona), **Nunito** (tekst — bardzo czytelna). Oba kroje mają pełny zestaw polskich znaków (ąćęłńóśźż) — każdy nowy krój sprawdzaj na tym zestawie. Fredoka odrzucona: brak polskich znaków.
 
 ## Reguły generowania ilustracji
 

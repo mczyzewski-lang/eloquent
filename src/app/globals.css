@@ -23,7 +23,7 @@
   --color-muted: #6b7486;
 
   --font-sans: var(--font-nunito), ui-rounded, system-ui, sans-serif;
-  --font-display: var(--font-fredoka), var(--font-nunito), ui-rounded, system-ui, sans-serif;
+  --font-display: var(--font-display-face), var(--font-nunito), ui-rounded, system-ui, sans-serif;
 
   --radius-xl: 1.25rem;
   --radius-2xl: 1.75rem;

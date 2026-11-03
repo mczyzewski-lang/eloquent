@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Fredoka, Nunito } from "next/font/google";
+import { Baloo_2, Nunito } from "next/font/google";
 import { SITE } from "@/lib/site";
 import { ServiceWorker } from "@/components/site/ServiceWorker";
 import "./globals.css";
 
 const nunito = Nunito({ subsets: ["latin", "latin-ext"], variable: "--font-nunito", display: "swap" });
-const fredoka = Fredoka({ subsets: ["latin", "latin-ext"], variable: "--font-fredoka", display: "swap", weight: ["400", "500", "600", "700"] });
+// Baloo 2: miękki, zaokrąglony krój z pełnym zestawem polskich znaków (Fredoka ich nie ma)
+const display = Baloo_2({ subsets: ["latin", "latin-ext"], variable: "--font-display-face", display: "swap", weight: ["500", "600", "700", "800"] });
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
@@ -37,7 +38,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pl" className={`${nunito.variable} ${fredoka.variable}`}>
+    <html lang="pl" className={`${nunito.variable} ${display.variable}`}>
       <body className="min-h-dvh">
         {children}
         <ServiceWorker />
