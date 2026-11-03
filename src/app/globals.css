@@ -142,3 +142,109 @@
 .mascot-waving { animation: mascot-bob 1.1s ease-in-out infinite; }
 @keyframes mascot-tilt { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
 @keyframes mascot-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+
+/* ==========================================================================
+   Panel administracyjny — techniczny, „notionowy” wygląd.
+   Celowo POZA @layer: nadpisuje narzędzia Tailwinda tylko wewnątrz .admin-ui,
+   strona konsumencka zostaje bez zmian.
+   ========================================================================== */
+.admin-ui {
+  --color-cream: #ffffff;
+  --color-cream-deep: #f7f7f5;
+  --color-navy: #37352f;
+  --color-navy-soft: #55534e;
+  --color-ink: #37352f;
+  --color-gold: #e9b949;
+  --color-gold-deep: #b7860b;
+  --color-peach: #fbecdd;
+  --color-peach-deep: #f5d3b4;
+  --color-sage: #6fbfa9;
+  --color-sage-deep: #2f7d6d;
+  --color-teal: #529cca;
+  --color-muted: #787774;
+  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-display: var(--font-sans);
+  --radius-lg: 6px;
+  --radius-xl: 6px;
+  --radius-2xl: 8px;
+  --radius-3xl: 10px;
+  --text-base: 0.875rem;
+  --text-lg: 0.9375rem;
+  --text-xl: 1.0625rem;
+  --text-2xl: 1.25rem;
+  --text-3xl: 1.625rem;
+  --text-4xl: 1.875rem;
+  --admin-border: #e9e9e7;
+  --admin-hover: rgb(55 53 47 / 0.06);
+  --admin-blue: #2383e2;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--color-ink);
+  background: #fff;
+}
+.admin-ui h1, .admin-ui h2, .admin-ui h3, .admin-ui .font-display { letter-spacing: -0.005em; font-weight: 600; }
+.admin-ui h1 { font-weight: 700; }
+.admin-ui :focus-visible { outline: 2px solid rgb(35 131 226 / 0.55); outline-offset: 1px; border-radius: 4px; }
+
+/* brak miękkich cieni i gradientów */
+.admin-ui .card-soft, .admin-ui .shadow-soft, .admin-ui .shadow-sm, .admin-ui .shadow, .admin-ui .shadow-md, .admin-ui .shadow-lg, .admin-ui [class*="shadow-["] { box-shadow: none; }
+.admin-ui .card-soft { border: 1px solid var(--admin-border); border-radius: 8px; }
+.admin-ui [class*="border-navy/10"], .admin-ui [class*="border-navy/5"] { border-color: var(--admin-border); }
+
+/* przyciski */
+.admin-ui [data-ui="button"] {
+  height: 30px; padding: 0 10px; gap: 6px;
+  font-size: 13.5px; font-weight: 500; font-family: var(--font-sans);
+  border-radius: 5px; box-shadow: none; transform: none;
+  border: 1px solid transparent;
+  transition: background-color .12s, border-color .12s, color .12s;
+}
+.admin-ui [data-ui="button"] svg { width: 15px; height: 15px; }
+.admin-ui [data-ui="button"][data-size="lg"], .admin-ui [data-ui="button"][data-size="xl"] { height: 36px; padding: 0 14px; font-size: 14px; }
+.admin-ui [data-ui="button"][data-size="icon"] { width: 30px; padding: 0; }
+.admin-ui [data-ui="button"][data-variant="primary"] { background: var(--admin-blue); color: #fff; }
+.admin-ui [data-ui="button"][data-variant="primary"]:hover { background: #0b6bcb; }
+.admin-ui [data-ui="button"][data-variant="navy"] { background: #37352f; color: #fff; }
+.admin-ui [data-ui="button"][data-variant="navy"]:hover { background: #2f2d28; }
+.admin-ui [data-ui="button"][data-variant="soft"] { background: #fff; color: #37352f; border-color: rgb(55 53 47 / 0.16); }
+.admin-ui [data-ui="button"][data-variant="soft"]:hover { background: var(--admin-hover); }
+.admin-ui [data-ui="button"][data-variant="ghost"] { background: transparent; color: #37352f; }
+.admin-ui [data-ui="button"][data-variant="ghost"]:hover { background: var(--admin-hover); }
+.admin-ui [data-ui="button"][data-variant="sage"] { background: #2f7d6d; color: #fff; }
+.admin-ui [data-ui="button"][data-variant="sage"]:hover { background: #276a5c; }
+.admin-ui [data-ui="button"][data-variant="danger"] { background: #fff; color: #d44c47; border-color: rgb(212 76 71 / 0.35); }
+.admin-ui [data-ui="button"][data-variant="danger"]:hover { background: #fdebec; }
+.admin-ui [data-ui="button"][data-variant="link"] { height: auto; padding: 0; color: var(--admin-blue); }
+
+/* pola formularzy */
+.admin-ui [data-ui="input"], .admin-ui textarea, .admin-ui select {
+  border: 1px solid rgb(55 53 47 / 0.16); border-radius: 5px; background: #fff;
+  font-size: 14px; color: #37352f; box-shadow: none; font-family: var(--font-sans);
+}
+.admin-ui [data-ui="input"], .admin-ui select { height: 32px; padding: 0 9px; }
+.admin-ui textarea { padding: 7px 9px; line-height: 1.55; }
+.admin-ui [data-ui="input"]:focus, .admin-ui textarea:focus, .admin-ui select:focus {
+  outline: none; border-color: var(--admin-blue); box-shadow: 0 0 0 2px rgb(35 131 226 / 0.2);
+}
+.admin-ui [data-ui="input"]::placeholder, .admin-ui textarea::placeholder { color: rgb(55 53 47 / 0.4); }
+.admin-ui [data-ui="label"] {
+  margin-bottom: 4px; font-family: var(--font-sans); font-size: 12px; font-weight: 500;
+  color: #787774; letter-spacing: 0;
+}
+
+/* znaczniki statusu */
+.admin-ui [data-ui="badge"] {
+  border-radius: 3px; padding: 1px 6px; font-size: 11.5px; font-weight: 500;
+  text-transform: none; letter-spacing: 0; line-height: 1.6;
+}
+.admin-ui [data-ui="badge"][data-tone="gold"] { background: #fbf3db; color: #956400; }
+.admin-ui [data-ui="badge"][data-tone="sage"] { background: #edf3ec; color: #448361; }
+.admin-ui [data-ui="badge"][data-tone="navy"] { background: #e7f3f8; color: #337ea9; }
+.admin-ui [data-ui="badge"][data-tone="peach"] { background: #fbecdd; color: #d9730d; }
+.admin-ui [data-ui="badge"][data-tone="muted"] { background: rgb(227 226 224 / 0.6); color: #787774; }
+
+/* tabele w stylu bazy danych */
+.admin-ui table { border-collapse: collapse; font-size: 13.5px; }
+.admin-ui th { font-weight: 500; color: #787774; text-align: left; }
+.admin-ui th, .admin-ui td { border-bottom: 1px solid var(--admin-border); }
+.admin-ui code, .admin-ui kbd { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85em; background: rgb(135 131 120 / 0.15); color: #eb5757; border-radius: 3px; padding: 0.1em 0.35em; }

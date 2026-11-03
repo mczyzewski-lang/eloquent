@@ -12,6 +12,18 @@ import { cn } from "@/lib/utils";
 const TYPES: SegmentType[] = ["CORE", "PERSONALIZED_CHILD", "PERSONALIZED_FAMILY", "OPTIONAL", "EDUCATIONAL"];
 const TYPE_TONE: Record<SegmentType, string> = { CORE: "bg-navy/5", EDUCATIONAL: "bg-sage/15", PERSONALIZED_CHILD: "bg-gold/20", PERSONALIZED_FAMILY: "bg-peach/60", OPTIONAL: "bg-teal/15" };
 
+type TextField = "title" | "wordOfDay" | "wordDefinition" | "educationalGoal" | "summary" | "ending" | "parentQuestion" | "illustrationPrompt";
+const FIELDS: { key: TextField; label: string; hint?: string; span: string; multiline?: number }[] = [
+  { key: "title", label: "Tytuł", span: "md:col-span-3" },
+  { key: "wordOfDay", label: "Słowo dnia", span: "md:col-span-2" },
+  { key: "wordDefinition", label: "Definicja słowa dnia", hint: "Jak wytłumaczyć słowo 5-latkowi", span: "md:col-span-6", multiline: 2 },
+  { key: "educationalGoal", label: "Cel edukacyjny", span: "md:col-span-3", multiline: 2 },
+  { key: "parentQuestion", label: "Pytanie dla rodzica (po bajce)", span: "md:col-span-3", multiline: 2 },
+  { key: "summary", label: "Streszczenie", span: "md:col-span-6", multiline: 3 },
+  { key: "ending", label: "Zakończenie (wyciszenie przed snem)", span: "md:col-span-6", multiline: 2 },
+  { key: "illustrationPrompt", label: "Opis sceny do ilustracji (po angielsku)", span: "md:col-span-6", multiline: 2 },
+];
+
 async function call(body: unknown) {
   const res = await fetch("/api/admin/stories", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
   const j = await res.json();
@@ -77,14 +89,21 @@ export function StoryEditor({ initial, status, issues: initialIssues, versions, 
         </ul>
       )}
 
-      <div className="grid gap-4 rounded-2xl border border-navy/10 bg-white p-4 md:grid-cols-2">
-        {(["title", "wordOfDay", "wordDefinition", "educationalGoal", "summary", "ending", "parentQuestion", "illustrationPrompt"] as const).map((k) => (
-          <div key={k} className={cn(["wordDefinition", "summary", "illustrationPrompt"].includes(k) && "md:col-span-2")}>
-            <Label htmlFor={k}>{k}</Label>
-            <Input id={k} value={String(s[k])} onChange={(e) => setS({ ...s, [k]: e.target.value })} />
+      <div className="grid gap-x-4 gap-y-3 rounded-2xl border border-navy/10 bg-white p-4 md:grid-cols-6">
+        {FIELDS.map((f) => (
+          <div key={f.key} className={f.span}>
+            <Label htmlFor={`f-${f.key}`}>{f.label}</Label>
+            {f.multiline ? (
+              <textarea id={`f-${f.key}`} rows={f.multiline} className="w-full" placeholder={f.hint} value={String(s[f.key] ?? "")} onChange={(e) => setS({ ...s, [f.key]: e.target.value })} />
+            ) : (
+              <Input id={`f-${f.key}`} placeholder={f.hint} value={String(s[f.key] ?? "")} onChange={(e) => setS({ ...s, [f.key]: e.target.value })} />
+            )}
           </div>
         ))}
-        <div><Label htmlFor="day">dayNumber</Label><Input id="day" type="number" value={s.dayNumber} onChange={(e) => setS({ ...s, dayNumber: Number(e.target.value) })} /></div>
+        <div className="md:col-span-1">
+          <Label htmlFor="f-day">Numer dnia</Label>
+          <Input id="f-day" type="number" min={1} value={s.dayNumber} onChange={(e) => setS({ ...s, dayNumber: Number(e.target.value) })} />
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -93,11 +112,11 @@ export function StoryEditor({ initial, status, issues: initialIssues, versions, 
         {s.segments.map((seg, i) => (
           <div key={i} className={cn("rounded-2xl border border-navy/10 p-4", TYPE_TONE[seg.type])}>
             <div className="flex flex-wrap items-center gap-2">
-              <Input className="h-10 w-40 text-sm" value={seg.id} onChange={(e) => updateSeg(i, { id: e.target.value })} aria-label="ID segmentu" />
-              <select value={seg.type} onChange={(e) => updateSeg(i, { type: e.target.value as SegmentType })} className="h-10 rounded-xl border border-navy/10 bg-white px-2 text-sm">
+              <Input className="w-40 font-mono text-xs" value={seg.id} onChange={(e) => updateSeg(i, { id: e.target.value })} aria-label="ID segmentu" />
+              <select value={seg.type} onChange={(e) => updateSeg(i, { type: e.target.value as SegmentType })} className="rounded-xl border border-navy/10 bg-white px-2 text-sm">
                 {TYPES.map((t) => <option key={t}>{t}</option>)}
               </select>
-              <Input className="h-10 w-28 text-sm" type="number" value={seg.pauseAfterMs ?? 450} onChange={(e) => updateSeg(i, { pauseAfterMs: Number(e.target.value) })} aria-label="Pauza po (ms)" />
+              <Input className="w-24" type="number" value={seg.pauseAfterMs ?? 450} onChange={(e) => updateSeg(i, { pauseAfterMs: Number(e.target.value) })} aria-label="Pauza po (ms)" />
               <button type="button" className="ml-auto p-2 text-muted hover:text-red-600" aria-label="Usuń segment" onClick={() => setS({ ...s, segments: s.segments.filter((_, j) => j !== i) })}><Trash2 className="h-4 w-4" /></button>
             </div>
             <textarea className="mt-2 min-h-24 w-full rounded-xl border border-navy/10 bg-white p-3 text-sm" value={seg.text} onChange={(e) => updateSeg(i, { text: e.target.value })} aria-label="Tekst segmentu" />

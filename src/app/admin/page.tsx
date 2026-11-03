@@ -16,7 +16,7 @@ export default async function AdminDashboard() {
     <div className="space-y-6">
       <h1 className="text-3xl font-semibold">Dashboard biznesowy</h1>
       {(!hasElevenLabs() || !hasOpenAI() || config.budget.monthlyUsd <= 0) && (
-        <div className="flex flex-wrap items-center gap-4 rounded-2xl border-2 border-gold bg-gold/15 p-4" data-testid="api-keys-prompt">
+        <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-gold/50 bg-gold/10 p-4" data-testid="api-keys-prompt">
           <KeyRound className="h-8 w-8 flex-none text-gold-deep" />
           <div className="flex-1">
             <p className="font-display text-lg font-semibold text-navy">Podaj klucze API, aby Elofik zaczął mówić prawdziwym głosem</p>
@@ -25,8 +25,8 @@ export default async function AdminDashboard() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Link href="/admin/ustawienia" className={buttonVariants({ size: "md" })}>Uzupełnij klucze API</Link>
-            {config.elevenlabs.apiKey && !config.elevenlabs.voiceId && <Link href="/admin/glos" className={buttonVariants({ size: "md", variant: "soft" })}>Wybierz głos Elofika</Link>}
+            <Link href="/admin/ustawienia" data-ui="button" data-variant="primary" data-size="md" className={buttonVariants({ size: "md" })}>Uzupełnij klucze API</Link>
+            {config.elevenlabs.apiKey && !config.elevenlabs.voiceId && <Link href="/admin/glos" data-ui="button" data-variant="soft" data-size="md" className={buttonVariants({ size: "md", variant: "soft" })}>Wybierz głos Elofika</Link>}
           </div>
         </div>
       )}

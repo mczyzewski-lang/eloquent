@@ -2,7 +2,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("card-soft p-6", className)} {...props} />;
+  return <div data-ui="card" className={cn("card-soft p-6", className)} {...props} />;
 }
 
 export function Badge({ className, tone = "gold", ...props }: React.HTMLAttributes<HTMLSpanElement> & { tone?: "gold" | "sage" | "navy" | "peach" | "muted" }) {
@@ -13,7 +13,7 @@ export function Badge({ className, tone = "gold", ...props }: React.HTMLAttribut
     peach: "bg-peach text-navy",
     muted: "bg-navy/5 text-muted",
   };
-  return <span className={cn("inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide", tones[tone], className)} {...props} />;
+  return <span data-ui="badge" data-tone={tone} className={cn("inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide", tones[tone], className)} {...props} />;
 }
 
 export function SectionTitle({ eyebrow, title, subtitle, className }: { eyebrow?: string; title: React.ReactNode; subtitle?: React.ReactNode; className?: string }) {
