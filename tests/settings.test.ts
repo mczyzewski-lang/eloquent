@@ -49,6 +49,8 @@ describe("Klucze API z panelu admina", () => {
 
   it("walidacja formatu", () => {
     expect(validateSetting("openai_api_key", "abc")).not.toBeNull();
+    expect(validateSetting("elevenlabs_api_key", "0123456789abcdef0123456789abcdef")).toMatch(/sk_/); // Key ID zamiast klucza
+    expect(validateSetting("elevenlabs_api_key", "sk_0123456789abcdef0123456789abcdef")).toBeNull();
     expect(validateSetting("openai_api_key", OA_KEY)).toBeNull();
     expect(validateSetting("ai_monthly_budget_usd", "-5")).not.toBeNull();
     expect(validateSetting("elevenlabs_voice_id", "zły id!")).not.toBeNull();

@@ -53,6 +53,7 @@ async function testElevenLabs() {
   const results: string[] = [];
   let anyOk = false;
   let authFailed = false;
+  let keyIdUsed = false;
   let plan = "";
   for (const c of checks) {
     const res = await get(c.path);
@@ -66,6 +67,7 @@ async function testElevenLabs() {
     } else {
       const reason = await elReason(res);
       if (res.status === 401 && /invalid_api_key|invalid api key/i.test(reason)) authFailed = true;
+      if (/api_key_id_used_as_api_key/i.test(reason)) keyIdUsed = true;
       results.push(`✗ ${c.name}: HTTP ${res.status}${reason ? ` — ${reason}` : ""}`);
     }
   }
@@ -74,6 +76,8 @@ async function testElevenLabs() {
     const v = await get(`/v1/voices/${encodeURIComponent(config.elevenlabs.voiceId)}`);
     voice = v.ok ? `Głos: ${((await v.json()) as { name?: string }).name ?? "OK"}` : `Głos ${config.elevenlabs.voiceId}: HTTP ${v.status} — ${await elReason(v)}`;
   }
+  if (keyIdUsed && !anyOk)
+    return { ok: false, message: "Wklejono identyfikator klucza (Key ID), a nie sam klucz. W ElevenLabs → Developers → API Keys utwórz nowy klucz (albo kliknij „Rotate” przy istniejącym) i skopiuj wartość zaczynającą się od „sk_” — jest pokazywana tylko raz. Wklej ją w pole „ElevenLabs — klucz API” i zapisz." };
   if (authFailed && !anyOk) return { ok: false, message: `ElevenLabs nie rozpoznaje klucza (sprawdź, czy wklejono cały klucz, bez spacji). ${results.join(" · ")}` };
   if (!anyOk) return { ok: false, message: `Klucz nie ma potrzebnych uprawnień. ${results.join(" · ")}. W ElevenLabs → API Keys włącz: Text to Speech, Speech to Text, Text to Voice, Voices (zapis i odczyt), Models (odczyt), User (odczyt).` };
   return { ok: true, message: `Klucz działa${plan}. ${results.join(" · ")}. ${voice}` };
