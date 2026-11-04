@@ -68,13 +68,13 @@ export default async function LandingPage() {
         <Ornament className="mt-4" />
         <div className="mt-10 grid gap-5 sm:grid-cols-3">
           {[
-            { icon: Users, title: "Przedstaw nam swoją rodzinę", text: "Imię dziecka, a jeśli chcesz — mamy, taty, dziadków, rodzeństwa i zwierzaka. Wszystko opcjonalne, zajmie minutę." },
-            { icon: Sun, title: "Każdego dnia nowa przygoda", text: "O 6:00 rano odblokowuje się kolejna bajka. Jedna dziennie, 5–10 minut, z jednym mądrym słowem w roli głównej." },
-            { icon: Ear, title: "„Hej Elofik!” i słuchamy", text: "Dziecko woła Elofika, a on odpowiada po imieniu i zaczyna opowieść. Ekran można odłożyć — liczy się słuchanie." },
+            { icon: Users, mood: "hug" as const, title: "Przedstaw nam swoją rodzinę", text: "Imię dziecka, a jeśli chcesz — mamy, taty, dziadków, rodzeństwa i zwierzaka. Wszystko opcjonalne, zajmie minutę." },
+            { icon: Sun, mood: "reading" as const, title: "Każdego dnia nowa przygoda", text: "O 6:00 rano odblokowuje się kolejna bajka. Jedna dziennie, 5–10 minut, z jednym mądrym słowem w roli głównej." },
+            { icon: Ear, mood: "hello" as const, title: "„Hej Elofik!” i słuchamy", text: "Dziecko woła Elofika, a on odpowiada po imieniu i zaczyna opowieść. Ekran można odłożyć — liczy się słuchanie." },
           ].map((s, i) => (
             <div key={s.title} className="storybook-card relative p-6 pt-10">
               <span className="absolute -top-5 left-6 flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-b from-gold to-gold-deep font-display text-lg font-bold text-navy shadow-[0_0_0_4px_#fff9f0,0_8px_20px_-6px_rgb(233_172_60/0.8)]">{i + 1}</span>
-              <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-sage/20"><s.icon className="h-6 w-6 text-sage-deep" /></span>
+              <div className="flex h-28 items-end"><Elofik mood={s.mood} className="h-28 w-auto [&_img]:h-28 [&_img]:w-auto" /></div>
               <h3 className="mt-3 text-xl font-semibold">{s.title}</h3>
               <p className="mt-2 leading-relaxed text-muted">{s.text}</p>
             </div>
@@ -184,7 +184,6 @@ export default async function LandingPage() {
             <StoryFrame src={art.ritual} alt="Elofik nasłuchuje, przykładając dłoń do ucha" arch className="mx-auto aspect-[4/5] w-full max-w-sm" />
           ) : (
             <div className="relative mx-auto w-56 sm:w-72">
-              <div className="absolute inset-6 rounded-full bg-gold/25 blur-3xl" aria-hidden />
               <Elofik mood="listening" />
             </div>
           )}
@@ -207,14 +206,14 @@ export default async function LandingPage() {
       {/* 7–8. Słownictwo i bez ekranu */}
       <section className="container-page grid gap-6 py-16 lg:grid-cols-2">
         <Card className="storybook-card">
-          <SparklesIcon className="h-7 w-7 text-gold-deep" />
+          <Elofik mood="reading" className="w-24" />
           <h3 className="mt-3 text-2xl font-semibold">Czym jest rozwijanie słownictwa przez opowieści?</h3>
           <p className="mt-3 leading-relaxed text-muted">
             Dzieci uczą się nowych słów przede wszystkim, słuchając ich w ciekawym kontekście — w rozmowie, w zabawie, w historii. Bajka daje słowu emocje, bohaterów i sytuację, którą łatwo zapamiętać. Elofik nie zastąpi rozmowy z rodzicem — daje do niej pretekst.
           </p>
         </Card>
         <Card className="storybook-card">
-          <MonitorOff className="h-7 w-7 text-sage-deep" />
+          <Elofik mood="music" className="w-24" />
           <h3 className="mt-3 text-2xl font-semibold">Bajki bez patrzenia w ekran</h3>
           <p className="mt-3 leading-relaxed text-muted">
             Elofik to słuchowisko. Po powitaniu możesz odłożyć telefon ekranem w dół albo zgasić ekran — opowieść gra dalej, także w tle. Wyobraźnia dziecka maluje resztę. Świetnie sprawdza się przed snem, w aucie i przy wieczornym przytulaniu.
@@ -230,12 +229,12 @@ export default async function LandingPage() {
         {art.family && <StoryFrame src={art.family} alt="Elofik opowiada bajkę babci, dziadkowi i wnukowi" className="mx-auto mt-10 aspect-[3/2] max-w-3xl" />}
         <div className="mt-10 grid gap-6 sm:grid-cols-2">
           <Card className="storybook-card">
-            <Heart className="h-7 w-7 text-peach-deep" />
+            <Elofik mood="love" className="w-20" />
             <h3 className="mt-3 text-xl font-semibold">Dla rodziców</h3>
             <p className="mt-2 text-muted">Prosty, codzienny rytuał, który zajmuje kilka minut. Bez szukania, wybierania i przewijania — dzisiejsza bajka jest zawsze gotowa.</p>
           </Card>
           <Card className="storybook-card">
-            <Gift className="h-7 w-7 text-gold-deep" />
+            <Elofik mood="hug" className="w-24" />
             <h3 className="mt-3 text-xl font-semibold">Dla babci i dziadka</h3>
             <p className="mt-2 text-muted">Stwórz bezpłatną bajkę, w której wystąpicie razem z wnukiem, albo podaruj miesiąc codziennych przygód.</p>
             <Link href="/dla-dziadkow" className={cn(buttonVariants({ variant: "soft", size: "sm" }), "mt-4")}>Zobacz prezent od dziadków</Link>
@@ -264,6 +263,7 @@ export default async function LandingPage() {
 
       {/* 11. FAQ */}
       <section className="container-page py-16">
+        <div className="mx-auto w-24"><Elofik mood="thinking" /></div>
         <SectionTitle eyebrow="FAQ" title="Najczęstsze pytania" />
         <Faq />
       </section>
@@ -281,7 +281,7 @@ export default async function LandingPage() {
           <StarField count={40} seed={17} className="h-2/3" />
           <Fireflies count={10} seed={4} />
           <div className="relative">
-            {!art.goodnight && <div className="mx-auto w-32"><Elofik mood="waving" /></div>}
+            {!art.goodnight && <div className="mx-auto w-32"><Elofik mood="hello" /></div>}
             <h2 className="text-glow mt-4 text-3xl font-semibold !text-cream sm:text-4xl">Elofik już nastawia uszy</h2>
             <p className="mx-auto mt-3 max-w-lg text-lg text-cream/85">Wpisz imię dziecka i posłuchaj, jak brzmi jego pierwsza przygoda.</p>
             <Link href="#probka" className={cn(buttonVariants({ size: "lg" }), "mt-6")}>Posłuchaj darmowej próbki</Link>

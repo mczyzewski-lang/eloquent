@@ -15,7 +15,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     <div className="paper min-h-dvh">
       <SiteHeader />
       <main className="container-page max-w-md py-10">
-        <div className="mx-auto w-28"><Elofik mood="waving" /></div>
+        <div className="mx-auto w-28"><Elofik mood="hello" /></div>
         <h1 className="mt-4 text-center text-3xl font-semibold">Witaj z powrotem!</h1>
         <p className="mt-2 text-center text-muted">Zaloguj się numerem telefonu — wyślemy Ci kod SMS.</p>
         {sp.blad && <p className="mt-4 rounded-2xl bg-red-50 p-3 text-center text-sm text-red-700">Link wygasł lub jest nieprawidłowy. Wyślij nowy.</p>}

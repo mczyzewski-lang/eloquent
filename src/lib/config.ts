@@ -58,6 +58,10 @@ export const config = {
     get voiceVersion() {
       return getOverride("elevenlabs_voice_version") ?? process.env.ELEVENLABS_VOICE_VERSION ?? "VOICE_V1";
     },
+    /** Drugi głos (narrator). Puste = jeden głos (Elofik czyta wszystko). */
+    get narratorVoiceId() {
+      return clean(getOverride("elevenlabs_narrator_voice_id") ?? process.env.ELEVENLABS_NARRATOR_VOICE_ID);
+    },
     // model TTS wybierany razem z głosem w Admin → Głos Elofika
     get ttsModel() {
       return clean(getOverride("elevenlabs_tts_model") ?? process.env.ELEVENLABS_TTS_MODEL) || "eleven_multilingual_v2";

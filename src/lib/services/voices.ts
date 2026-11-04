@@ -24,6 +24,20 @@ export const VOICE_DEMO_TEXT =
   "Heeej, Leonku! Tu Elofik, mały elf opowieści. Ale się cieszę, że znowu jesteś! Dzisiaj w mojej torbie na słowa schowałem coś niezwykłego: słowo dociekliwość. A wszystko zaczęło się od tajemniczego, srebrzystego śladu w zaczarowanym lesie… Usiądź wygodnie i posłuchaj!";
 
 /** Gotowe opisy głosu do Voice Design (można je edytować w panelu). */
+/** Opisy głosu narratora (drugi głos: zapowiedź i narracja). */
+export const NARRATOR_PRESETS: { name: string; description: string }[] = [
+  {
+    name: "Narrator — ciepła lektorka",
+    description:
+      "A warm, calm adult female audiobook narrator speaking Polish with a native Polish accent. Gentle, soothing and expressive, measured bedtime-story pace, clear articulation, like a kind kindergarten teacher reading a picture book aloud.",
+  },
+  {
+    name: "Narrator — spokojny lektor",
+    description:
+      "A warm, deep yet soft adult male storyteller voice speaking Polish with a native Polish accent. Calm, reassuring and friendly, slow cozy pacing for children's bedtime audiobooks, crisp diction, never dramatic or scary.",
+  },
+];
+
 export const VOICE_PRESETS: { name: string; description: string }[] = [
   {
     name: "Ciepły opowiadacz",
@@ -271,6 +285,13 @@ export async function chooseLeadingVoice(voiceId: string, actorEmail: string, mo
   await saveSetting("elevenlabs_voice_version", version, actorEmail);
   if (model) await saveSetting("elevenlabs_tts_model", model, actorEmail);
   return { voiceId, version, model: model ?? config.elevenlabs.ttsModel };
+}
+
+/** Ustawia głos narratora (drugi głos w bajkach). Pusty voiceId = wyłączenie narratora. */
+export async function chooseNarratorVoice(voiceId: string | null, actorEmail: string) {
+  if (voiceId && !/^[A-Za-z0-9]{10,40}$/.test(voiceId)) throw new VoiceStudioError("Nieprawidłowy Voice ID.");
+  await saveSetting("elevenlabs_narrator_voice_id", voiceId ?? "", actorEmail);
+  return { narratorVoiceId: voiceId };
 }
 
 export async function listCandidates(): Promise<VoiceCandidateRow[]> {

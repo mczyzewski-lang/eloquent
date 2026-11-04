@@ -7,7 +7,7 @@
  */
 
 // 2.0 — nowy wygląd Elofika (grafiki dostarczone przez właściciela marki, listopad 2026)
-export const PROMPT_VERSION = "2.0";
+export const PROMPT_VERSION = "2.1";
 
 export const CHARACTER_AND_STYLE_PROMPT = `Create a premium children's storybook illustration featuring ELOFIK, the EXACT SAME RECURRING CHARACTER used throughout the Elofik brand.
 
@@ -18,7 +18,7 @@ SIGNATURE OUTFIT — INVARIANT:
 Elofik wears an olive/leaf-green hooded tunic with a small pale two-leaf emblem on the chest and a round gold toggle button at the collar, beige trousers, brown boots with cream cuffed tops, and a brown leather crossbody satchel with a gold button. He is usually holding the SAME navy-blue storybook with gold corners and a gold four-point star on the cover; small golden sparkles often float near the book. No hat, never a Christmas hat. Keep the outfit identity and palette consistent; adapt only small functional props when the story demands it.
 
 VISUAL STYLE — INVARIANT:
-Clean 2D cartoon children's picture-book illustration with bold, warm dark-brown outlines, flat colors with soft cel shading, rounded friendly shapes and expressive faces — the same style as the supplied Elofik reference. Warm, cozy lighting, a cohesive storybook fantasy world, expressive child-friendly emotions and gentle golden sparkles. Elofik should feel lovable, safe, curious and mascot-ready. The image must look like one frame from a consistent illustrated book series, not like a new character design.
+Flat 2D cartoon illustration in the style of modern preschool TV animation: bold warm dark-brown outlines, flat bright colors with minimal cel shading, simple rounded shapes, clean uncluttered flat-color backgrounds (no painterly textures, no gradients-heavy lighting, no 3D) — the same style as the supplied Elofik reference sheet. Cheerful, cozy everyday-adventure atmosphere, expressive child-friendly emotions and a few simple golden sparkles. Elofik should feel lovable, safe, curious and mascot-ready. The image must look like one frame from a consistent illustrated book series, not like a new character design.
 
 CORE COLOR SYSTEM:
 Warm cream #FDF3E1, deep navy #26344A (storybook), warm gold #F6C34D, olive/leaf green #6E9B35 clothing, ginger-auburn hair, beige trousers, warm brown leather and boots, dark-brown outlines. Environmental colors may change to fit the story while Elofik's identity colors stay stable.

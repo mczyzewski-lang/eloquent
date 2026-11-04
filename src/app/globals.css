@@ -264,3 +264,31 @@
     radial-gradient(700px 420px at 30% 100%, rgb(246 199 109 / 0.18) 0%, transparent 60%);
 }
 .text-glow { text-shadow: 0 2px 24px rgb(246 199 109 / 0.35); }
+
+/* ==========================================================================
+   Styl „płaska kreskówka 2D” (jak w animacjach dla przedszkolaków):
+   płaskie kolory w pasach, grube kontury, naklejkowe cienie bez rozmycia, bez poświat.
+   Nadpisuje wcześniejsze definicje (ta sama specyficzność, później w pliku).
+   ========================================================================== */
+:root {
+  --ink-line: #3b2a1f;      /* ciepły, ciemnobrązowy kontur jak w grafikach Elofika */
+  --sticker: 0 5px 0 rgb(59 42 31 / 0.16);
+}
+.sky-twilight {
+  background: linear-gradient(180deg, #2b3c6e 0 46%, #35498a 46% 66%, #4a5d9c 66% 80%, #7c6fa8 80% 90%, #c08a9a 90% 100%);
+}
+.sky-night {
+  background: linear-gradient(180deg, #223058 0 55%, #2a3a68 55% 100%);
+}
+.night { background: linear-gradient(180deg, #223058 0 55%, #2a3a68 55% 100%); }
+.paper { background: #fff6e6; }
+.paper-grain { background: #fff6e6; }
+.text-glow { text-shadow: 0 3px 0 rgb(20 26 50 / 0.35); }
+.firefly { box-shadow: none; width: 7px; height: 7px; background: #ffd54a; }
+.story-frame { box-shadow: 0 0 0 4px #fff6e6, 0 0 0 7px var(--ink-line), 0 10px 0 7px rgb(20 26 50 / 0.25); }
+.storybook-card {
+  background: #fffdf8;
+  box-shadow: inset 0 0 0 2.5px var(--ink-line), var(--sticker);
+}
+.storybook-card::after { border: 2px dashed rgb(233 172 60 / 0.45); }
+.card-soft { box-shadow: inset 0 0 0 2px rgb(59 42 31 / 0.14), var(--sticker); border: 0; }

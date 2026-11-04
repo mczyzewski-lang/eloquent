@@ -256,3 +256,35 @@ describe("Rutyna słuchania", () => {
     expect(nextRoutineAt(null, tz)).toBeNull();
   });
 });
+
+describe("Dwa głosy: narrator i Elofik", () => {
+  it("dzieli dialog według pauz (—)", async () => {
+    const { splitNarration } = await import("@/lib/domain/narration");
+    const parts = splitNarration("Tego ranka Elofik usłyszał coś wyjątkowego. Usłyszał Ciebie! — Dzień dobry, Leonku! — zawołał radośnie. — Jak dobrze, że jesteś. Mam przeczucie, że dzisiaj wydarzy się coś bardzo ciekawego. Pójdziesz ze mną?");
+    expect(parts).toEqual([
+      { speaker: "narrator", text: "Tego ranka Elofik usłyszał coś wyjątkowego. Usłyszał Ciebie!" },
+      { speaker: "elofik", text: "Dzień dobry, Leonku!" },
+      { speaker: "narrator", text: "zawołał radośnie." },
+      { speaker: "elofik", text: "Jak dobrze, że jesteś. Mam przeczucie, że dzisiaj wydarzy się coś bardzo ciekawego. Pójdziesz ze mną?" },
+    ]);
+  });
+  it("po kwestii bez pauzy wraca do narracji", async () => {
+    const { splitNarration } = await import("@/lib/domain/narration");
+    const parts = splitNarration("— Hmm — mruknął Elofik i przyłożył palec do brody. — Kto zostawił takie ślady? Elofik ruszył dalej ścieżką.");
+    expect(parts.map((p) => p.speaker)).toEqual(["elofik", "narrator", "elofik", "narrator"]);
+    expect(parts[3].text).toBe("Elofik ruszył dalej ścieżką.");
+  });
+  it("jawne znaczniki redakcji i tekst bez dialogu", async () => {
+    const { splitNarration } = await import("@/lib/domain/narration");
+    expect(splitNarration("[elofik] Hej! [narrator] powiedział cicho.")).toEqual([{ speaker: "elofik", text: "Hej!" }, { speaker: "narrator", text: "powiedział cicho." }]);
+    expect(splitNarration("Dawno, dawno temu…")).toEqual([{ speaker: "narrator", text: "Dawno, dawno temu…" }]);
+  });
+  it("każdy segment bajek startowych daje sensowny podział", async () => {
+    const { splitNarration } = await import("@/lib/domain/narration");
+    for (const st of STORY_CATALOG) for (const seg of st.segments) {
+      const parts = splitNarration(seg.text);
+      expect(parts.length).toBeGreaterThan(0);
+      expect(parts.every((p) => p.text.length > 0 && !p.text.startsWith("—"))).toBe(true);
+    }
+  });
+});

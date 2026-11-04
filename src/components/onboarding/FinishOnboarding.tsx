@@ -23,7 +23,7 @@ export function FinishOnboarding() {
   }, [router]);
   return (
     <main className="paper flex min-h-dvh flex-col items-center justify-center p-6 text-center">
-      <div className="w-32"><Elofik mood="listening" /></div>
+      <div className="w-32"><Elofik mood="jumping" /></div>
       <p className="mt-4 font-display text-xl text-navy">{err ?? "Elofik zapisuje imiona w swojej księdze…"}</p>
       {err && <a href="/onboarding" className="mt-4 underline">Wróć do onboardingu</a>}
     </main>

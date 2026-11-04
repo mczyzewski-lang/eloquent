@@ -326,7 +326,7 @@ function StoryPlayer({
         <div className="mx-auto max-w-md text-center">
           <div className="relative mx-auto w-40">
             <Sparkles />
-            <Elofik mood="happy" />
+            <Elofik mood="jumping" />
           </div>
           <p className="mt-4 text-sm font-bold uppercase tracking-[0.18em] text-gold-deep">{story.dayNumber > 0 ? `Dzień ${story.dayNumber}` : "Sekretna bajka"}</p>
           <h1 className="mt-2 text-3xl font-semibold">Dzisiaj poznaliśmy słowo: <span className="uppercase text-gold-deep">{story.wordOfDay}</span>!</h1>

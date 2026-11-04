@@ -108,7 +108,7 @@ export function StoryEditor({ initial, status, issues: initialIssues, versions, 
 
       <div className="space-y-3">
         <h2 className="text-xl font-semibold">Segmenty</h2>
-        <p className="text-sm text-muted">Zmienne: {"{child}"} (zwrot), {"{child.name}"}, {"{mom} {dad} {grandma} {grandpa} {brother} {sister} {dog} {cat} {other}"} — zawsze w mianowniku; rodzaj: {"{g:męska|żeńska|neutralna}"}.</p>
+        <p className="text-sm text-muted">Zmienne: {"{child}"} (zwrot), {"{child.name}"}, {"{mom} {dad} {grandma} {grandpa} {brother} {sister} {dog} {cat} {other}"} — zawsze w mianowniku; rodzaj: {"{g:męska|żeńska|neutralna}"}. Dwa głosy: kwestie po pauzie „—” czyta Elofik, resztę narrator (np. „— Hej! — zawołał Elofik.”); wymuszenie głosu: [narrator] / [elofik].</p>
         {s.segments.map((seg, i) => (
           <div key={i} className={cn("rounded-2xl border border-navy/10 p-4", TYPE_TONE[seg.type])}>
             <div className="flex flex-wrap items-center gap-2">

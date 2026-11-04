@@ -27,7 +27,7 @@ export default async function ActivateGiftPage({ params }: { params: Promise<{ t
       <PageView event="gift_activation_viewed" />
       <SiteHeader />
       <main className="container-page max-w-lg py-8 text-center">
-        <div className="relative mx-auto w-36"><Sparkles /><Elofik mood="waving" /></div>
+        <div className="relative mx-auto w-36"><Sparkles /><Elofik mood="hug" /></div>
         <h1 className="mt-4 text-3xl font-semibold">{giverCap} {verb} prezent{gen ? ` dla ${gen}` : ""}: codzienne przygody z Elofikiem!</h1>
         <p className="mt-4 text-lg leading-relaxed text-muted">
           Każdego dnia {name} może odkrywać nową bajkę, poznawać wartościowe słowa i przeżywać przygody z Elofikiem. A w historiach może pojawiać się także {giver}.

@@ -21,7 +21,7 @@ export default async function SubscriptionPage({ searchParams }: { searchParams:
     <div className="paper min-h-dvh">
       <SiteHeader variant={family ? "app" : "parents"} />
       <main className="container-page max-w-lg py-10">
-        <div className="mx-auto w-28"><Elofik mood="waving" /></div>
+        <div className="mx-auto w-28"><Elofik mood="love" /></div>
         <h1 className="mt-4 text-center text-3xl font-semibold">Elofik Premium</h1>
         <p className="mt-2 text-center text-muted">Codzienny rytuał, który rozwija słownictwo i wyobraźnię.</p>
         {sp.anulowano && <p className="mt-4 rounded-2xl bg-peach p-3 text-center text-sm">Płatność została przerwana — nic nie pobraliśmy.</p>}

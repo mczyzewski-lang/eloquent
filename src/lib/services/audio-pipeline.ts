@@ -5,11 +5,11 @@
 import { config } from "@/lib/config";
 import { getDb, nowIso, type AudioAssemblyRow, type AudioCacheRow } from "@/lib/db";
 import { getStorage } from "@/lib/storage";
-import { getTts, currentVoiceProfile } from "@/lib/audio/tts";
+import { getTts, currentVoiceProfile, narratorVoiceProfile } from "@/lib/audio/tts";
 import { assembleSegments } from "@/lib/audio/ffmpeg";
 import { wavDurationMs } from "@/lib/audio/wav";
 import { estimateTtsUsd, type CostPurpose } from "@/lib/domain/budget";
-import { buildRenderPlan, type PlannedSegment, type RenderPlan, type StoryVersion } from "@/lib/domain/story";
+import { buildRenderPlan, type PlannedSegment, type RenderPlan, type StoryVersion, type VoiceProfile } from "@/lib/domain/story";
 import type { TemplateContext } from "@/lib/domain/templates";
 import { assertBudget, recordCost } from "./costs";
 import { storyIntro, type StoryIntro } from "@/lib/domain/intro";
@@ -35,6 +35,8 @@ export interface SegmentContext {
   language?: string;
   previousText?: string;
   nextText?: string;
+  /** Głos inny niż Elofik (narrator). */
+  voice?: VoiceProfile;
 }
 
 export async function ensureSegmentAudio(text: string, cacheKey: string, ctx: SegmentContext): Promise<AudioCacheRow> {
@@ -52,7 +54,7 @@ export async function ensureSegmentAudio(text: string, cacheKey: string, ctx: Se
     const tts = getTts();
     const estimated = estimateTtsUsd(text.length, config.elevenlabs.ttsUsdPer1kChars);
     if (tts.name !== "mock") await assertBudget(ctx.purpose, estimated);
-    const voice = currentVoiceProfile();
+    const voice = ctx.voice ?? currentVoiceProfile();
     const res = await tts.synthesize(text, voice, ctx.language ?? "pl", { previousText: ctx.previousText, nextText: ctx.nextText });
     const storagePath = `tts/${cacheKey.slice(0, 2)}/${cacheKey}.${res.ext}`;
     await getStorage().put(storagePath, res.audio, res.contentType);
@@ -111,6 +113,7 @@ export async function assemblePlan(plan: RenderPlan, opts: { familyId?: string |
         language: opts.language,
         previousText: seg.previousText,
         nextText: seg.nextText,
+        voice: seg.voice,
       });
       if (before) reused++;
       else generated++;
@@ -162,7 +165,7 @@ export async function renderStoryForFamily(story: StoryVersion, ctx: TemplateCon
     const listenedBefore = (await db.find("listening_progress", { family_id: familyId })).some((p) => p.play_count > 0 && p.story_id !== story.storyId);
     intro = storyIntro(ctx.child.address, opts.introAt ?? new Date(), family?.timezone ?? config.defaultTimezone, story.dayNumber <= 1 && !listenedBefore);
   }
-  const plan = buildRenderPlan(story, ctx, currentVoiceProfile(), intro);
+  const plan = buildRenderPlan(story, ctx, currentVoiceProfile(), intro, narratorVoiceProfile());
   const res = await assemblePlan(plan, { familyId, language: story.locale });
   if (familyId) {
     await getDb().upsert("family_assemblies", { family_id: familyId, story_id: story.storyId, assembly_key: plan.assemblyKey, created_at: nowIso() }, ["family_id", "story_id"]);
@@ -173,11 +176,11 @@ export async function renderStoryForFamily(story: StoryVersion, ctx: TemplateCon
 /** Generuje wyłącznie wspólne segmenty (CORE/EDUCATIONAL/fallback) — uruchamiane raz przy publikacji. */
 export async function generateCore(story: StoryVersion) {
   await ensureRuntimeSettings();
-  const plan = buildRenderPlan(story, null, currentVoiceProfile());
+  const plan = buildRenderPlan(story, null, currentVoiceProfile(), null, narratorVoiceProfile());
   let generated = 0;
   for (const seg of plan.segments.filter((s) => s.shared)) {
     const before = await getDb().findOne("audio_cache", { cache_key: seg.cacheKey });
-    await ensureSegmentAudio(seg.text, seg.cacheKey, { purpose: "core", storyId: story.storyId, segmentType: seg.type, shared: true, language: story.locale });
+    await ensureSegmentAudio(seg.text, seg.cacheKey, { purpose: "core", storyId: story.storyId, segmentType: seg.type, shared: true, language: story.locale, voice: seg.voice, previousText: seg.previousText, nextText: seg.nextText });
     if (!before) generated++;
   }
   return { generated, total: plan.segments.filter((s) => s.shared).length };

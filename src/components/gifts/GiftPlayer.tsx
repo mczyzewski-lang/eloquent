@@ -49,7 +49,7 @@ export function GiftPlayer({ audioUrl, provider, timeline }: { audioUrl: string;
         <button type="button" onClick={playing ? pause : play} aria-label={playing ? "Pauza" : "Odtwórz"} className="flex h-16 w-16 flex-none items-center justify-center rounded-full bg-gold text-navy shadow-soft" data-testid="gift-play">
           {playing ? <Pause className="h-8 w-8" /> : <Play className="ml-1 h-8 w-8" />}
         </button>
-        <div className="w-14 flex-none"><Elofik mood={playing ? "telling" : "idle"} /></div>
+        <div className="w-14 flex-none"><Elofik mood={playing ? "reading" : "hello"} /></div>
         <button type="button" onClick={() => { pause(); if (ref.current) ref.current.currentTime = 0; play(); }} className="ml-auto inline-flex items-center gap-1 text-sm font-semibold text-muted"><RotateCcw className="h-4 w-4" /> Posłuchaj ponownie</button>
       </div>
       <p className="mt-4 min-h-16 text-lg leading-relaxed text-navy">{caption}</p>

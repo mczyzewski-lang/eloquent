@@ -3,6 +3,7 @@
  * Plan renderu jest czystą funkcją — łatwo testowalną i deterministyczną.
  */
 import { INTRO_TEMPLATE_VERSION, type StoryIntro } from "./intro";
+import { splitNarration, storyAnnouncement, type Speaker } from "./narration";
 import { ttsCacheKey, assemblyKey, type TtsCacheInput } from "./hash";
 import { applyPronunciation, PRONUNCIATION_VERSION } from "./pronunciation";
 import { renderTemplate, requiredRelations, usesChild, type TemplateContext, type RelationType } from "./templates";
@@ -67,6 +68,10 @@ export interface PlannedSegment {
   /** Sąsiedni tekst (ElevenLabs previous_text/next_text) — płynniejsze sklejanie krótkich fragmentów */
   previousText?: string;
   nextText?: string;
+  /** Kto czyta fragment (gdy bajka ma dwa głosy). */
+  speaker?: Speaker;
+  /** Profil głosu innego niż domyślny (narrator). */
+  voice?: VoiceProfile;
 }
 
 export interface RenderPlan {
@@ -95,9 +100,14 @@ function introKey(text: string, story: StoryVersion, voice: VoiceProfile): strin
   return ttsCacheKey({ text, voiceId: voice.voiceId, modelId: voice.modelId, voiceSettings: voice.settings, language: story.locale, templateVersion: INTRO_TEMPLATE_VERSION, pronunciationVersion: PRONUNCIATION_VERSION });
 }
 
-export function buildRenderPlan(story: StoryVersion, ctx: TemplateContext | null, voice: VoiceProfile, intro?: StoryIntro | null): RenderPlan {
+export function buildRenderPlan(story: StoryVersion, ctx: TemplateContext | null, voice: VoiceProfile, intro?: StoryIntro | null, narrator?: VoiceProfile | null): RenderPlan {
   const ordered = [...story.segments].sort((a, b) => a.order - b.order);
   const planned: PlannedSegment[] = [];
+  if (narrator) {
+    // zapowiedź bajki — narrator, wspólna dla wszystkich rodzin
+    const text = applyPronunciation(storyAnnouncement(story.title, story.wordOfDay));
+    planned.push({ segmentId: "announce", type: "CORE", text, cacheKey: keyFor(text, story, narrator), shared: true, pauseAfterMs: 600, speaker: "narrator", voice: narrator });
+  }
   if (intro && ctx) {
     const personal = applyPronunciation(intro.personal);
     const shared = applyPronunciation(intro.shared);
@@ -127,11 +137,39 @@ export function buildRenderPlan(story: StoryVersion, ctx: TemplateContext | null
     const shared = needsFamily.length === 0 && !usesChild(seg.text);
     planned.push({ segmentId: seg.id, type: seg.type, text, cacheKey: keyFor(text, story, voice), shared, pauseAfterMs });
   }
+  const final = narrator ? splitPlanByVoice(planned, story, voice, narrator) : planned;
   const aKey = assemblyKey(
-    planned.map((p) => `${p.cacheKey}:${p.pauseAfterMs}`),
+    final.map((p) => `${p.cacheKey}:${p.pauseAfterMs}`),
     `${MASTERING_VERSION}:${story.storyId}:v${story.version}`,
   );
-  return { storyId: story.storyId, version: story.version, segments: planned, assemblyKey: aKey };
+  return { storyId: story.storyId, version: story.version, segments: final, assemblyKey: aKey };
+}
+
+/** Rozbija segmenty na fragmenty narratora i Elofika (powitanie i zapowiedź mają już przypisany głos). */
+function splitPlanByVoice(planned: PlannedSegment[], story: StoryVersion, elofik: VoiceProfile, narrator: VoiceProfile): PlannedSegment[] {
+  const out: PlannedSegment[] = [];
+  for (const seg of planned) {
+    if (seg.speaker || seg.segmentId.startsWith("intro-")) {
+      out.push({ ...seg, speaker: seg.speaker ?? "elofik" });
+      continue;
+    }
+    const parts = splitNarration(seg.text, "narrator");
+    parts.forEach((part, i) => {
+      const v = part.speaker === "narrator" ? narrator : elofik;
+      out.push({
+        ...seg,
+        segmentId: parts.length > 1 ? `${seg.segmentId}~${i + 1}` : seg.segmentId,
+        text: part.text,
+        cacheKey: keyFor(part.text, story, v),
+        pauseAfterMs: i < parts.length - 1 ? 150 : seg.pauseAfterMs,
+        previousText: parts[i - 1]?.text,
+        nextText: parts[i + 1]?.text,
+        speaker: part.speaker,
+        voice: part.speaker === "narrator" ? narrator : undefined,
+      });
+    });
+  }
+  return out;
 }
 
 export function personalizedSegmentCount(story: StoryVersion): number {

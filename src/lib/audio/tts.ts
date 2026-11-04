@@ -50,6 +50,15 @@ export function currentVoiceProfile(): VoiceProfile {
   };
 }
 
+/** Głos narratora (ten sam model i ustawienia co Elofik). null = bajkę czyta jeden głos. */
+export function narratorVoiceProfile(): VoiceProfile | null {
+  const id = config.elevenlabs.narratorVoiceId;
+  const elofik = currentVoiceProfile();
+  // w trybie demo (bez ElevenLabs) narrator działa „na niby”: osobne klucze cache, ten sam syntezator
+  if (!id || id === elofik.voiceId) return null;
+  return { ...elofik, voiceId: id, voiceVersion: `NARRATOR_${id.slice(0, 8).toUpperCase()}` };
+}
+
 class ElevenLabsTts implements TtsProvider {
   readonly name = "elevenlabs" as const;
   async synthesize(text: string, voice: VoiceProfile, language: string, context?: TtsContext): Promise<TtsResult> {

@@ -112,7 +112,6 @@ export function SampleExperience({ variant = "parents" }: { variant?: "parents" 
   return (
     <div className="relative mx-auto w-full max-w-md">
       <div className="relative mx-auto w-40 sm:w-64">
-        <div className="absolute inset-x-6 bottom-6 top-10 rounded-full bg-gold/30 blur-3xl" aria-hidden />
         {(phase === "playing" || phase === "done") && <Sparkles />}
         <motion.div animate={phase === "idle" ? { y: [0, -8, 0] } : { y: 0 }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}>
           <Elofik mood={mood} />

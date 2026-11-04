@@ -85,7 +85,7 @@ export default async function GrandparentsPage({ searchParams }: { searchParams:
       {/* Kreator niespodzianki */}
       <section className="relative overflow-x-clip"><div className="container-page relative max-w-2xl py-12">
         <div className="relative">
-          <div className="absolute -inset-6 rounded-[3rem] bg-gold/15 blur-2xl" aria-hidden />
+          <div className="hidden" aria-hidden />
           <div className="storybook-card relative p-2 [&_form]:bg-transparent [&_form]:shadow-none">
             <GiftCreator />
           </div>

@@ -5,7 +5,7 @@ import { auditLog } from "@/lib/auth/guards";
 import { getDb } from "@/lib/db";
 import { getStorage } from "@/lib/storage";
 import type { VoiceCandidateRow } from "@/lib/db";
-import { chooseLeadingVoice, demoLibraryVoice, designVoices, listCandidates, listLibraryVoices, listTtsModels, renderModelDemos, saveDesignedVoice, VOICE_DESIGN_MODELS, VoiceStudioError } from "@/lib/services/voices";
+import { chooseLeadingVoice, chooseNarratorVoice, demoLibraryVoice, designVoices, listCandidates, listLibraryVoices, listTtsModels, renderModelDemos, saveDesignedVoice, VOICE_DESIGN_MODELS, VoiceStudioError } from "@/lib/services/voices";
 
 export const maxDuration = 300;
 
@@ -18,6 +18,8 @@ const body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("tts_models") }),
   z.object({ action: z.literal("model_demos"), candidateId: z.string().uuid(), models: z.array(z.string().max(60)).min(1).max(8) }),
   z.object({ action: z.literal("delete"), candidateId: z.string().uuid() }),
+  z.object({ action: z.literal("narrator"), voiceId: z.string().max(40), candidateId: z.string().uuid().optional() }),
+  z.object({ action: z.literal("narrator_off") }),
 ]);
 
 async function view(c: VoiceCandidateRow) {
@@ -70,6 +72,18 @@ export async function POST(req: Request) {
       case "model_demos": {
         const row = await renderModelDemos(b.candidateId, b.models);
         return json({ candidate: await view(row) });
+      }
+      case "narrator": {
+        let voiceId = b.voiceId;
+        if (!voiceId && b.candidateId) voiceId = (await saveDesignedVoice(b.candidateId)).voice_id!;
+        const res = await chooseNarratorVoice(voiceId, user.email);
+        await auditLog(user, "voice.narrator", voiceId);
+        return json(res);
+      }
+      case "narrator_off": {
+        await chooseNarratorVoice(null, user.email);
+        await auditLog(user, "voice.narrator_off", null);
+        return json({ narratorVoiceId: null });
       }
       case "delete": {
         await getDb().delete("voice_candidates", { id: b.candidateId });

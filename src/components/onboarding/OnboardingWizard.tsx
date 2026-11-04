@@ -200,7 +200,7 @@ export function OnboardingWizard({ initialName, auth, loggedIn, day1Cover }: { i
           {step === 1 && (
             <div className="space-y-6">
               <div className="flex items-center gap-4">
-                <div className="w-16 flex-none"><Elofik mood="waving" /></div>
+                <div className="w-16 flex-none"><Elofik mood="hello" /></div>
                 <h1 className="text-2xl font-semibold">Poznajmy się! Kto będzie słuchał bajek?</h1>
               </div>
               <div>
@@ -256,7 +256,10 @@ export function OnboardingWizard({ initialName, auth, loggedIn, day1Cover }: { i
 
           {step === 2 && (
             <div className="space-y-6">
-              <h1 className="text-2xl font-semibold">Kto jeszcze może występować w bajkach Elofika?</h1>
+              <div className="flex items-center gap-4">
+                <div className="w-16 flex-none"><Elofik mood="hug" /></div>
+                <h1 className="text-2xl font-semibold">Kto jeszcze może występować w bajkach Elofika?</h1>
+              </div>
               <p className="text-muted">Wszystko opcjonalne. Dodaj tylko te osoby, które chcesz — możesz to zmienić później.</p>
               <ul className="space-y-2" aria-label="Rodzina i bliscy">
                 {GROUPS.map((g) => {
@@ -314,7 +317,10 @@ export function OnboardingWizard({ initialName, auth, loggedIn, day1Cover }: { i
 
           {step === 3 && (
             <div className="space-y-6">
-              <h1 className="text-2xl font-semibold">{gen ? `Co najbardziej ciekawi ${gen}?` : "Co najbardziej ciekawi Twoje dziecko?"}</h1>
+              <div className="flex items-center gap-4">
+                <div className="w-16 flex-none"><Elofik mood="idea" /></div>
+                <h1 className="text-2xl font-semibold">{gen ? `Co najbardziej ciekawi ${gen}?` : "Co najbardziej ciekawi Twoje dziecko?"}</h1>
+              </div>
               <p className="text-muted">Pomoże nam to polecać przygody. Wybierz dowolnie wiele.</p>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {INTERESTS.map((i) => {
@@ -333,7 +339,10 @@ export function OnboardingWizard({ initialName, auth, loggedIn, day1Cover }: { i
 
           {step === 4 && (
             <div className="space-y-6">
-              <h1 className="text-2xl font-semibold">{gen ? `Kiedy w ciągu dnia ${gen} będzie słuchać bajek?` : "Kiedy w ciągu dnia dziecko będzie słuchać bajek?"}</h1>
+              <div className="flex items-center gap-4">
+                <div className="w-16 flex-none"><Elofik mood="music" /></div>
+                <h1 className="text-2xl font-semibold">{gen ? `Kiedy w ciągu dnia ${gen} będzie słuchać bajek?` : "Kiedy w ciągu dnia dziecko będzie słuchać bajek?"}</h1>
+              </div>
               <p className="rounded-2xl bg-sage/15 p-4 text-sm leading-relaxed text-navy">
                 <strong>Dzieci kochają rutynę i najlepiej uczą się w powtarzalnym rytmie.</strong> Stała pora sprawia, że bajka z Elofikiem staje się wyczekiwaną częścią dnia — a nowe słowa utrwalają się same. Wybierz porę, która pasuje Wam najbardziej; Elofik przywita się „w ten … poranek” albo „wieczór”, a my przypomnimy o bajce o tej porze.
               </p>
@@ -371,7 +380,10 @@ export function OnboardingWizard({ initialName, auth, loggedIn, day1Cover }: { i
 
           {step === 6 && (
             <div className="space-y-6">
-              <h1 className="text-2xl font-semibold">Ostatni krok: konto rodzica</h1>
+              <div className="flex items-center gap-4">
+                <div className="w-16 flex-none"><Elofik mood="wink" /></div>
+                <h1 className="text-2xl font-semibold">Ostatni krok: konto rodzica</h1>
+              </div>
               <p className="text-muted">Podaj swój numer telefonu — otrzymasz kod SMS, którym potwierdzisz konto. Konto zakłada dorosły opiekun; przechowujemy tylko to, co potrzebne do działania bajek.</p>
               {loggedIn ? (
                 <Button size="lg" className="w-full" onClick={finish} disabled={saving}>

@@ -299,3 +299,39 @@ describe("Zaproś 3 rodziny → miesiąc gratis + sekretna bajka", () => {
     expect(smallText).toContain("Pani Sowa");
   });
 });
+
+describe("Dwa głosy: narrator i Elofik", () => {
+  it("zapowiedź i narracja — narrator, kwestie — Elofik; wspólne fragmenty z cache dla innych rodzin", async () => {
+    const { saveSetting, ensureRuntimeSettings } = await import("@/lib/settings/runtime");
+    const { narratorVoiceProfile } = await import("@/lib/audio/tts");
+    await ensureRuntimeSettings(true);
+    await saveSetting("elevenlabs_narrator_voice_id", "Narrator0123456789AB", "a@x.pl");
+    const narrator = narratorVoiceProfile()!;
+    expect(narrator.voiceId).toBe("Narrator0123456789AB");
+    const plan = buildRenderPlan(STORY_CATALOG[0], ctxFor("Leon"), currentVoiceProfile(), null, narrator);
+    expect(plan.segments[0]).toMatchObject({ segmentId: "announce", speaker: "narrator", text: "Elofik i tajemniczy ślad. Bajka o słowie: dociekliwość." });
+    const hello = plan.segments.filter((s) => s.segmentId.startsWith("child-hello"));
+    expect(hello.map((s) => [s.speaker, s.text])).toEqual([
+      ["narrator", "Tego ranka Elofik usłyszał coś wyjątkowego. Usłyszał Ciebie!"],
+      ["elofik", "Dzień dobry, Leonku!"],
+      ["narrator", "zawołał radośnie."],
+      ["elofik", "Jak dobrze, że jesteś. Mam przeczucie, że dzisiaj wydarzy się coś bardzo ciekawego. Pójdziesz ze mną?"],
+    ]);
+    // ten sam tekst w różnych głosach = różne nagrania
+    expect(new Set(hello.map((s) => s.cacheKey)).size).toBe(4);
+    expect(hello.filter((s) => s.speaker === "narrator").every((s) => s.voice?.voiceId === "Narrator0123456789AB")).toBe(true);
+    // „zawołał radośnie.” jest wspólne dla wszystkich dzieci
+    const other = buildRenderPlan(STORY_CATALOG[0], ctxFor("Kasia"), currentVoiceProfile(), null, narrator);
+    expect(other.segments.find((s) => s.text === "zawołał radośnie.")?.cacheKey).toBe(hello[2].cacheKey);
+    // nagranie: narrator idzie głosem narratora
+    const voices: string[] = [];
+    const tts = env.tts as unknown as { synthesize: (text: string, voice: { voiceId: string }) => Promise<unknown> };
+    const orig = tts.synthesize.bind(tts);
+    tts.synthesize = async (text, voice) => { voices.push(voice.voiceId); return orig(text, voice); };
+    await assemblePlan(plan, { purposeShared: "core", purposePersonal: "personalization" });
+    expect(voices).toContain("Narrator0123456789AB");
+    expect(voices).toContain(currentVoiceProfile().voiceId);
+    await saveSetting("elevenlabs_narrator_voice_id", "", "a@x.pl");
+    expect(narratorVoiceProfile()).toBeNull();
+  });
+});

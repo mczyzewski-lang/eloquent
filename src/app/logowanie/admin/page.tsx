@@ -15,7 +15,7 @@ export default async function AdminLoginPage() {
     <div className="paper min-h-dvh">
       <SiteHeader />
       <main className="container-page max-w-md py-10">
-        <div className="mx-auto w-24"><Elofik mood="listening" /></div>
+        <div className="mx-auto w-24"><Elofik mood="confident" /></div>
         <h1 className="mt-4 text-center text-3xl font-semibold">Panel administratora</h1>
         <div className="card-soft mt-6 p-6">{adminPasswordConfigured() ? <AdminLoginForm /> : <ConfigHelp />}</div>
       </main>

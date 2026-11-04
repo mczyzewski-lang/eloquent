@@ -171,7 +171,7 @@ export function VoiceGreeting({ storyId, locale, childName, needsConsent, onUser
     setPhase("intro");
   }
 
-  const mood: ElofikMood = phase === "listening" || phase === "connecting" ? "listening" : phase === "responding" ? "waving" : phase === "transition" ? "happy" : "idle";
+  const mood: ElofikMood = phase === "listening" || phase === "connecting" ? "listening" : phase === "responding" ? "hello" : phase === "transition" ? "jumping" : "idle";
   const showFallback = failures >= 2;
 
   return (
@@ -184,7 +184,7 @@ export function VoiceGreeting({ storyId, locale, childName, needsConsent, onUser
 
       <div className="flex w-full max-w-md flex-1 flex-col items-center justify-center text-center">
         <div className="relative w-56 sm:w-64">
-          <div className={cn("absolute inset-6 rounded-full blur-3xl transition", phase === "responding" || phase === "transition" ? "bg-gold/50" : "bg-gold/20")} aria-hidden />
+          <div className={cn("absolute left-1/2 top-1/2 aspect-square w-[90%] -translate-x-1/2 -translate-y-1/2 rounded-full transition", phase === "responding" || phase === "transition" ? "bg-gold/50" : "bg-gold/20")} aria-hidden />
           {(phase === "responding" || phase === "transition") && <Sparkles count={9} />}
           <motion.div animate={phase === "intro" ? { y: [0, -10, 0] } : { y: 0 }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}>
             <Elofik mood={mood} />

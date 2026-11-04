@@ -2,7 +2,10 @@
  * Okładka bajki: ilustracja bazowa (wspólna dla wszystkich rodzin) + imię dziecka jako warstwa tekstowa w UI.
  * Nigdy nie generujemy osobnej grafiki dla imienia.
  */
-import { Elofik } from "./Elofik";
+import { Elofik, type ElofikMood } from "./Elofik";
+
+/** Scenka Elofika na okładce zastępczej — dopasowana do motywu dnia. */
+const COVER_MOOD: Record<string, ElofikMood> = { forest: "detective", stream: "building", cloud: "hug", music: "music", leaf: "love", shells: "idea", stars: "stargazing" };
 import { cn } from "@/lib/utils";
 
 const SCENES = [
@@ -132,7 +135,7 @@ export function StoryCover({
         <SceneArt kind={s.kind} accent={s.accent} ground={s.ground} />
       </svg>
       <div className={cn("absolute left-1/2 -translate-x-1/2", compact || !title ? "bottom-[6%] w-[34%]" : "bottom-[22%] w-[28%]")}>
-        <Elofik mood={dark ? "sleepy" : "idle"} />
+        <Elofik mood={dark ? "stargazing" : COVER_MOOD[s.kind] ?? "idle"} />
       </div>
       </>
       )}

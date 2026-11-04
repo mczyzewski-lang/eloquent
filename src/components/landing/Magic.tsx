@@ -37,7 +37,7 @@ export function Moon({ className }: { className?: string }) {
           <stop offset="100%" stopColor="#fff3c4" stopOpacity="0" />
         </radialGradient>
       </defs>
-      <circle cx="60" cy="60" r="58" fill="url(#moon-glow)" />
+      <circle cx="60" cy="60" r="34" fill="#fff4d6" opacity="0.18" />
       <circle cx="60" cy="60" r="26" fill="#fff4d6" />
       <circle cx="71" cy="52" r="24" fill="#2f3d63" opacity="0.92" />
     </svg>

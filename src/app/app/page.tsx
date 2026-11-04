@@ -83,7 +83,7 @@ export default async function AppHome({ searchParams }: { searchParams: Promise<
       {tab === "dzisiaj" && (
         <div className="space-y-6">
           <div className="flex items-center gap-3">
-            <Elofik mood={sp.witaj ? "waving" : "idle"} className="w-14 flex-none" />
+            <Elofik mood={sp.witaj ? "jumping" : hour >= 19 || hour < 5 ? "calm" : "hello"} className="w-14 flex-none" />
             <h1 className="text-2xl font-semibold leading-tight">{greetingByHour(hour)}, {vocative}! Elofik czeka z nową przygodą!</h1>
           </div>
 

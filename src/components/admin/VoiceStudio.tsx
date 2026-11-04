@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, Library, Loader2, Mic2, Plus, Star, Trash2, Wand2 } from "lucide-react";
+import { BookOpen, CheckCircle2, Library, Loader2, Mic2, Plus, Star, Trash2, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
@@ -46,7 +46,7 @@ export function VoiceStudio({
   initial: Candidate[];
   presets: { name: string; description: string }[];
   demoText: string;
-  current: { voiceId: string | null; version: string; model: string };
+  current: { voiceId: string | null; version: string; model: string; narratorVoiceId: string | null };
   keyConfigured: boolean;
   realTts: boolean;
 }) {
@@ -94,9 +94,23 @@ export function VoiceStudio({
   const choose = (c: Candidate, ttsModel?: string) =>
     run(`choose-${c.id}-${ttsModel ?? ""}`, async () => {
       const j = await call<{ voiceId: string; version: string; model: string }>({ action: "choose", voiceId: c.voiceId ?? "", candidateId: c.voiceId ? undefined : c.id, model: ttsModel ?? null });
-      setCurrent({ voiceId: j.voiceId, version: j.version, model: j.model });
+      setCurrent((cur) => ({ ...cur, voiceId: j.voiceId, version: j.version, model: j.model }));
       setCandidates((list) => list.map((x) => (x.id === c.id ? { ...x, voiceId: j.voiceId } : x)));
       setMsg({ ok: true, text: `„${c.name}” (${j.model}) jest teraz głosem Elofika — wersja ${j.version}.` });
+    });
+
+  const chooseNarrator = (c: Candidate | null) =>
+    run(`narr-${c?.id ?? "off"}`, async () => {
+      if (!c) {
+        await call({ action: "narrator_off" });
+        setCurrent((cur) => ({ ...cur, narratorVoiceId: null }));
+        setMsg({ ok: true, text: "Narrator wyłączony — całą bajkę czyta Elofik." });
+        return;
+      }
+      const j = await call<{ narratorVoiceId: string }>({ action: "narrator", voiceId: c.voiceId ?? "", candidateId: c.voiceId ? undefined : c.id });
+      setCurrent((cur) => ({ ...cur, narratorVoiceId: j.narratorVoiceId }));
+      setCandidates((list) => list.map((x) => (x.id === c.id ? { ...x, voiceId: j.narratorVoiceId } : x)));
+      setMsg({ ok: true, text: `„${c.name}” jest teraz narratorem: zapowiada bajki i czyta narrację. Elofik mówi swoje kwestie.` });
     });
 
   const replace = (c: Candidate) => setCandidates((list) => list.map((x) => (x.id === c.id ? c : x)));
@@ -172,6 +186,15 @@ export function VoiceStudio({
           </p>
         ) : (
           <p className="mt-1 text-muted">Nie wybrano{realTts ? "" : " — do czasu wyboru głosu aplikacja używa dźwięku zastępczego i syntezatora przeglądarki"}.</p>
+        )}
+        <p className="mt-3 text-xs font-bold uppercase tracking-wide text-muted">Narrator (drugi głos)</p>
+        {current.narratorVoiceId ? (
+          <p className="mt-1 flex flex-wrap items-center gap-2 font-semibold text-navy">
+            {candidates.find((c) => c.voiceId === current.narratorVoiceId)?.name ?? "Głos z ustawień"} · <code className="text-sm">{current.narratorVoiceId}</code>
+            <Button size="sm" variant="ghost" disabled={!!busy} onClick={() => chooseNarrator(null)}>Wyłącz narratora</Button>
+          </p>
+        ) : (
+          <p className="mt-1 text-sm text-muted">Brak — całą bajkę czyta Elofik. Zaprojektuj głos z presetu „Narrator — …” i kliknij „Ustaw jako narratora”: narrator zapowie bajkę i przeczyta narrację (np. „zawołał radośnie”), a Elofik powie swoje kwestie.</p>
         )}
       </div>
 
@@ -289,6 +312,9 @@ export function VoiceStudio({
                 <div className="mt-2 flex flex-wrap gap-2">
                   <Button size="sm" variant={isCurrent ? "sage" : "primary"} disabled={!!busy || isCurrent} onClick={() => choose(c)} data-testid="choose-voice">
                     {busy?.startsWith(`choose-${c.id}`) ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} {isCurrent ? "Wiodący głos" : "Ustaw jako głos Elofika"}
+                  </Button>
+                  <Button size="sm" variant={c.voiceId && c.voiceId === current.narratorVoiceId ? "sage" : "soft"} disabled={!!busy || Boolean(c.voiceId && (c.voiceId === current.narratorVoiceId || c.voiceId === current.voiceId))} onClick={() => chooseNarrator(c)} data-testid="choose-narrator">
+                    {busy === `narr-${c.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <BookOpen className="h-4 w-4" />} {c.voiceId && c.voiceId === current.narratorVoiceId ? "Narrator" : "Ustaw jako narratora"}
                   </Button>
                   <Button size="sm" variant="soft" disabled={!!busy || !keyConfigured} onClick={() => compareModels(c)}>
                     {busy === `cmp-${c.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mic2 className="h-4 w-4" />} {(c.modelDemos ?? []).length ? "Odśwież modele" : "Porównaj modele v2/v3/v4…"}

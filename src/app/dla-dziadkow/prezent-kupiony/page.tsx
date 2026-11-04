@@ -27,7 +27,7 @@ export default async function GiftBoughtPage({ searchParams }: { searchParams: P
     <div className="paper min-h-dvh">
       <SiteHeader variant="grandparents" />
       <main className="container-page max-w-lg py-10 text-center">
-        <div className="relative mx-auto w-36"><Sparkles /><Elofik mood="happy" /></div>
+        <div className="relative mx-auto w-36"><Sparkles /><Elofik mood="jumping" /></div>
         <h1 className="mt-4 text-3xl font-semibold">Dziękujemy! Prezent jest gotowy</h1>
         {link ? (
           <>

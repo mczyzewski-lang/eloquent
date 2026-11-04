@@ -75,11 +75,11 @@ describe("Generowanie z referencją (testy 3–5, 8)", () => {
   it("wzorzec nowego Elofika (grafiki marki) jest zatwierdzany automatycznie — postać i arkusz póz", async () => {
     await ensureProposedReference();
     const refs = await db.find("reference_assets", { status: "approved" });
-    expect(refs.map((r) => r.kind).sort()).toEqual(["master", "sheet"]);
+    expect(refs.map((r) => r.kind).sort()).toEqual(["master", "sheet", "sheet"]);
     expect(refs.every((r) => r.storage_path.endsWith(".webp"))).toBe(true);
     // ponowne wywołanie nic nie dubluje
     await ensureProposedReference();
-    expect(await db.count("reference_assets", {})).toBe(2);
+    expect(await db.count("reference_assets", {})).toBe(3);
   });
 
   it("5. bez zatwierdzonej referencji generowanie jest zablokowane", async () => {

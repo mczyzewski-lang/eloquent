@@ -4,13 +4,13 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 export const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap font-display font-semibold transition-all duration-200 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.97] [&_svg]:shrink-0 select-none",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap font-display font-semibold transition-all duration-200 disabled:pointer-events-none disabled:opacity-50 [&_svg]:shrink-0 select-none",
   {
     variants: {
       variant: {
-        primary: "bg-gold text-navy shadow-[0_8px_24px_-8px_rgb(233_172_60/0.8)] hover:bg-gold-deep hover:shadow-[0_10px_28px_-8px_rgb(233_172_60/0.9)]",
-        navy: "bg-navy text-cream hover:bg-navy-soft shadow-soft",
-        soft: "bg-white text-navy border border-navy/10 hover:border-navy/25 shadow-soft",
+        primary: "bg-gold text-navy shadow-[inset_0_0_0_2.5px_#3b2a1f,0_4px_0_#3b2a1f] hover:bg-gold-deep active:translate-y-[3px] active:shadow-[inset_0_0_0_2.5px_#3b2a1f,0_1px_0_#3b2a1f]",
+        navy: "bg-navy text-cream hover:bg-navy-soft shadow-[0_4px_0_#141a32]",
+        soft: "bg-white text-navy shadow-[inset_0_0_0_2.5px_#3b2a1f,0_4px_0_#3b2a1f] hover:bg-cream active:translate-y-[3px] active:shadow-[inset_0_0_0_2.5px_#3b2a1f,0_1px_0_#3b2a1f]",
         ghost: "text-navy hover:bg-navy/5",
         sage: "bg-sage text-white hover:bg-sage-deep",
         danger: "bg-red-600 text-white hover:bg-red-700",
