@@ -32,7 +32,13 @@ export async function recordPlayback(familyId: string, storyId: string, update: 
     patch.first_played_at = row.first_played_at ?? now;
   }
   if (update.event === "complete" || (update.durationSec > 0 && update.positionSec / update.durationSec >= 0.92)) patch.completed = true;
-  return (await db.update("listening_progress", { id: row.id }, patch))[0];
+  const updated = (await db.update("listening_progress", { id: row.id }, patch))[0];
+  if (patch.completed && !row.completed) {
+    // pierwsza wysłuchana bajka zaproszonej rodziny = skuteczne zaproszenie
+    const { evaluateReferralActivation } = await import("./referrals");
+    await evaluateReferralActivation(familyId).catch((e) => console.warn("[referrals]", (e as Error).message));
+  }
+  return updated;
 }
 
 export async function setFavorite(familyId: string, storyId: string, favorite: boolean) {

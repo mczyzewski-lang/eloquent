@@ -235,3 +235,67 @@ describe("FFmpeg", () => {
     }
   });
 });
+
+describe("Kilkoro dzieci w rodzinie", () => {
+  it("dodanie drugiego dziecka ustawia je jako aktywne; przełączanie zmienia imię w bajce", async () => {
+    const { addChild, switchChild, removeChild } = await import("@/lib/services/families");
+    const { family } = await makeFamily("dwoje@x.pl", "Leon");
+    const kasia = await addChild(family.id, { name: "Kasia", age: 4, addressStyle: "diminutive", gender: "f" } as never);
+    let bundle = (await getFamilyBundle(family.id))!;
+    expect(bundle.children.map((c) => c.name)).toEqual(["Leon", "Kasia"]);
+    expect(bundle.child!.id).toBe(kasia.id);
+    expect(buildTemplateContext(bundle)!.child.address).toBe("Kasiu");
+    // rodzina jest wspólna
+    expect(buildTemplateContext(bundle)!.family.mom).toBe("Monika");
+    await switchChild(family.id, bundle.children[0].id);
+    bundle = (await getFamilyBundle(family.id))!;
+    expect(bundle.child!.name).toBe("Leon");
+    await removeChild(family.id, kasia.id);
+    bundle = (await getFamilyBundle(family.id))!;
+    expect(bundle.children).toHaveLength(1);
+    await expect(removeChild(family.id, bundle.children[0].id)).rejects.toThrow(/co najmniej jedno/);
+  });
+});
+
+describe("Zaproś 3 rodziny → miesiąc gratis + sekretna bajka", () => {
+  it("liczy rodziny, które wysłuchały pierwszej bajki; blokuje ten sam numer", async () => {
+    const { SECRET_STORY_ID } = await import("@/content/secret-story");
+    const { hasSecretStory, referralSummary } = await import("@/lib/services/referrals");
+    const host = await env.db.insert("users", { email: null, phone: "+48600100100", is_admin: false, created_at: new Date().toISOString() });
+    const hostFamily = await createOrUpdateFamily(host.id, { child: { name: "Leon", age: 5, addressStyle: "diminutive" }, members: [], interests: [], locale: "pl" } as never);
+    await expect(assertStoryAccessible(hostFamily, SECRET_STORY_ID)).rejects.toBeInstanceOf(AccessDeniedError);
+
+    const invite = async (phone: string) => {
+      const u = await env.db.insert("users", { email: null, phone, is_admin: false, created_at: new Date().toISOString() });
+      const f = await createOrUpdateFamily(u.id, { child: { name: "Ola", age: 5, addressStyle: "diminutive" }, members: [], interests: [], locale: "pl", referralCode: hostFamily.referral_code } as never);
+      await recordPlayback(f.id, STORY_CATALOG[0].storyId, { positionSec: 0, durationSec: 300, event: "start" });
+      await recordPlayback(f.id, STORY_CATALOG[0].storyId, { positionSec: 300, durationSec: 300, event: "complete" });
+      return f;
+    };
+    await invite("+48600100101");
+    await invite("+48600100100"); // ten sam numer co zapraszający — nie liczy się
+    await invite("+48600100102");
+    expect((await referralSummary(hostFamily.id)).qualified).toBe(2);
+    expect(await hasSecretStory(hostFamily.id)).toBe(false);
+    const third = await invite("+48600100103");
+    // ponowne ukończenie tej samej bajki nie liczy się drugi raz
+    await recordPlayback(third.id, STORY_CATALOG[0].storyId, { positionSec: 300, durationSec: 300, event: "complete" });
+    expect((await referralSummary(hostFamily.id)).qualified).toBe(3);
+    expect(await hasSecretStory(hostFamily.id)).toBe(true);
+    expect((await env.db.find("referral_rewards", { family_id: hostFamily.id })).map((r) => r.reward).sort()).toEqual(["free_month", "secret_story"]);
+    expect((await getAccess(hostFamily.id)).hasAccess).toBe(true);
+    const { story } = await assertStoryAccessible(hostFamily, SECRET_STORY_ID);
+    expect(story.estimatedMinutes).toBeGreaterThanOrEqual(12);
+  });
+
+  it("sekretna bajka: wszyscy bliscy w jednej historii, bez luk przy małej rodzinie", async () => {
+    const { SECRET_STORY } = await import("@/content/secret-story");
+    const full = buildRenderPlan(SECRET_STORY, ctxFor("Leon", { mom: "Monika", dad: "Marek", grandma: "Basia", grandpa: "Jan", sister: "Ola", dog: "Burek", cat: "Mruczek" }), currentVoiceProfile());
+    const text = full.segments.map((s) => s.text).join(" ");
+    for (const n of ["Leonku", "Monika", "Marek", "Basia", "Jan", "Ola", "Burek", "Mruczek"]) expect(text).toContain(n);
+    const small = buildRenderPlan(SECRET_STORY, ctxFor("Leon"), currentVoiceProfile());
+    const smallText = small.segments.map((s) => s.text).join(" ");
+    expect(smallText).not.toMatch(/\{|\}/);
+    expect(smallText).toContain("Pani Sowa");
+  });
+});

@@ -11,7 +11,9 @@ export const ANALYTICS_EVENTS = [
   // rytuał
   "voice_greeting_screen_viewed", "voice_greeting_started", "voice_greeting_recognized", "voice_greeting_failed", "voice_greeting_skipped", "voice_greeting_response_played", "voice_greeting_to_story_started",
   // polecenia
-  "referral_link_copied", "referral_signup", "referral_qualified",
+  "referral_link_copied", "referral_signup", "referral_qualified", "referral_reward_granted",
+  // rodzina i własne bajki
+  "child_added", "custom_story_created", "custom_story_played",
 ] as const;
 
 export type AnalyticsEventName = (typeof ANALYTICS_EVENTS)[number];

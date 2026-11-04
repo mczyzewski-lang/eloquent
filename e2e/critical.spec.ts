@@ -51,6 +51,9 @@ test("onboarding → konto (demo) → Dzień 1", async ({ page }) => {
   await page.getByRole("button", { name: /Dalej/ }).click();
   await page.getByRole("button", { name: /Kosmos/ }).click();
   await page.getByRole("button", { name: /Dalej/ }).click();
+  await expect(page.getByText("Dzieci kochają rutynę", { exact: false })).toBeVisible();
+  await page.getByRole("radio", { name: /Wieczorem przed snem/ }).click();
+  await page.getByRole("button", { name: /Dalej/ }).click();
   await expect(page.getByRole("heading", { name: "Świat Elofika dla Zosi jest gotowy!" })).toBeVisible();
   await expect(page.getByText(/babcia Halina/)).toBeVisible();
   await page.getByRole("button", { name: /Rozpocznij przygodę/ }).click();

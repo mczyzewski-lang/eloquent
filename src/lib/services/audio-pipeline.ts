@@ -12,6 +12,7 @@ import { estimateTtsUsd, type CostPurpose } from "@/lib/domain/budget";
 import { buildRenderPlan, type PlannedSegment, type RenderPlan, type StoryVersion } from "@/lib/domain/story";
 import type { TemplateContext } from "@/lib/domain/templates";
 import { assertBudget, recordCost } from "./costs";
+import { storyIntro, type StoryIntro } from "@/lib/domain/intro";
 import { ensureRuntimeSettings } from "@/lib/settings/runtime";
 
 const inflight = new Map<string, Promise<unknown>>();
@@ -152,9 +153,16 @@ export async function assemblePlan(plan: RenderPlan, opts: { familyId?: string |
 }
 
 /** Renderuje bajkę dla rodziny (lub wersję bez personalizacji, gdy ctx = null). */
-export async function renderStoryForFamily(story: StoryVersion, ctx: TemplateContext | null, familyId: string | null): Promise<AssemblyResult> {
+export async function renderStoryForFamily(story: StoryVersion, ctx: TemplateContext | null, familyId: string | null, opts: { introAt?: Date | null } = {}): Promise<AssemblyResult> {
   await ensureRuntimeSettings();
-  const plan = buildRenderPlan(story, ctx, currentVoiceProfile());
+  let intro: StoryIntro | null = null;
+  if (ctx && familyId && opts.introAt !== null) {
+    const db = getDb();
+    const family = await db.findOne("families", { id: familyId });
+    const listenedBefore = (await db.find("listening_progress", { family_id: familyId })).some((p) => p.play_count > 0 && p.story_id !== story.storyId);
+    intro = storyIntro(ctx.child.address, opts.introAt ?? new Date(), family?.timezone ?? config.defaultTimezone, story.dayNumber <= 1 && !listenedBefore);
+  }
+  const plan = buildRenderPlan(story, ctx, currentVoiceProfile(), intro);
   const res = await assemblePlan(plan, { familyId, language: story.locale });
   if (familyId) {
     await getDb().upsert("family_assemblies", { family_id: familyId, story_id: story.storyId, assembly_key: plan.assemblyKey, created_at: nowIso() }, ["family_id", "story_id"]);

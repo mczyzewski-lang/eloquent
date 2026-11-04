@@ -15,6 +15,7 @@ import { getNameForms, validateName, type GrammaticalGender } from "@/lib/domain
 import type { RelationType } from "@/lib/domain/templates";
 import { track } from "@/lib/client/analytics";
 import { cn } from "@/lib/utils";
+import { ROUTINES, type RoutineId } from "@/lib/domain/routine";
 
 export const DRAFT_KEY = "elofik_onboarding_draft";
 
@@ -24,6 +25,7 @@ export interface OnboardingDraft {
   child: { name: string; age: number; diminutive: string; gender: GrammaticalGender | null; address: "diminutive" | "full" | "name_only" | "custom"; customAddress: string };
   members: Member[];
   interests: string[];
+  routine?: RoutineId | null;
 }
 
 /** Grupy osób: każda rozwija się w miejscu (bez przewijania strony na telefonie). */
@@ -78,6 +80,7 @@ export function draftToPayload(d: OnboardingDraft, referralCode: string | null) 
     },
     members: d.members.filter((m) => m.name.trim()).map((m) => ({ relation: m.relation, name: m.name.trim() })),
     interests: d.interests,
+    routine: d.routine ?? null,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     locale: "pl" as const,
     referralCode,
@@ -148,7 +151,7 @@ export function OnboardingWizard({ initialName, auth, loggedIn, day1Cover }: { i
 
   function next() {
     track("onboarding_step_completed", { step });
-    setStep((s) => Math.min(5, s + 1));
+    setStep((s) => Math.min(6, s + 1));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -178,7 +181,7 @@ export function OnboardingWizard({ initialName, auth, loggedIn, day1Cover }: { i
   const removeMember = (id: string) => setDraft((d) => ({ ...d, members: d.members.filter((x) => x.id !== id) }));
   const setMemberName = (id: string, name: string) => setDraft((d) => ({ ...d, members: d.members.map((x) => (x.id === id ? { ...x, name } : x)) }));
 
-  const steps = ["Dziecko", "Rodzina", "Zainteresowania", "Podsumowanie", "Konto"];
+  const steps = ["Dziecko", "Rodzina", "Zainteresowania", "Rytuał", "Podsumowanie", "Konto"];
   const summary = summarizeMembers(draft.members);
 
   return (
@@ -329,18 +332,44 @@ export function OnboardingWizard({ initialName, auth, loggedIn, day1Cover }: { i
           )}
 
           {step === 4 && (
-            <div className="space-y-6 text-center">
-              <h1 className="text-2xl font-semibold">{gen ? `Świat Elofika dla ${gen} jest gotowy!` : `Świat Elofika jest gotowy, ${nom}!`}</h1>
-              <StoryCover day={1} title="Elofik i tajemniczy ślad" word="dociekliwość" childName={nom} imageUrl={day1Cover} className="aspect-[4/3]" />
-              {summary && <p className="text-lg text-navy">{gen ? `W przygodach ${gen}` : "W przygodach"} mogą pojawiać się {summary}.</p>}
-              <Button size="xl" className="w-full" onClick={next}>
-                Rozpocznij przygodę <Sparkles className="h-5 w-5" />
-              </Button>
-              <button type="button" onClick={() => setStep(3)} className="text-sm font-semibold text-muted hover:text-navy">Wróć</button>
+            <div className="space-y-6">
+              <h1 className="text-2xl font-semibold">{gen ? `Kiedy w ciągu dnia ${gen} będzie słuchać bajek?` : "Kiedy w ciągu dnia dziecko będzie słuchać bajek?"}</h1>
+              <p className="rounded-2xl bg-sage/15 p-4 text-sm leading-relaxed text-navy">
+                <strong>Dzieci kochają rutynę i najlepiej uczą się w powtarzalnym rytmie.</strong> Stała pora sprawia, że bajka z Elofikiem staje się wyczekiwaną częścią dnia — a nowe słowa utrwalają się same. Wybierz porę, która pasuje Wam najbardziej; Elofik przywita się „w ten … poranek” albo „wieczór”, a my przypomnimy o bajce o tej porze.
+              </p>
+              <div className="space-y-2" role="radiogroup" aria-label="Pora słuchania">
+                {ROUTINES.map((r) => {
+                  const on = draft.routine === r.id;
+                  return (
+                    <button key={r.id} type="button" role="radio" aria-checked={on} onClick={() => setDraft((d) => ({ ...d, routine: r.id }))} className={cn("flex w-full items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left transition active:scale-[0.99]", on ? "border-gold-deep bg-gold/20" : "border-navy/10 bg-white")}>
+                      <span className="text-2xl" aria-hidden>{r.emoji}</span>
+                      <span className="flex-1">
+                        <span className="block font-semibold text-navy">{r.label}</span>
+                        <span className="block text-xs text-muted">{r.hint} · ok. {r.hour}:{String(r.minute).padStart(2, "0")}</span>
+                      </span>
+                      <span className={cn("h-5 w-5 flex-none rounded-full border-2", on ? "border-gold-deep bg-gold-deep shadow-[inset_0_0_0_3px_white]" : "border-navy/20")} aria-hidden />
+                    </button>
+                  );
+                })}
+              </div>
+              <NavButtons onBack={() => setStep(3)} onNext={next} disabled={!draft.routine} />
             </div>
           )}
 
           {step === 5 && (
+            <div className="space-y-6 text-center">
+              <h1 className="text-2xl font-semibold">{gen ? `Świat Elofika dla ${gen} jest gotowy!` : `Świat Elofika jest gotowy, ${nom}!`}</h1>
+              <StoryCover day={1} title="Elofik i tajemniczy ślad" word="dociekliwość" childName={nom} imageUrl={day1Cover} className="aspect-[4/3]" />
+              {summary && <p className="text-lg text-navy">{gen ? `W przygodach ${gen}` : "W przygodach"} mogą pojawiać się {summary}.</p>}
+              {draft.routine && <p className="text-muted">Wasza pora na bajkę: <strong className="text-navy">{ROUTINES.find((r) => r.id === draft.routine)?.label.toLowerCase()}</strong>.</p>}
+              <Button size="xl" className="w-full" onClick={next}>
+                Rozpocznij przygodę <Sparkles className="h-5 w-5" />
+              </Button>
+              <button type="button" onClick={() => setStep(4)} className="text-sm font-semibold text-muted hover:text-navy">Wróć</button>
+            </div>
+          )}
+
+          {step === 6 && (
             <div className="space-y-6">
               <h1 className="text-2xl font-semibold">Ostatni krok: konto rodzica</h1>
               <p className="text-muted">Podaj swój numer telefonu — otrzymasz kod SMS, którym potwierdzisz konto. Konto zakłada dorosły opiekun; przechowujemy tylko to, co potrzebne do działania bajek.</p>
@@ -352,7 +381,7 @@ export function OnboardingWizard({ initialName, auth, loggedIn, day1Cover }: { i
                 <AuthForm auth={auth} next="/onboarding/zakoncz" onDemoSignedIn={finish} />
               )}
               {err && <p role="alert" className="text-sm font-semibold text-red-600">{err}</p>}
-              <button type="button" onClick={() => setStep(4)} className="text-sm font-semibold text-muted hover:text-navy">Wróć</button>
+              <button type="button" onClick={() => setStep(5)} className="text-sm font-semibold text-muted hover:text-navy">Wróć</button>
             </div>
           )}
         </motion.div>

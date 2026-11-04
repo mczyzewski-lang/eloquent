@@ -1,3 +1,4 @@
+import { SECRET_STORY, SECRET_STORY_ID } from "@/content/secret-story";
 import { config } from "@/lib/config";
 import { getDb, nowIso, type FamilyRow } from "@/lib/db";
 import { computeUnlockState, type UnlockState } from "@/lib/domain/unlock";
@@ -83,6 +84,16 @@ export class AccessDeniedError extends Error {
 /** Autoryzacja dostępu do konkretnej bajki — zawsze po stronie serwera. */
 export async function assertStoryAccessible(family: FamilyRow, storyId: string, now = new Date()): Promise<{ story: StoryVersion; library: FamilyLibrary }> {
   const library = await getFamilyLibrary(family, now);
+  if (storyId.startsWith("wlasna-")) {
+    const row = await getDb().findOne("custom_stories", { family_id: family.id, story_id: storyId });
+    if (!row) throw new AccessDeniedError("not_found");
+    return { story: row.story as unknown as StoryVersion, library };
+  }
+  if (storyId === SECRET_STORY_ID) {
+    const granted = await getDb().findOne("referral_rewards", { family_id: family.id, reward: "secret_story" });
+    if (!granted) throw new AccessDeniedError("locked");
+    return { story: SECRET_STORY, library };
+  }
   const story = library.stories.find((s) => s.storyId === storyId);
   if (!story) throw new AccessDeniedError("not_found");
   if (story.dayNumber > library.unlock.unlockedThrough) throw new AccessDeniedError("locked");

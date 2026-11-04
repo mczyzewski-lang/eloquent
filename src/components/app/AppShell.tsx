@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BookHeart, Library, Sparkles, TrendingUp, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ChildSwitcher } from "./ChildSwitcher";
 
 export type AppTab = "dzisiaj" | "bajki" | "slowa" | "postep" | "konto";
 
@@ -16,7 +17,7 @@ const NAV: { id: AppTab; href: string; label: string; icon: React.ComponentType<
  * Układ aplikacji jak w aplikacji mobilnej: górny pasek, przewijana treść, dolny pasek zakładek
  * (z uwzględnieniem wcięć ekranu iPhone'a — safe-area).
  */
-export function AppShell({ active, title, children }: { active: AppTab; title?: React.ReactNode; children: React.ReactNode }) {
+export function AppShell({ active, title, kids, activeChildId, children }: { active: AppTab; title?: React.ReactNode; kids?: { id: string; name: string }[]; activeChildId?: string | null; children: React.ReactNode }) {
   return (
     <div className="paper min-h-dvh">
       <header className="sticky top-0 z-40 border-b border-navy/5 bg-cream/85 pt-[env(safe-area-inset-top)] backdrop-blur-md">
@@ -26,9 +27,13 @@ export function AppShell({ active, title, children }: { active: AppTab; title?: 
             <img src="/brand/elofik-mark.png" alt="" className="h-9 w-auto" />
           </Link>
           <p className="min-w-0 flex-1 truncate font-display text-lg font-semibold text-navy">{title}</p>
-          <Link href="/konto" aria-label="Panel rodzica" className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-navy shadow-sm">
-            <UserRound className="h-5 w-5" />
-          </Link>
+          {kids?.length ? (
+            <ChildSwitcher kids={kids} activeId={activeChildId ?? null} />
+          ) : (
+            <Link href="/konto" aria-label="Panel rodzica" className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-navy shadow-sm">
+              <UserRound className="h-5 w-5" />
+            </Link>
+          )}
         </div>
       </header>
 

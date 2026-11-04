@@ -7,6 +7,9 @@ import type { ReferralReward } from "@/lib/domain/referral";
 
 export interface UserRow { id: string; email: string | null; phone?: string | null; is_admin: boolean; created_at: string }
 
+/** Własna bajka rodziny (pomysł rodzica → AI → głos Elofika). `story` to StoryVersion ze zmiennymi zamiast imion. */
+export interface CustomStoryRow { id: string; family_id: string; child_id: string | null; story_id: string; idea: string; title: string; word: string; story: Record<string, unknown>; created_at: string }
+
 /** Jednorazowy kod logowania SMS (przechowywany wyłącznie jako HMAC). */
 export interface PhoneOtpRow { id: string; phone: string; code_hash: string; expires_at: string; attempts: number; consumed_at: string | null; created_at: string }
 
@@ -22,6 +25,10 @@ export interface FamilyRow {
   voice_consent_at: string | null;
   marketing_consent_at: string | null;
   stripe_customer_id: string | null;
+  /** Stała pora słuchania (rutyna) — patrz lib/domain/routine.ts */
+  listening_routine?: string | null;
+  /** Aktywne dziecko (gdy w rodzinie jest więcej dzieci) */
+  active_child_id?: string | null;
   created_at: string;
 }
 
@@ -356,6 +363,7 @@ export interface Tables {
   admin_audit_logs: AdminAuditLogRow;
   rate_limits: RateLimitRow;
   phone_otps: PhoneOtpRow;
+  custom_stories: CustomStoryRow;
   app_settings: AppSettingRow;
   voice_candidates: VoiceCandidateRow;
   reference_assets: ReferenceAssetRow;

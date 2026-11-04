@@ -1,5 +1,7 @@
 "use client";
 
+import { ROUTINES } from "@/lib/domain/routine";
+import { InviteCard } from "./InviteCard";
 import { useState } from "react";
 import { Bell, BookHeart, Copy, CreditCard, Download, Gift, Loader2, Mic, Plus, Save, ShieldCheck, Trash2, User, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,8 +30,8 @@ interface Props {
   interests: string[];
   access: { hasAccess: boolean; source: string | null; endsAt: string | null; cancelAtPeriodEnd: boolean; autoRenews: boolean };
   stripeEnabled: boolean;
-  referral: { link: string; qualified: number; signups: number; rewards: string[] };
-  settings: { voiceGreetingEnabled: boolean; voiceConsent: boolean; emailDaily: boolean; pushEnabled: boolean; sendHour: number; marketingConsent: boolean; timezone: string };
+  referral: { link: string; qualified: number; signups: number; rewards: string[]; goal: number };
+  settings: { voiceGreetingEnabled: boolean; voiceConsent: boolean; emailDaily: boolean; pushEnabled: boolean; sendHour: number; marketingConsent: boolean; timezone: string; routine: string | null };
   history: { day: number; title: string; word: string; listened: boolean; completed: boolean }[];
 }
 
@@ -144,19 +146,18 @@ export function AccountPanel(p: Props) {
         )}
       </Card>
 
-      <Card id="polecenia">
-        <h2 className="flex items-center gap-2 text-xl font-semibold"><Gift className="h-5 w-5 text-gold-deep" /> Polecaj Elofika</h2>
-        <p className="mt-2 text-muted">Za każdą nową rodzinę, która opłaci abonament z Twojego linku: 1 polecenie — specjalna bajka, 2 — dodatkowa przygoda, 3 — miesiąc premium gratis.</p>
-        <div className="mt-3 flex gap-2">
-          <Input readOnly value={p.referral.link} className="h-12 text-sm" aria-label="Twój link polecający" />
-          <Button variant="soft" onClick={async () => { await navigator.clipboard.writeText(p.referral.link); setCopied(true); track("referral_link_copied"); }}><Copy className="h-5 w-5" />{copied ? "OK" : ""}</Button>
-        </div>
-        <p className="mt-3 text-sm text-muted">Skuteczne polecenia: <strong>{p.referral.qualified}</strong> · Rejestracje z linku: {p.referral.signups}</p>
-        {p.referral.rewards.length > 0 && <div className="mt-2 flex flex-wrap gap-2">{p.referral.rewards.map((r) => <Badge key={r}>{REWARD_LABEL[r]}</Badge>)}</div>}
-      </Card>
+      <InviteCard link={p.referral.link} qualified={p.referral.qualified} signups={p.referral.signups} goal={p.referral.goal} rewards={p.referral.rewards} childName={p.child.name} />
 
       <Card id="powiadomienia">
         <h2 className="flex items-center gap-2 text-xl font-semibold"><Bell className="h-5 w-5 text-gold-deep" /> Ustawienia i zgody</h2>
+        <div className="mt-2 rounded-2xl bg-cream p-4">
+          <Label htmlFor="routine" className="mb-1">Wasza pora na bajkę</Label>
+          <select id="routine" value={settings.routine ?? ""} onChange={(e) => e.target.value && saveSetting({ routine: e.target.value })} className="h-11 w-full rounded-xl border border-navy/10 bg-white px-3">
+            {!settings.routine && <option value="">Wybierz porę…</option>}
+            {ROUTINES.map((r) => <option key={r.id} value={r.id}>{r.emoji} {r.label}</option>)}
+          </select>
+          <p className="mt-1 text-xs text-muted">Stała pora buduje nawyk — dzieci najlepiej uczą się w rutynie. Przypomnienie przesunie się na tę porę.</p>
+        </div>
         <Toggle icon={Mic} label="Rozpoczynaj bajki powitaniem głosowym" desc="Krótki rytuał „Hej Elofik!” z mikrofonem włączanym tylko po dotknięciu. Bez nagrywania głosu." checked={settings.voiceGreetingEnabled} onChange={(v) => saveSetting({ voiceGreetingEnabled: v })} />
         <Toggle icon={Bell} label="Przypomnienie e-mail o nowej bajce" desc={`„Nowa bajka Elofika już czeka!” — codziennie o ${settings.sendHour}:00.`} checked={settings.emailDaily} onChange={(v) => saveSetting({ emailDaily: v })} />
         {settings.emailDaily && (

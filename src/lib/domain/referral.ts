@@ -1,12 +1,16 @@
 /**
- * Program poleceń. Skuteczne polecenie = opłacona subskrypcja NOWEJ, niezależnej rodziny.
+ * Program poleceń: „Zaproś 3 rodziny — odbierz miesiąc za darmo i sekretną bajkę”.
+ * Skuteczne zaproszenie = NOWA, niezależna rodzina (inny numer/e-mail), która założyła profil
+ * i wysłuchała do końca pierwszej bajki (albo opłaciła abonament).
  */
-export type ReferralReward = "special_story" | "bonus_adventure" | "free_month";
+// special_story / bonus_adventure — nagrody z poprzedniej wersji programu (zostają w historii)
+export type ReferralReward = "special_story" | "bonus_adventure" | "free_month" | "secret_story";
+
+export const REFERRAL_GOAL = 3;
 
 export const REFERRAL_TIERS: { threshold: number; reward: ReferralReward; label: string }[] = [
-  { threshold: 1, reward: "special_story", label: "Specjalna bajka" },
-  { threshold: 2, reward: "bonus_adventure", label: "Dodatkowa przygoda" },
-  { threshold: 3, reward: "free_month", label: "Miesiąc premium gratis" },
+  { threshold: REFERRAL_GOAL, reward: "free_month", label: "Miesiąc Elofik Premium gratis" },
+  { threshold: REFERRAL_GOAL, reward: "secret_story", label: "Sekretna bajka (15 min) z całą rodziną" },
 ];
 
 export interface ReferralCandidate {
@@ -14,6 +18,8 @@ export interface ReferralCandidate {
   referrerEmail: string;
   refereeFamilyId: string;
   refereeEmail: string;
+  referrerPhone?: string | null;
+  refereePhone?: string | null;
   /** Czy pierwsza faktura subskrypcji polecanego została faktycznie opłacona */
   refereeFirstPaymentSucceeded: boolean;
   /** Czy polecany miał już wcześniej konto / subskrypcję */
@@ -33,7 +39,8 @@ function emailRoot(email: string): string {
 
 export function qualifyReferral(c: ReferralCandidate): QualifyResult {
   if (c.referrerFamilyId === c.refereeFamilyId) return { qualified: false, reason: "self_referral" };
-  if (emailRoot(c.referrerEmail) === emailRoot(c.refereeEmail)) return { qualified: false, reason: "same_email" };
+  if (c.referrerEmail && c.refereeEmail && emailRoot(c.referrerEmail) === emailRoot(c.refereeEmail)) return { qualified: false, reason: "same_email" };
+  if (c.referrerPhone && c.referrerPhone === c.refereePhone) return { qualified: false, reason: "same_phone" };
   if (c.referrerCardFingerprint && c.referrerCardFingerprint === c.refereeCardFingerprint) return { qualified: false, reason: "same_card" };
   if (c.refereeWasCustomerBefore) return { qualified: false, reason: "existing_customer" };
   if (!c.refereeFirstPaymentSucceeded) return { qualified: false, reason: "not_paid" };

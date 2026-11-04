@@ -142,8 +142,15 @@ describe("Polecenia i budżet", () => {
     expect(qualifyReferral({ ...base, refereeEmail: "ala+2@x.pl" }).qualified).toBe(false);
     expect(qualifyReferral({ ...base, refereeFirstPaymentSucceeded: false }).qualified).toBe(false);
   });
-  it("nagrody za 1/2/3 polecenia", () => {
-    expect(rewardsDue(3, ["special_story"])).toEqual(["bonus_adventure", "free_month"]);
+  it("3 zaproszenia = miesiąc gratis + sekretna bajka", () => {
+    expect(rewardsDue(2, [])).toEqual([]);
+    expect(rewardsDue(3, [])).toEqual(["free_month", "secret_story"]);
+    expect(rewardsDue(5, ["free_month", "secret_story"])).toEqual([]);
+  });
+  it("konta na telefon: ten sam numer to samopolecenie, puste e-maile nie są „tym samym e-mailem”", () => {
+    const phones = { ...base, referrerEmail: "", refereeEmail: "", referrerPhone: "+48600000001", refereePhone: "+48600000002" };
+    expect(qualifyReferral(phones).qualified).toBe(true);
+    expect(qualifyReferral({ ...phones, refereePhone: "+48600000001" })).toEqual({ qualified: false, reason: "same_phone" });
   });
   it("blokuje płatne generowanie bez skonfigurowanego budżetu", () => {
     expect(checkBudget({ monthlyLimitUsd: 0, spentThisMonthUsd: 0, estimatedUsd: 0.01, purpose: "core" }).allowed).toBe(false);
@@ -206,5 +213,46 @@ describe("Powitania: podział na część z imieniem i część wspólną", () =
   it("każdy wariant z banku ma część z imieniem", () => {
     for (const g of GREETINGS) expect([`${g.id}:${g.locale}`, splitGreetingTemplate(g.template).some((p) => p.personal)]).toEqual([`${g.id}:${g.locale}`, true]);
     expect(splitGreetingTemplate("Hey, {child.name}! Come.")).toEqual([{ template: "Hey, {child.name}!", personal: true }, { template: "Come.", personal: false }]);
+  });
+});
+
+describe("Powitanie na początku bajki", () => {
+  // 2026-11-07 to sobota, 2026-11-08 niedziela (Europe/Warsaw = UTC+1 w listopadzie)
+  it("odmienia dzień i porę", async () => {
+    const { whenPhrase, storyIntro } = await import("@/lib/domain/intro");
+    const tz = "Europe/Warsaw";
+    expect(whenPhrase(new Date("2026-11-07T07:30:00Z"), tz)).toBe("w ten sobotni poranek");
+    expect(whenPhrase(new Date("2026-11-08T14:00:00Z"), tz)).toBe("w to niedzielne popołudnie");
+    expect(whenPhrase(new Date("2026-11-08T18:30:00Z"), tz)).toBe("w ten niedzielny wieczór");
+    expect(whenPhrase(new Date("2026-11-07T18:30:00Z"), tz)).toBe("w ten weekendowy wieczór");
+    expect(whenPhrase(new Date("2026-11-04T09:30:00Z"), tz)).toBe("w to środowe przedpołudnie");
+    const intro = storyIntro("Leonku", new Date("2026-11-07T07:30:00Z"), tz, false);
+    expect(intro.personal).toBe("Czeeeeść, Leonku!");
+    expect(intro.shared).toBe("Super, że znowu się spotykamy w ten sobotni poranek! Usiądź wygodnie — zaczynamy.");
+    expect(storyIntro("Leonku", new Date("2026-11-07T07:30:00Z"), tz, true).shared).toMatch(/^Super, że się poznajemy/);
+  });
+  it("część po imieniu jest wspólna dla wszystkich dzieci", async () => {
+    const { storyIntro } = await import("@/lib/domain/intro");
+    const { buildRenderPlan } = await import("@/lib/domain/story");
+    const d = new Date("2026-11-07T07:30:00Z");
+    const voice = { voiceId: "v", modelId: "m", voiceVersion: "V1", settings: {} };
+    const ctx = (address: string) => ({ child: { name: "X", address, gender: "m" as const }, family: {} });
+    const a = buildRenderPlan(STORY_CATALOG[1], ctx("Leonku"), voice, storyIntro("Leonku", d, "Europe/Warsaw", false));
+    const b = buildRenderPlan(STORY_CATALOG[2], ctx("Kasiu"), voice, storyIntro("Kasiu", d, "Europe/Warsaw", false));
+    expect(a.segments[0].text).toBe("Czeeeeść, Leonku!");
+    expect(a.segments[1].shared).toBe(true);
+    expect(a.segments[1].cacheKey).toBe(b.segments[1].cacheKey); // inna bajka, inne dziecko — to samo nagranie
+  });
+});
+
+describe("Rutyna słuchania", () => {
+  it("najbliższa pora rutyny: dziś albo jutro", async () => {
+    const { nextRoutineAt } = await import("@/lib/domain/routine");
+    const tz = "Europe/Warsaw";
+    // 2026-11-04 10:00 lokalnie → przed snem (19:30) jeszcze dziś
+    expect(nextRoutineAt("bedtime", tz, new Date("2026-11-04T09:00:00Z"))!.toISOString()).toBe("2026-11-04T18:30:00.000Z");
+    // po 19:30 → jutro
+    expect(nextRoutineAt("bedtime", tz, new Date("2026-11-04T19:00:00Z"))!.toISOString()).toBe("2026-11-05T18:30:00.000Z");
+    expect(nextRoutineAt(null, tz)).toBeNull();
   });
 });

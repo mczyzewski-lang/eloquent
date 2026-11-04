@@ -328,7 +328,7 @@ function StoryPlayer({
             <Sparkles />
             <Elofik mood="happy" />
           </div>
-          <p className="mt-4 text-sm font-bold uppercase tracking-[0.18em] text-gold-deep">Dzień {story.dayNumber}</p>
+          <p className="mt-4 text-sm font-bold uppercase tracking-[0.18em] text-gold-deep">{story.dayNumber > 0 ? `Dzień ${story.dayNumber}` : "Sekretna bajka"}</p>
           <h1 className="mt-2 text-3xl font-semibold">Dzisiaj poznaliśmy słowo: <span className="uppercase text-gold-deep">{story.wordOfDay}</span>!</h1>
           <p className="mt-4 text-lg leading-relaxed text-muted">{story.wordDefinition}</p>
           <div className="card-soft mt-6 p-5 text-left">
@@ -351,32 +351,32 @@ function StoryPlayer({
   const progress = duration ? (time / duration) * 100 : 0;
   return (
     <main className="night min-h-dvh px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] text-cream">
-      <div className="mx-auto flex min-h-[calc(100dvh-3rem)] max-w-md flex-col">
+      <div className="mx-auto flex min-h-[calc(100dvh-3rem-env(safe-area-inset-bottom))] max-w-md flex-col">
         <div className="flex items-center justify-between">
           <Link href="/app" className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-white/10" aria-label="Wróć do biblioteki">
             <ArrowLeft className="h-6 w-6" />
           </Link>
-          <p className="text-sm font-semibold text-cream/70">Dzień {story.dayNumber}</p>
+          <p className="text-sm font-semibold text-cream/70">{story.dayNumber > 0 ? `Dzień ${story.dayNumber}` : "Sekretna bajka"}</p>
           <button type="button" aria-pressed={favorite} aria-label="Ulubione" onClick={() => { setFavOverride(!favorite); void post("/api/progress", { action: "favorite", storyId: story.storyId, value: !favorite }); }} className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-white/10">
             <Heart className={cn("h-6 w-6", favorite && "fill-peach-deep text-peach-deep")} />
           </button>
         </div>
 
-        <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} className="mt-4">
+        <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} className="mx-auto mt-2 w-full max-w-[min(100%,36dvh)]">
           <StoryCover day={story.dayNumber} word={story.wordOfDay} childName={childName} imageUrl={story.coverUrl} className="aspect-square shadow-2xl" />
         </motion.div>
 
-        <div className="mt-6 text-center">
+        <div className="mt-4 text-center">
           <h1 className="text-2xl font-semibold text-cream">{story.title}</h1>
           <p className="mt-1 text-cream/70">Słowo dnia: <strong className="text-gold">{story.wordOfDay}</strong> · {story.estimatedMinutes} min</p>
         </div>
 
-        <p className="mt-4 min-h-[4.5rem] text-center text-sm leading-relaxed text-cream/75" aria-live="off">
+        <p className="mt-3 line-clamp-3 min-h-[3.75rem] text-center text-sm leading-relaxed text-cream/75" aria-live="off">
           {audio?.timeline[segIdx]?.text.slice(0, 180)}
           {(audio?.timeline[segIdx]?.text.length ?? 0) > 180 ? "…" : ""}
         </p>
 
-        <div className="mt-auto">
+        <div className="mt-auto pt-3">
           {!audio && !audioError && (
             <p className="flex items-center justify-center gap-2 py-6 text-cream/80"><Loader2 className="h-5 w-5 animate-spin" /> Elofik układa przygodę…</p>
           )}

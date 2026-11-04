@@ -2,6 +2,7 @@
  * Architektura bajki: wspólny rdzeń (CORE) generowany raz + krótkie segmenty personalizowane.
  * Plan renderu jest czystą funkcją — łatwo testowalną i deterministyczną.
  */
+import { INTRO_TEMPLATE_VERSION, type StoryIntro } from "./intro";
 import { ttsCacheKey, assemblyKey, type TtsCacheInput } from "./hash";
 import { applyPronunciation, PRONUNCIATION_VERSION } from "./pronunciation";
 import { renderTemplate, requiredRelations, usesChild, type TemplateContext, type RelationType } from "./templates";
@@ -89,9 +90,20 @@ function keyFor(text: string, story: StoryVersion, voice: VoiceProfile): string 
   return ttsCacheKey(input);
 }
 
-export function buildRenderPlan(story: StoryVersion, ctx: TemplateContext | null, voice: VoiceProfile): RenderPlan {
+/** Klucz nagrań powitania na początku bajki — wspólny dla wszystkich bajek (nie zależy od storyId). */
+function introKey(text: string, story: StoryVersion, voice: VoiceProfile): string {
+  return ttsCacheKey({ text, voiceId: voice.voiceId, modelId: voice.modelId, voiceSettings: voice.settings, language: story.locale, templateVersion: INTRO_TEMPLATE_VERSION, pronunciationVersion: PRONUNCIATION_VERSION });
+}
+
+export function buildRenderPlan(story: StoryVersion, ctx: TemplateContext | null, voice: VoiceProfile, intro?: StoryIntro | null): RenderPlan {
   const ordered = [...story.segments].sort((a, b) => a.order - b.order);
   const planned: PlannedSegment[] = [];
+  if (intro && ctx) {
+    const personal = applyPronunciation(intro.personal);
+    const shared = applyPronunciation(intro.shared);
+    planned.push({ segmentId: "intro-name", type: "PERSONALIZED_CHILD", text: personal, cacheKey: introKey(personal, story, voice), shared: false, pauseAfterMs: 200, nextText: shared });
+    planned.push({ segmentId: "intro-when", type: "CORE", text: shared, cacheKey: introKey(shared, story, voice), shared: true, pauseAfterMs: 700, previousText: personal });
+  }
   for (const seg of ordered) {
     const pauseAfterMs = seg.pauseAfterMs ?? 450;
     if (seg.type === "CORE" || seg.type === "EDUCATIONAL") {

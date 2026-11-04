@@ -1,10 +1,20 @@
 import { config, hasStripe } from "@/lib/config";
 import { getDb, nowIso } from "@/lib/db";
-import { qualifyReferral, rewardsDue, REFERRAL_TIERS } from "@/lib/domain/referral";
+import { qualifyReferral, rewardsDue, REFERRAL_GOAL, REFERRAL_TIERS } from "@/lib/domain/referral";
 import { track } from "./analytics";
+import { enqueueJob } from "./jobs";
+import { SECRET_STORY_ID } from "@/content/secret-story";
 
-/** Wywoływane po pierwszej opłaconej fakturze rodziny polecanej. */
-export async function evaluateReferralForFamily(refereeFamilyId: string, opts: { firstPaymentSucceeded: boolean; cardFingerprint?: string | null }) {
+/**
+ * Aktywacja zaproszonej rodziny: pierwsza bajka wysłuchana do końca = skuteczne zaproszenie
+ * (konto potwierdzone kodem SMS lub e-mailem, profil dziecka założony).
+ */
+export async function evaluateReferralActivation(refereeFamilyId: string) {
+  return evaluateReferralForFamily(refereeFamilyId, { firstPaymentSucceeded: true, activation: true });
+}
+
+/** Wywoływane po pierwszej opłaconej fakturze rodziny polecanej (albo po aktywacji — patrz wyżej). */
+export async function evaluateReferralForFamily(refereeFamilyId: string, opts: { firstPaymentSucceeded: boolean; cardFingerprint?: string | null; activation?: boolean }) {
   const db = getDb();
   const referee = await db.findOne("families", { id: refereeFamilyId });
   if (!referee?.referred_by_code) return null;
@@ -18,8 +28,10 @@ export async function evaluateReferralForFamily(refereeFamilyId: string, opts: {
     referrerEmail: referrerUser?.email ?? "",
     refereeFamilyId,
     refereeEmail: refereeUser?.email ?? "",
+    referrerPhone: referrerUser?.phone ?? null,
+    refereePhone: refereeUser?.phone ?? null,
     refereeFirstPaymentSucceeded: opts.firstPaymentSucceeded,
-    refereeWasCustomerBefore: previousPayments > 1,
+    refereeWasCustomerBefore: !opts.activation && previousPayments > 1,
   });
   await db.insert("referrals", {
     referrer_family_id: referrer.id,
@@ -41,8 +53,15 @@ export async function grantDueRewards(familyId: string) {
   const granted = (await db.find("referral_rewards", { family_id: familyId })).map((r) => r.reward);
   for (const reward of rewardsDue(qualified, granted)) {
     await db.insert("referral_rewards", { family_id: familyId, reward, granted_at: nowIso() });
+    await track("referral_reward_granted", { familyId, props: { reward } });
     if (reward === "free_month") await grantFreeMonth(familyId);
+    // sekretna bajka jest długa — przygotowujemy ją od razu w tle
+    if (reward === "secret_story") await enqueueJob("render_story", { familyId, storyId: SECRET_STORY_ID }, { dedupeKey: `story-${familyId}-${SECRET_STORY_ID}` });
   }
+}
+
+export async function hasSecretStory(familyId: string): Promise<boolean> {
+  return Boolean(await getDb().findOne("referral_rewards", { family_id: familyId, reward: "secret_story" }));
 }
 
 async function grantFreeMonth(familyId: string) {
@@ -63,5 +82,5 @@ export async function referralSummary(familyId: string) {
   const qualified = await db.count("referrals", { referrer_family_id: familyId, status: "qualified" });
   const pending = await db.count("families", { referred_by_code: (await db.findOne("families", { id: familyId }))?.referral_code ?? "__none__" });
   const rewards = await db.find("referral_rewards", { family_id: familyId });
-  return { qualified, signups: pending, rewards, tiers: REFERRAL_TIERS };
+  return { qualified, signups: pending, rewards, tiers: REFERRAL_TIERS, goal: REFERRAL_GOAL };
 }

@@ -5,6 +5,8 @@ import { getDb } from "@/lib/db";
 import { hasStripe } from "@/lib/config";
 import { absoluteUrl } from "@/lib/config";
 import { AppShell } from "@/components/app/AppShell";
+import { ChildrenCard } from "@/components/account/ChildrenCard";
+import { MAX_CHILDREN } from "@/lib/services/families";
 import { formatPhone } from "@/lib/domain/phone";
 import { AccountPanel } from "@/components/account/AccountPanel";
 import { getFamilyLibrary } from "@/lib/services/access";
@@ -24,16 +26,17 @@ export default async function AccountPage() {
   ]);
   const child = bundle.child!;
   return (
-    <AppShell active="konto" title="Konto">
+    <AppShell active="konto" title="Konto" kids={bundle.children.map((c) => ({ id: c.id, name: c.name }))} activeChildId={child.id}>
         <h1 className="text-3xl font-semibold">Panel rodzica</h1>
         <p className="mt-1 text-muted">{user.phone ? formatPhone(user.phone) : user.email}</p>
+        <div className="mt-6"><ChildrenCard kids={bundle.children.map((c) => ({ id: c.id, name: c.name, age: c.age }))} activeId={child.id} max={MAX_CHILDREN} /></div>
         <AccountPanel
           child={{ name: child.name, age: child.age, diminutive: child.diminutive ?? "", vocative: child.vocative_override ?? "", gender: child.gender, addressStyle: child.address_style }}
           members={bundle.members.map((m) => ({ relation: m.relation, name: m.name }))}
           interests={bundle.interests}
           access={access}
           stripeEnabled={hasStripe()}
-          referral={{ link: absoluteUrl(`/?ref=${bundle.family.referral_code}`), qualified: referrals.qualified, signups: referrals.signups, rewards: referrals.rewards.map((r) => r.reward) }}
+          referral={{ link: absoluteUrl(`/?ref=${bundle.family.referral_code}`), qualified: referrals.qualified, signups: referrals.signups, rewards: referrals.rewards.map((r) => r.reward), goal: referrals.goal }}
           settings={{
             voiceGreetingEnabled: bundle.family.voice_greeting_enabled,
             voiceConsent: Boolean(bundle.family.voice_consent_at),
@@ -42,6 +45,7 @@ export default async function AccountPage() {
             sendHour: prefs?.send_hour ?? 17,
             marketingConsent: Boolean(bundle.family.marketing_consent_at),
             timezone: bundle.family.timezone,
+            routine: bundle.family.listening_routine ?? null,
           }}
           history={lib.unlocked.map((s) => ({ day: s.dayNumber, title: s.title, word: s.wordOfDay, listened: Boolean(progress.get(s.storyId)?.play_count), completed: Boolean(progress.get(s.storyId)?.completed) }))}
         />
