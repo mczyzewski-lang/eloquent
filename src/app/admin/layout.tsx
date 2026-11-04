@@ -24,7 +24,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <div className="flex items-center gap-2 px-3 pb-1 pt-3">
           <Link href="/admin" className="flex items-center gap-2 rounded-[5px] px-1 py-1 hover:bg-[rgb(55_53_47/0.06)]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/elofik-mark.png" alt="" className="h-5 w-5 rounded-[4px] object-contain" />
+            <img src="/brand/elofik-head.webp" alt="" className="h-6 w-6 rounded-[4px] object-contain" />
             <span className="text-sm font-semibold text-[#37352f]">Elofik · Admin</span>
           </Link>
           <Link href="/" className="ml-auto text-xs text-[#91918e] hover:text-[#37352f]">strona ↗</Link>

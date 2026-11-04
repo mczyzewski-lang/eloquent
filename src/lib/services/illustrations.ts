@@ -33,16 +33,38 @@ export class IllustrationError extends Error {
 
 // ---------- referencje --------------------------------------------------------
 
-/** Propozycja startowej referencji: postać z zatwierdzonego logo (wymaga akceptacji admina). */
+/** Kanoniczny wygląd Elofika (grafiki od właściciela marki). Zmiana = nowy tag → nowa referencja. */
+export const BRAND_REFERENCE_TAG = "Elofik — grafiki marki v2";
+const BRAND_MASTER_FILE = "public/brand/elofik/idle.webp";
+const BRAND_SHEET_FILE = "public/brand/elofik-reference-sheet.webp";
+
+/**
+ * Referencja kanoniczna: postać i arkusz póz dostarczone przez właściciela marki.
+ * Zatwierdzana automatycznie (to decyzja właściciela, nie wynik AI) i wycofuje poprzednie wzorce —
+ * ilustracje wygenerowane ze starym wyglądem przestają być publikowane.
+ */
 export async function ensureProposedReference(): Promise<void> {
   const db = getDb();
-  if (await db.count("reference_assets", { kind: "master" })) return;
-  const file = path.join(process.cwd(), "public/brand/elofik-mark.png");
-  const data = await fs.readFile(file).catch(() => null);
-  if (!data) return;
-  const storagePath = "references/master-v1.png";
-  await getStorage().put(storagePath, data, "image/png");
-  await db.insert("reference_assets", { kind: "master", version: 1, label: "Elofik z logo marki (postać z książką)", storage_path: storagePath, status: "proposed", approved_by: null, approved_at: null, created_at: nowIso() });
+  if (await db.findOne("reference_assets", { label: BRAND_REFERENCE_TAG, kind: "master" })) return;
+  const [master, sheet] = await Promise.all([
+    fs.readFile(path.join(process.cwd(), BRAND_MASTER_FILE)).catch(() => null),
+    fs.readFile(path.join(process.cwd(), BRAND_SHEET_FILE)).catch(() => null),
+  ]);
+  if (!master) return;
+  const storage = getStorage();
+  const now = nowIso();
+  const actor = "właściciel marki (grafiki dostarczone)";
+  await db.update("reference_assets", { status: "approved" }, { status: "retired" });
+  await db.update("reference_assets", { status: "proposed" }, { status: "retired" });
+  const nextVersion = async (kind: "master" | "sheet") => Math.max(0, ...(await db.find("reference_assets", { kind })).map((r) => r.version)) + 1;
+  const mv = await nextVersion("master");
+  await storage.put(`references/master-v${mv}-brand.webp`, master, "image/webp");
+  await db.insert("reference_assets", { kind: "master", version: mv, label: BRAND_REFERENCE_TAG, storage_path: `references/master-v${mv}-brand.webp`, status: "approved", approved_by: actor, approved_at: now, created_at: now });
+  if (sheet) {
+    const sv = await nextVersion("sheet");
+    await storage.put(`references/sheet-v${sv}-brand.webp`, sheet, "image/webp");
+    await db.insert("reference_assets", { kind: "sheet", version: sv, label: `${BRAND_REFERENCE_TAG} — arkusz póz`, storage_path: `references/sheet-v${sv}-brand.webp`, status: "approved", approved_by: actor, approved_at: now, created_at: now });
+  }
 }
 
 export async function uploadReference(data: Buffer, mime: string, label: string, kind: "master" | "sheet", actor: string): Promise<ReferenceAssetRow> {
@@ -73,6 +95,7 @@ export async function retireReference(id: string) {
 }
 
 export async function activeMaster(): Promise<ReferenceAssetRow | null> {
+  await ensureProposedReference();
   return (await getDb().find("reference_assets", { kind: "master", status: "approved" }, { orderBy: { column: "version", ascending: false }, limit: 1 }))[0] ?? null;
 }
 
@@ -228,7 +251,10 @@ export async function mascotMapUncached(): Promise<Record<string, string>> {
 
 /** Zatwierdzone grafiki strony (landing): slot → URL. */
 export async function landingArtUncached(): Promise<Record<string, string>> {
-  const rows = await getDb().find("illustrations", { story_id: LANDING_STORY_ID, status: "approved" }, { orderBy: { column: "reviewed_at", ascending: true } });
+  const master = await activeMaster();
+  if (!master) return {};
+  // tylko grafiki z aktualnym wyglądem Elofika (po zmianie wzorca stare znikają ze strony)
+  const rows = await getDb().find("illustrations", { story_id: LANDING_STORY_ID, status: "approved", reference_id: master.id }, { orderBy: { column: "reviewed_at", ascending: true } });
   const out: Record<string, string> = {};
   for (const r of rows) if (r.slot) out[r.slot] = publicIllustrationUrl(r);
   return out;
@@ -236,8 +262,13 @@ export async function landingArtUncached(): Promise<Record<string, string>> {
 
 /** Mapa okładek: tylko zatwierdzone (stories.cover_path ustawiane wyłącznie przy akceptacji). */
 export async function getCoverMap(): Promise<Record<string, string>> {
-  const rows = await getDb().find("stories", { status: { in: ["published", "approved", "core_generated"] } });
+  const db = getDb();
+  const master = await activeMaster();
+  if (!master) return {};
+  const rows = await db.find("stories", { status: { in: ["published", "approved", "core_generated"] } });
+  // okładka tylko, jeśli powstała z aktualnym wyglądem Elofika
+  const current = new Set((await db.find("illustrations", { image_type: "COVER", status: "approved", reference_id: master.id })).map((i) => i.storage_path));
   const out: Record<string, string> = {};
-  for (const r of rows) if (r.cover_path) out[r.id] = `/api/covers/${r.id}?v=${sha256(r.cover_path).slice(0, 8)}`;
+  for (const r of rows) if (r.cover_path && current.has(r.cover_path)) out[r.id] = `/api/covers/${r.id}?v=${sha256(r.cover_path).slice(0, 8)}`;
   return out;
 }

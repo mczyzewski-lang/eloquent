@@ -24,7 +24,7 @@ export function AppShell({ active, title, kids, activeChildId, children }: { act
         <div className="mx-auto flex h-14 max-w-3xl items-center gap-3 px-4">
           <Link href="/app" aria-label="Elofik — dzisiaj" className="flex items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/elofik-mark.png" alt="" className="h-9 w-auto" />
+            <img src="/brand/elofik-head.webp" alt="" className="h-10 w-10 object-contain" />
           </Link>
           <p className="min-w-0 flex-1 truncate font-display text-lg font-semibold text-navy">{title}</p>
           {kids?.length ? (

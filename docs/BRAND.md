@@ -26,9 +26,15 @@ Nie obiecujemy „podnoszenia IQ” ani wymiernych efektów — komunikujemy roz
 | Proporcje | Pluszakowe: duża okrągła głowa, miękkie kompaktowe ciało, krótkie kończyny — łatwe do przeniesienia na fizycznego pluszaka |
 | Zakazane | Szpiczasta czapka świątecznego elfa, dzwoneczki, renifery, czerwono-zielone kostiumy, motywy bożonarodzeniowe |
 
-Wizerunek kanoniczny: Elofik z logo marki (`public/brand/elofik-mark.png`) — zatwierdzona referencja dla OpenAI (Admin → Ilustracje).
-Wszystkie ilustracje (pozy maskotki, sceny strony, okładki) są generowane z tej referencji i stałego opisu postaci (`src/lib/ai/elofik-bible.ts`) i publikowane dopiero po akceptacji.
-Do czasu akceptacji póz komponent `src/components/elofik/Elofik.tsx` pokazuje Elofika z logo. Wektorowa maskotka została wycofana.
+Wizerunek kanoniczny (od 11.2026): grafiki dostarczone przez właściciela marki — `public/brand/elofik/*.webp`
+(idle, excited, surprised, curious, thinking, sleepy; wycięte z tła) oraz logo `public/brand/elofik-logo.webp`.
+Wygląd: rudo-kasztanowe potargane włosy z loczkiem, duże brązowe oczy, piegi, długie spiczaste uszy, zielona tunika
+z kapturem i listkiem, beżowe spodnie, brązowe buty z kremowym mankietem, brązowa torba, granatowa książka ze złotą gwiazdą.
+Styl: płaska ilustracja 2D z ciepłym brązowym konturem.
+
+Komponent `src/components/elofik/Elofik.tsx` mapuje nastroje na te pozy. Ta sama postać (+ arkusz póz
+`public/brand/elofik-reference-sheet.webp`) jest obrazem wzorcowym dla OpenAI (zatwierdzanym automatycznie);
+ilustracje wygenerowane ze starym wyglądem nie są publikowane.
 
 Machanie: Elofik unosi rękę i macha **dłonią** (obrót wokół nadgarstka), ramię pozostaje nieruchome.
 

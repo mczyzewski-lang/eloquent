@@ -13,7 +13,7 @@ import { STORY_CATALOG } from "@/content/stories";
 import { cn } from "@/lib/utils";
 import { getCoverMap } from "@/lib/services/illustrations";
 import { getLandingArt } from "@/lib/services/mascots";
-import { Fireflies, ForestHills, ListeningMoon, Moon as MoonArt, Ornament, Sparkles, StarField, StoryFrame, Wave } from "@/components/landing/Magic";
+import { Fireflies, ForestHills, Moon as MoonArt, Ornament, Sparkles, StarField, StoryFrame, Wave } from "@/components/landing/Magic";
 
 export const revalidate = 300; // okładki z panelu pojawiają się bez nowego wdrożenia
 
@@ -185,7 +185,7 @@ export default async function LandingPage() {
           ) : (
             <div className="relative mx-auto w-56 sm:w-72">
               <div className="absolute inset-6 rounded-full bg-gold/25 blur-3xl" aria-hidden />
-              <Elofik mood="listening" fallback={<ListeningMoon />} />
+              <Elofik mood="listening" />
             </div>
           )}
           <div>
@@ -281,7 +281,7 @@ export default async function LandingPage() {
           <StarField count={40} seed={17} className="h-2/3" />
           <Fireflies count={10} seed={4} />
           <div className="relative">
-            {!art.goodnight && <div className="mx-auto w-32"><Elofik mood="waving" fallback={<MoonArt className="mx-auto w-24" />} /></div>}
+            {!art.goodnight && <div className="mx-auto w-32"><Elofik mood="waving" /></div>}
             <h2 className="text-glow mt-4 text-3xl font-semibold !text-cream sm:text-4xl">Elofik już nastawia uszy</h2>
             <p className="mx-auto mt-3 max-w-lg text-lg text-cream/85">Wpisz imię dziecka i posłuchaj, jak brzmi jego pierwsza przygoda.</p>
             <Link href="#probka" className={cn(buttonVariants({ size: "lg" }), "mt-6")}>Posłuchaj darmowej próbki</Link>

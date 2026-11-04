@@ -78,7 +78,6 @@ export function IllustrationStudio({
 
   const proposedMaster = refs.find((r) => r.kind === "master" && r.status === "proposed") ?? null;
   const siteList = [
-    ...mascotPoses.map((p) => ({ storyId: "__mascot__", type: "CHARACTER_ONLY" as ImageType, scene: p.scene, slot: p.slot })),
     ...landingScenes.map((t) => ({ storyId: "__landing__", type: t.type, scene: t.scene, slot: t.slot })),
   ];
 
@@ -124,7 +123,7 @@ export function IllustrationStudio({
         <div className="min-w-0 flex-1">
           <p className="font-semibold text-navy">Grafiki Elofika na stronę — jednym kliknięciem</p>
           <p className="text-sm text-muted">
-            {mascotPoses.length} póz maskotki + {landingScenes.length} scen strony, generowane w OpenAI z obrazem referencyjnym (Elofik z logo) i stałym opisem postaci. Po wygenerowaniu przejrzyj je i zatwierdź — dopiero wtedy zastąpią tymczasowego Elofika z logo.
+            {landingScenes.length} scen strony (hero, rytuał, słowo dnia, rodzina, dobranoc) generowanych w OpenAI z obrazem wzorcowym nowego Elofika i stałym opisem postaci. Pozy Elofika w całym serwisie pochodzą z grafik marki — nie trzeba ich generować. Po wygenerowaniu przejrzyj sceny i zatwierdź.
           </p>
         </div>
         <Button disabled={!!busy || !openaiReady || (!master && !proposedMaster)} onClick={() => batch("site-all", siteList, { approveLogoReference: true })} data-testid="gen-site-all">
@@ -215,33 +214,10 @@ export function IllustrationStudio({
         </div>
       </section>
 
-      {/* 3. Maskotka */}
-      <section className="space-y-3 rounded-2xl border border-navy/10 bg-white p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-xl font-semibold">3. Elofik na stronie (pozy maskotki, CHARACTER_ONLY)</h2>
-          <Button size="sm" disabled={!!busy || !master || !openaiReady} onClick={() => batch("mascots", mascotPoses.map((p) => ({ storyId: "__mascot__", type: "CHARACTER_ONLY", scene: p.scene, slot: p.slot })))} data-testid="gen-mascots">
-            {busy === "mascots" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />} Wygeneruj wszystkie pozy ({mascotPoses.length})
-          </Button>
-        </div>
-        <p className="text-sm text-muted">Zatwierdzone pozy zastępują wektorową maskotkę w całym serwisie (landing, aplikacja, rytuał „Hej Elofik!”, logowanie). Przezroczyste tło.</p>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          {mascotPoses.map((p) => {
-            const cur = latest.get(`__mascot__|CHARACTER_ONLY|${p.slot}`);
-            return (
-              <div key={p.slot} className="rounded-xl border border-navy/10 p-2 text-center text-xs">
-                <div className="flex aspect-square items-center justify-center rounded-lg bg-cream">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  {cur?.url ? <img src={cur.url} alt={p.label} className="max-h-full" /> : <ImageIcon className="h-6 w-6 text-muted" />}
-                </div>
-                <p className="mt-1 font-semibold">{p.label}</p>
-                {cur && <Badge tone={cur.status === "approved" ? "sage" : cur.status === "pending" ? "gold" : "muted"}>{cur.status}</Badge>}
-                <button type="button" disabled={!!busy || !master || !openaiReady} className="mt-1 block w-full text-muted underline disabled:opacity-40" onClick={() => run(`m-${p.slot}`, async () => { await generate("__mascot__", "CHARACTER_ONLY", p.scene, p.slot, Boolean(cur)); })}>
-                  {busy === `m-${p.slot}` ? "generuję…" : cur ? "nowa wersja" : "generuj"}
-                </button>
-              </div>
-            );
-          })}
-        </div>
+      {/* 3. Maskotka — grafiki marki */}
+      <section className="rounded-2xl border border-navy/10 bg-white p-4 text-sm text-muted">
+        <h2 className="text-xl font-semibold text-navy">3. Elofik na stronie</h2>
+        <p className="mt-1">Pozy Elofika (spokojny, radosny, zaskoczony, zaciekawiony, zamyślony, senny) to grafiki dostarczone przez właściciela marki — używane w całym serwisie i jako obraz wzorcowy dla OpenAI. Grafiki wygenerowane wcześniej ze starym wyglądem nie są już publikowane.</p>
       </section>
 
       {/* 3b. Grafiki strony */}

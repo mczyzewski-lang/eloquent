@@ -6,27 +6,28 @@
  * Zmiana treści = nowa PROMPT_VERSION (nowe klucze cache, stare ilustracje zostają w historii).
  */
 
-export const PROMPT_VERSION = "1.0";
+// 2.0 — nowy wygląd Elofika (grafiki dostarczone przez właściciela marki, listopad 2026)
+export const PROMPT_VERSION = "2.0";
 
 export const CHARACTER_AND_STYLE_PROMPT = `Create a premium children's storybook illustration featuring ELOFIK, the EXACT SAME RECURRING CHARACTER used throughout the Elofik brand.
 
 CHARACTER IDENTITY — INVARIANT:
-Elofik is a lovable, non-Christmas young boy elf, visually around 5–7 years old. He has a soft, round, friendly face; very large expressive warm brown eyes; a small rounded nose; subtle freckles and peachy cheeks; a cheerful, kind smile; large, softly pointed elf ears; and thick, fluffy, slightly tousled, wavy caramel-chestnut hair with a distinctive forelock. His youthful proportions and facial structure must remain recognizably identical in every illustration.
+Elofik is a lovable, non-Christmas young boy elf, visually around 5–7 years old, with a slightly chibi, big-head child proportion. He has a round friendly face; very large round dark-brown eyes with big white highlights; a small rounded nose; orange freckles on both cheeks; a wide cheerful open smile; long pointed elf ears sticking out sideways with peach inner color; and thick, tousled, ginger-auburn (warm orange-brown) hair with a curled cowlick on top and a sweeping fringe. His youthful proportions and facial structure must remain recognizably identical in every illustration.
 
 SIGNATURE OUTFIT — INVARIANT:
-Elofik wears a cozy moss-green/sage-green fantasy tunic or hoodie-like top with delicate botanical/book motifs, loose warm beige trousers, soft brown boots, a brown belt and a small leather crossbody satchel. He is often accompanied by the SAME navy-blue magical storybook with elegant warm-gold decorations. No Christmas hat. Keep the outfit identity and palette consistent; adapt only small functional props when the story demands it.
+Elofik wears an olive/leaf-green hooded tunic with a small pale two-leaf emblem on the chest and a round gold toggle button at the collar, beige trousers, brown boots with cream cuffed tops, and a brown leather crossbody satchel with a gold button. He is usually holding the SAME navy-blue storybook with gold corners and a gold four-point star on the cover; small golden sparkles often float near the book. No hat, never a Christmas hat. Keep the outfit identity and palette consistent; adapt only small functional props when the story demands it.
 
 VISUAL STYLE — INVARIANT:
-Polished, high-end, soft three-dimensional/semi-3D children's picture-book artwork. Rounded friendly forms, gently detailed plush-like materials, warm cinematic lighting, gorgeous but controlled atmosphere, a believable cohesive fantasy world, expressive child-friendly emotions, subtle magical gold glows, and sophisticated editorial composition. Elofik should feel lovable, safe, intelligent, and plush-mascot-ready. The image must look like one frame from a consistent illustrated book series, not like a new character design.
+Clean 2D cartoon children's picture-book illustration with bold, warm dark-brown outlines, flat colors with soft cel shading, rounded friendly shapes and expressive faces — the same style as the supplied Elofik reference. Warm, cozy lighting, a cohesive storybook fantasy world, expressive child-friendly emotions and gentle golden sparkles. Elofik should feel lovable, safe, curious and mascot-ready. The image must look like one frame from a consistent illustrated book series, not like a new character design.
 
 CORE COLOR SYSTEM:
-Warm ivory/cream #FFF9F0, deep navy #26344A, warm gold #F6C76D, soft peach #F8DDD0, moss/sage green clothing, caramel/chestnut-brown hair, and warm brown leather accessories. Environmental colors may change to fit the story while Elofik's identity colors stay stable.
+Warm cream #FDF3E1, deep navy #26344A (storybook), warm gold #F6C34D, olive/leaf green #6E9B35 clothing, ginger-auburn hair, beige trousers, warm brown leather and boots, dark-brown outlines. Environmental colors may change to fit the story while Elofik's identity colors stay stable.
 
 CONSISTENCY RULES:
 Treat the supplied character reference image as the definitive visual source of truth. Match his face shape, eye design, eye color, hairstyle, hair silhouette, pointed ears, costume language, color relationships, and overall character proportions as closely as possible. Do NOT redesign Elofik. Only adjust pose, expression, action, background, storytelling props, time of day, and composition as specified in the scene.
 
 DO NOT INCLUDE:
-Christmas or Santa elf imagery, red-and-white holiday outfits, holiday ornaments, horror/dark fantasy styling, sinister sharp facial traits, a different child or animal in place of Elofik, adult-looking anatomy, a changed hairstyle or different hair color, flat vector icon styling, low-detail stock clipart, photorealistic humans, random text, logos, captions, or watermarks.
+Christmas or Santa elf imagery, red-and-white holiday outfits, holiday ornaments, horror/dark fantasy styling, sinister sharp facial traits, a different child or animal in place of Elofik, adult-looking anatomy, a changed hairstyle or different hair color, 3D/CGI rendering, photorealism, low-detail stock clipart, photorealistic humans, random text, logos, captions, or watermarks.
 
 VISUAL PRIORITY:
 1. Preserve Elofik's recognizable identity.
@@ -206,10 +207,10 @@ export const TEST_SCENES: { id: string; title: string; type: ImageType; scene: S
 
 /** Checklista akceptacji (sekcja 6) — wyświetlana przy każdej ilustracji w panelu. */
 export const ACCEPTANCE_CHECKLIST = [
-  "Twarz, nos, oczy i piegi zgodne z kanonem",
-  "Ten sam karmelowy kolor i układ włosów",
-  "To samo położenie, kształt i proporcje uszu",
-  "Kostium szałwiowo-zielony + beżowe spodnie + brązowe dodatki",
+  "Twarz, duże brązowe oczy i piegi zgodne z kanonem; styl 2D z brązowym konturem",
+  "Te same rudo-kasztanowe, potargane włosy z loczkiem na czubku",
+  "Długie, spiczaste uszy odstające na boki",
+  "Zielona tunika z kapturem i listkiem, beżowe spodnie, brązowe buty z kremowym mankietem, torba",
   "Brak skojarzeń ze Świętym Mikołajem i Bożym Narodzeniem",
   "Scena oddaje fabułę konkretnej bajki",
   "Czytelny bohater w miniaturze mobilnej",

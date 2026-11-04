@@ -1,45 +1,46 @@
 "use client";
 
 /**
- * Elofik — mały elf opowieści.
- * Jeśli w panelu (Admin → Ilustracje → Elofik na stronie) zatwierdzono pozy maskotki wygenerowane
- * z character bible (OpenAI + referencja), komponent pokazuje je w całym serwisie.
- * Do tego czasu pokazuje Elofika z logo marki (public/brand/elofik-mark.png).
+ * Elofik — mały elf opowieści. Wygląd kanoniczny: grafiki dostarczone przez właściciela marki
+ * (public/brand/elofik/*.webp — wycięte z tła). Ilustracje scen z OpenAI powstają z tego samego wzoru.
  */
-import { createContext, useContext } from "react";
+import { createContext } from "react";
 import { cn } from "@/lib/utils";
 
-/** mood → URL zatwierdzonej ilustracji (dostarczane przez <MascotProvider> w layoucie). */
+/** Zostawione dla zgodności (dawniej: pozy z OpenAI). Elofik zawsze używa grafik marki. */
 const MascotContext = createContext<Record<string, string>>({});
 
 export function MascotProvider({ map, children }: { map: Record<string, string>; children: React.ReactNode }) {
   return <MascotContext.Provider value={map}>{children}</MascotContext.Provider>;
 }
 
-export type ElofikMood = "idle" | "listening" | "happy" | "waving" | "telling" | "sleepy";
+export type ElofikMood = "idle" | "listening" | "happy" | "waving" | "telling" | "sleepy" | "thinking" | "surprised";
+
+/** Nastrój → poza z grafik marki. */
+export const ELOFIK_POSES: Record<ElofikMood, string> = {
+  idle: "/brand/elofik/idle.webp",
+  telling: "/brand/elofik/idle.webp",
+  waving: "/brand/elofik/excited.webp",
+  happy: "/brand/elofik/excited.webp",
+  surprised: "/brand/elofik/surprised.webp",
+  listening: "/brand/elofik/curious.webp",
+  thinking: "/brand/elofik/thinking.webp",
+  sleepy: "/brand/elofik/sleepy.webp",
+};
 
 /**
- * `fallback` — co pokazać, gdy nie ma zatwierdzonej pozy z OpenAI (domyślnie Elofik z logo).
- * Przekaż `null`, aby w danym miejscu nie powtarzać logo.
+ * `fallback` — zostawione dla zgodności z miejscami, które wcześniej ukrywały zastępczego Elofika.
+ * Teraz Elofik ma własne pozy, więc pokazujemy go zawsze.
  */
-export function Elofik({ mood = "idle", className, title = "Elofik, mały elf opowieści", fallback }: { mood?: ElofikMood; className?: string; title?: string; fallback?: React.ReactNode }) {
-  const mascots = useContext(MascotContext);
-  const src = mascots[mood] ?? mascots.idle;
-  if (src) {
-    // zatwierdzona ilustracja z panelu; animacje nastroju realizowane na całej postaci
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={src} alt={title} draggable={false} className={cn("mascot-img block h-auto w-full select-none object-contain", `mascot-${mood}`, className)} />;
-  }
-  if (fallback !== undefined) return <>{fallback}</>;
-  return <ElofikBrand mood={mood} className={className} title={title} />;
-}
-
-/** Elofik z logo marki (ilustracja zatwierdzona przez właściciela) — do czasu akceptacji póz z OpenAI. */
-const BRAND_ELOFIK = "/brand/elofik-mark.png";
-
-function ElofikBrand({ mood, className, title }: { mood: ElofikMood; className?: string; title: string }) {
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src={BRAND_ELOFIK} alt={title} draggable={false} className={cn("mascot-img block h-auto w-full select-none object-contain", `mascot-${mood}`, className)} />;
+export function Elofik({ mood = "idle", className, title = "Elofik, mały elf opowieści" }: { mood?: ElofikMood; className?: string; title?: string; fallback?: React.ReactNode }) {
+  return (
+    <span className={cn("relative block", className)}>
+      {/* miękki cień pod stopami (grafiki są wycięte z tła) */}
+      <span aria-hidden className="absolute inset-x-[18%] bottom-[0.5%] h-[3.5%] rounded-[50%] bg-navy/15 blur-[3px]" />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={ELOFIK_POSES[mood]} alt={title} draggable={false} className={cn("mascot-img relative block h-auto w-full select-none object-contain", `mascot-${mood}`)} />
+    </span>
+  );
 }
 
 export function Sparkles({ className, count = 7 }: { className?: string; count?: number }) {

@@ -6,21 +6,20 @@ import Link from "next/link";
 import { KeyRound } from "lucide-react";
 import { config, hasElevenLabs, hasOpenAI } from "@/lib/config";
 import { buttonVariants } from "@/components/ui/button";
-import { landingArtUncached, mascotMapUncached } from "@/lib/services/illustrations";
-import { LANDING_SCENES, MASCOT_POSES } from "@/lib/ai/elofik-bible";
+import { landingArtUncached } from "@/lib/services/illustrations";
+import { LANDING_SCENES } from "@/lib/ai/elofik-bible";
 
 export default async function AdminDashboard() {
   const m = await businessMetrics();
   const db = getDb();
   const audit = await db.find("admin_audit_logs", {}, { orderBy: { column: "created_at", ascending: false }, limit: 10 });
   const jobs = await db.find("generation_jobs", { status: { in: ["queued", "running", "failed"] } }, { limit: 20 });
-  const [mascots, landingArt, pendingArt] = await Promise.all([
-    mascotMapUncached().catch(() => ({}) as Record<string, string>),
+  const [landingArt, pendingArt] = await Promise.all([
     landingArtUncached().catch(() => ({}) as Record<string, string>),
-    db.count("illustrations", { story_id: { in: ["__mascot__", "__landing__"] }, status: "pending" }).catch(() => 0),
+    db.count("illustrations", { story_id: "__landing__", status: "pending" }).catch(() => 0),
   ]);
-  const artTotal = Object.keys(MASCOT_POSES).length + LANDING_SCENES.length;
-  const artApproved = Object.keys(mascots).length + LANDING_SCENES.filter((x) => landingArt[x.slot]).length;
+  const artTotal = LANDING_SCENES.length;
+  const artApproved = LANDING_SCENES.filter((x) => landingArt[x.slot]).length;
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-semibold">Dashboard biznesowy</h1>
@@ -42,11 +41,11 @@ export default async function AdminDashboard() {
       {artApproved < artTotal && (
         <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-gold/50 bg-gold/10 p-4" data-testid="site-art-prompt">
           <div className="flex-1">
-            <p className="font-display text-lg font-semibold text-navy">Grafiki Elofika na stronie: zatwierdzone {artApproved} z {artTotal}</p>
+            <p className="font-display text-lg font-semibold text-navy">Sceny z nowym Elofikiem na stronie: zatwierdzone {artApproved} z {artTotal}</p>
             <p className="text-sm text-muted">
               {pendingArt > 0
-                ? `${pendingArt} czeka na Twoją akceptację — dopóki ich nie zatwierdzisz, strona pokazuje tymczasowo Elofika z logo.`
-                : "Do czasu wygenerowania i zatwierdzenia grafik z OpenAI strona pokazuje tymczasowo Elofika z logo."}
+                ? `${pendingArt} czeka na Twoją akceptację — dopóki ich nie zatwierdzisz, strona pokazuje Elofika z grafik marki na bajkowym tle.`
+                : "Do czasu wygenerowania scen z OpenAI strona pokazuje Elofika z grafik marki na bajkowym tle."}
             </p>
           </div>
           <Link href="/admin/ilustracje" data-ui="button" data-variant="primary" data-size="md" className={buttonVariants({ size: "md" })}>{pendingArt > 0 ? "Przejrzyj i zatwierdź" : "Wygeneruj grafiki"}</Link>

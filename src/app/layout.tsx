@@ -2,8 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Baloo_2, Nunito } from "next/font/google";
 import { SITE } from "@/lib/site";
 import { ServiceWorker } from "@/components/site/ServiceWorker";
-import { MascotProvider } from "@/components/elofik/Elofik";
-import { getMascotMap } from "@/lib/services/mascots";
 import "./globals.css";
 
 const nunito = Nunito({ subsets: ["latin", "latin-ext"], variable: "--font-nunito", display: "swap" });
@@ -39,11 +37,10 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const mascots = await getMascotMap().catch(() => ({}) as Record<string, string>);
   return (
     <html lang="pl" className={`${nunito.variable} ${display.variable}`}>
       <body className="min-h-dvh">
-        <MascotProvider map={mascots}>{children}</MascotProvider>
+        {children}
         <ServiceWorker />
       </body>
     </html>
