@@ -7,7 +7,8 @@
  */
 
 // 2.0 — nowy wygląd Elofika (grafiki dostarczone przez właściciela marki, listopad 2026)
-export const PROMPT_VERSION = "2.1";
+// 2.2 — pastelowe tła (wzór teł od właściciela marki)
+export const PROMPT_VERSION = "2.2";
 
 export const CHARACTER_AND_STYLE_PROMPT = `Create a premium children's storybook illustration featuring ELOFIK, the EXACT SAME RECURRING CHARACTER used throughout the Elofik brand.
 
@@ -20,11 +21,14 @@ Elofik wears an olive/leaf-green hooded tunic with a small pale two-leaf emblem 
 VISUAL STYLE — INVARIANT:
 Flat 2D cartoon illustration in the style of modern preschool TV animation: bold warm dark-brown outlines, flat bright colors with minimal cel shading, simple rounded shapes, clean uncluttered flat-color backgrounds (no painterly textures, no gradients-heavy lighting, no 3D) — the same style as the supplied Elofik reference sheet. Cheerful, cozy everyday-adventure atmosphere, expressive child-friendly emotions and a few simple golden sparkles. Elofik should feel lovable, safe, curious and mascot-ready. The image must look like one frame from a consistent illustrated book series, not like a new character design.
 
+BACKGROUNDS & ENVIRONMENT STYLE — INVARIANT:
+Backgrounds are soft, PASTEL, hand-painted-looking flat 2D storybook environments in the style of the supplied background style reference: simple readable shapes, gentle soft-edged forms, light airy skies with fluffy rounded clouds, smooth soft color transitions, subtle soft light (no harsh shadows, no high contrast), calm and cozy. Palette: powder blue skies, mint and sage greens, butter yellow, peach, blush pink, lavender and warm cream; night scenes in soft periwinkle-navy with pale gold stars rather than black. Keep backgrounds slightly lighter and less saturated than Elofik so he always pops in front. Uncluttered compositions with a clear focal area — the environment supports the story and never competes with the character.
+
 CORE COLOR SYSTEM:
 Warm cream #FDF3E1, deep navy #26344A (storybook), warm gold #F6C34D, olive/leaf green #6E9B35 clothing, ginger-auburn hair, beige trousers, warm brown leather and boots, dark-brown outlines. Environmental colors may change to fit the story while Elofik's identity colors stay stable.
 
 CONSISTENCY RULES:
-Treat the supplied character reference image as the definitive visual source of truth. Match his face shape, eye design, eye color, hairstyle, hair silhouette, pointed ears, costume language, color relationships, and overall character proportions as closely as possible. Do NOT redesign Elofik. Only adjust pose, expression, action, background, storytelling props, time of day, and composition as specified in the scene.
+Reference images, in order: (1) Elofik character — the definitive source of truth for his identity; (2) Elofik pose and emotion sheets — same character, for expressions and body language; (3) the LAST image is a BACKGROUND STYLE reference only — use it for the pastel environment style, palette and rendering, never copy its scenes, objects or compositions, and never add characters from it. Match his face shape, eye design, eye color, hairstyle, hair silhouette, pointed ears, costume language, color relationships, and overall character proportions as closely as possible. Do NOT redesign Elofik. Only adjust pose, expression, action, background, storytelling props, time of day, and composition as specified in the scene.
 
 DO NOT INCLUDE:
 Christmas or Santa elf imagery, red-and-white holiday outfits, holiday ornaments, horror/dark fantasy styling, sinister sharp facial traits, a different child or animal in place of Elofik, adult-looking anatomy, a changed hairstyle or different hair color, 3D/CGI rendering, photorealism, low-detail stock clipart, photorealistic humans, random text, logos, captions, or watermarks.

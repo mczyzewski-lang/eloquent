@@ -75,11 +75,12 @@ describe("Generowanie z referencją (testy 3–5, 8)", () => {
   it("wzorzec nowego Elofika (grafiki marki) jest zatwierdzany automatycznie — postać i arkusz póz", async () => {
     await ensureProposedReference();
     const refs = await db.find("reference_assets", { status: "approved" });
-    expect(refs.map((r) => r.kind).sort()).toEqual(["master", "sheet", "sheet"]);
+    expect(refs.map((r) => r.kind).sort()).toEqual(["master", "sheet", "sheet", "sheet"]);
+    expect(refs.some((r) => r.label.includes("styl teł"))).toBe(true);
     expect(refs.every((r) => r.storage_path.endsWith(".webp"))).toBe(true);
     // ponowne wywołanie nic nie dubluje
     await ensureProposedReference();
-    expect(await db.count("reference_assets", {})).toBe(3);
+    expect(await db.count("reference_assets", {})).toBe(4);
   });
 
   it("5. bez zatwierdzonej referencji generowanie jest zablokowane", async () => {
@@ -117,6 +118,17 @@ describe("Generowanie z referencją (testy 3–5, 8)", () => {
     expect(illustrationCacheKey({ ...base, storyVersion: 2 })).not.toBe(k);
     expect(illustrationCacheKey({ ...base, scenePrompt: "q" })).not.toBe(k);
     expect(illustrationCacheKey(base)).toBe(k);
+  });
+
+  it("wzorce marki: postać, arkusze i na końcu wzór pastelowych teł; prompt opisuje kolejność", async () => {
+    await withKeys();
+    await ensureProposedReference();
+    await generateIllustrationAsset({ storyId: TEST_STORY_ID, imageType: "INTERIOR", scene: TEST_SCENES[2].scene, slot: "03", actor: "a" });
+    expect(calls[0].images).toHaveLength(4);
+    expect(calls[0].prompt).toContain("BACKGROUNDS & ENVIRONMENT STYLE");
+    expect(calls[0].prompt).toMatch(/LAST image is a BACKGROUND STYLE reference only/);
+    const sheets = (await db.find("reference_assets", { kind: "sheet", status: "approved" })).sort((a, b) => a.version - b.version);
+    expect(sheets[sheets.length - 1].label).toContain("styl teł");
   });
 
   it("character sheet trafia do wywołania razem z masterem", async () => {

@@ -34,9 +34,12 @@ export class IllustrationError extends Error {
 // ---------- referencje --------------------------------------------------------
 
 /** Kanoniczny wygląd Elofika (grafiki od właściciela marki). Zmiana = nowy tag → nowa referencja. */
-export const BRAND_REFERENCE_TAG = "Elofik — grafiki marki v3";
+export const BRAND_REFERENCE_TAG = "Elofik — grafiki marki v4";
 const BRAND_MASTER_FILE = "public/brand/elofik/idle.webp";
-const BRAND_SHEET_FILES = ["public/brand/elofik-reference-sheet.webp", "public/brand/elofik-emotions-sheet.webp"];
+const BRAND_SHEET_FILES = ["public/brand/elofik-reference-sheet.webp", "public/brand/elofik-emotions-sheet.webp", "public/brand/elofik-background-style.webp"];
+const SHEET_LABELS = ["pozy", "emocje i zajęcia", "styl teł (pastelowe tła)"];
+/** Wzorzec stylu teł — zawsze dołączany jako ostatni (prompt opisuje kolejność). */
+const isStyleSheet = (r: ReferenceAssetRow) => r.label.includes("styl teł");
 
 /**
  * Referencja kanoniczna: postać i arkusz póz dostarczone przez właściciela marki.
@@ -61,7 +64,7 @@ export async function ensureProposedReference(): Promise<void> {
   for (const [i, sheet] of sheets.entries()) {
     const sv = await nextVersion("sheet");
     await storage.put(`references/sheet-v${sv}-brand.webp`, sheet, "image/webp");
-    await db.insert("reference_assets", { kind: "sheet", version: sv, label: `${BRAND_REFERENCE_TAG} — ${i === 0 ? "pozy" : "emocje i zajęcia"}`, storage_path: `references/sheet-v${sv}-brand.webp`, status: "approved", approved_by: actor, approved_at: now, created_at: now });
+    await db.insert("reference_assets", { kind: "sheet", version: sv, label: `${BRAND_REFERENCE_TAG} — ${SHEET_LABELS[i] ?? "arkusz"}`, storage_path: `references/sheet-v${sv}-brand.webp`, status: "approved", approved_by: actor, approved_at: now, created_at: now });
   }
 }
 
@@ -105,7 +108,9 @@ export async function activeMaster(): Promise<ReferenceAssetRow | null> {
 }
 
 async function activeSheets(): Promise<ReferenceAssetRow[]> {
-  return getDb().find("reference_assets", { kind: "sheet", status: "approved" }, { orderBy: { column: "version", ascending: false }, limit: 3 });
+  const sheets = await getDb().find("reference_assets", { kind: "sheet", status: "approved" }, { orderBy: { column: "version", ascending: true }, limit: 6 });
+  // kolejność: arkusze postaci, na końcu wzorzec teł
+  return [...sheets.filter((r) => !isStyleSheet(r)).slice(-3), ...sheets.filter(isStyleSheet).slice(-1)];
 }
 
 // ---------- generowanie --------------------------------------------------------

@@ -36,6 +36,8 @@ Komponent `src/components/elofik/Elofik.tsx` mapuje nastroje na te pozy. Ta sama
 `public/brand/elofik-reference-sheet.webp`) jest obrazem wzorcowym dla OpenAI (zatwierdzanym automatycznie);
 ilustracje wygenerowane ze starym wyglądem nie są publikowane.
 
+Tła scen: pastelowe, płaskie ilustracje 2D (wzór: `public/brand/elofik-background-style.webp`, dołączany do OpenAI jako ostatni obraz — tylko styl i paleta, nie kopiowane sceny). Paleta teł: pudrowy błękit, mięta/szałwia, maślany żółty, brzoskwinia, róż, lawenda, krem; noc w pastelowym granacie zamiast czerni. Tła jaśniejsze i mniej nasycone niż Elofik.
+
 Machanie: Elofik unosi rękę i macha **dłonią** (obrót wokół nadgarstka), ramię pozostaje nieruchome.
 
 ## Paleta
