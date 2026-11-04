@@ -29,7 +29,7 @@ export default async function GrandparentsPage({ searchParams }: { searchParams:
         <StarField count={60} seed={29} className="h-[70%]" />
         <Moon className="absolute right-[5%] top-6 w-16 sm:w-24" />
         <Fireflies count={14} seed={12} />
-        <div className="container-page relative grid items-center gap-8 pb-4 pt-10 lg:grid-cols-2 lg:pt-16">
+        <div className="container-page relative grid items-center gap-8 pb-4 pt-10 lg:grid-cols-2 lg:gap-12 lg:pt-16">
           <div className="text-center lg:text-left">
             <p className="font-display text-sm font-bold uppercase tracking-[0.18em] text-gold">Dla babci i dziadka</p>
             <h1 className="text-glow mt-3 text-4xl font-semibold leading-tight !text-cream sm:text-5xl">
@@ -38,7 +38,7 @@ export default async function GrandparentsPage({ searchParams }: { searchParams:
             <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-cream/85 lg:mx-0">
               Stwórz bezpłatną opowieść, w której Elofik zabierze Twojego wnuka w magiczną przygodę. A jeśli chcesz, możesz podarować mu coś więcej — codzienne bajki rozwijające słownictwo, wyobraźnię i ciekawość świata.
             </p>
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start">
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center lg:justify-start">
               <a href="#kreator" className={buttonVariants({ size: "lg" })}><Gift className="h-5 w-5" /> Stwórz bezpłatną niespodziankę</a>
               <Link href="/dla-dziadkow/kup" className={buttonVariants({ size: "lg", variant: "soft" })}>Podaruj codzienne bajki</Link>
             </div>
