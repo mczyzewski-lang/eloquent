@@ -107,8 +107,12 @@ test("19. bez sesji brak dostępu do audio i danych", async ({ request }) => {
 
 test("13. babcia tworzy bezpłatną bajkę i dostaje bezpieczny link", async ({ page }) => {
   await page.goto("/dla-dziadkow");
-  await page.fill("#g-child", "Leon");
-  await page.fill("#g-giver", "Basia");
+  // hero: imię wnuka → okno z resztą kreatora (imię już wpisane)
+  await page.fill("#hero-child", "Leon");
+  await page.getByTestId("gift-hero-start").click();
+  await expect(page.getByRole("dialog", { name: "Niespodzianka dla Leona" })).toBeVisible();
+  await expect(page.locator("#g-child-okno")).toHaveValue("Leon");
+  await page.fill("#g-giver-okno", "Basia");
   await page.getByTestId("gift-generate").click();
   await page.waitForURL(/\/prezent\/[A-Za-z0-9_-]{32,}\?nowa=1/, { timeout: 30_000 });
   await expect(page.getByRole("heading", { name: "Twoja bajka dla Leona jest gotowa!" })).toBeVisible();

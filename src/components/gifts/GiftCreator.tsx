@@ -12,9 +12,9 @@ import { cn } from "@/lib/utils";
 const INTERESTS = ["Zwierzęta", "Kosmos", "Dinozaury", "Przyroda", "Pojazdy", "Magia", "Roboty", "Przygody"];
 
 /** Kreator bezpłatnej bajki-niespodzianki od babci/dziadka. */
-export function GiftCreator() {
+export function GiftCreator({ initialChildName = "", inSheet = false }: { initialChildName?: string; inSheet?: boolean } = {}) {
   const router = useRouter();
-  const [childName, setChildName] = useState("");
+  const [childName, setChildName] = useState(initialChildName);
   const [age, setAge] = useState(5);
   const [relation, setRelation] = useState<"grandma" | "grandpa">("grandma");
   const [giverName, setGiverName] = useState("");
@@ -46,12 +46,12 @@ export function GiftCreator() {
   }
 
   return (
-    <form onSubmit={submit} className="card-soft space-y-5 p-6" id="kreator">
-      <h2 className="text-2xl font-semibold">Stwórz bezpłatną niespodziankę</h2>
+    <form onSubmit={submit} className={inSheet ? "space-y-5" : "card-soft space-y-5 p-6"} id={inSheet ? "kreator-okno" : "kreator"}>
+      {!inSheet && <h2 className="text-2xl font-semibold">Stwórz bezpłatną niespodziankę</h2>}
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="g-child">Imię wnuka lub wnuczki</Label>
-          <Input id="g-child" value={childName} onChange={(e) => setChildName(e.target.value)} placeholder="np. Leon" maxLength={30} required />
+          <Label htmlFor={inSheet ? "g-child-okno" : "g-child"}>Imię wnuka lub wnuczki</Label>
+          <Input id={inSheet ? "g-child-okno" : "g-child"} value={childName} onChange={(e) => setChildName(e.target.value)} placeholder="np. Leon" maxLength={30} required />
         </div>
         <div>
           <Label>Wiek dziecka</Label>
@@ -71,8 +71,8 @@ export function GiftCreator() {
         </div>
       </div>
       <div>
-        <Label htmlFor="g-giver">{relation === "grandma" ? "Imię babci" : "Imię dziadka"}</Label>
-        <Input id="g-giver" value={giverName} onChange={(e) => setGiverName(e.target.value)} placeholder={relation === "grandma" ? "np. Basia" : "np. Jan"} maxLength={30} required />
+        <Label htmlFor={inSheet ? "g-giver-okno" : "g-giver"}>{relation === "grandma" ? "Imię babci" : "Imię dziadka"}</Label>
+        <Input id={inSheet ? "g-giver-okno" : "g-giver"} autoFocus={inSheet && Boolean(initialChildName)} value={giverName} onChange={(e) => setGiverName(e.target.value)} placeholder={relation === "grandma" ? "np. Basia" : "np. Jan"} maxLength={30} required />
         <p className="mt-1 text-xs text-muted">W bajce usłyszycie np. „{relation === "grandma" ? "babcia" : "dziadek"} {giverName || (relation === "grandma" ? "Basia" : "Jan")}”.</p>
       </div>
       <div>

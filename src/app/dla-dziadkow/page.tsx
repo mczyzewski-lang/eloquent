@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Gift, Heart, Send, Sparkles as SparklesIcon, Wand2 } from "lucide-react";
 import { SiteFooter, SiteHeader } from "@/components/site/Header";
-import { GiftCreator } from "@/components/gifts/GiftCreator";
+import { GiftHeroStart, OpenGiftButton } from "@/components/gifts/GiftHeroStart";
 import { GrandparentsIllustration } from "@/components/gifts/GrandparentsIllustration";
 import { SectionTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
@@ -38,10 +38,10 @@ export default async function GrandparentsPage({ searchParams }: { searchParams:
             <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-cream/85 lg:mx-0">
               Stwórz bezpłatną opowieść, w której Elofik zabierze Twojego wnuka w magiczną przygodę. A jeśli chcesz, możesz podarować mu coś więcej — codzienne bajki rozwijające słownictwo, wyobraźnię i ciekawość świata.
             </p>
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center lg:justify-start">
-              <a href="#kreator" className={buttonVariants({ size: "lg" })}><Gift className="h-5 w-5" /> Stwórz bezpłatną niespodziankę</a>
-              <Link href="/dla-dziadkow/kup" className={buttonVariants({ size: "lg", variant: "soft" })}>Podaruj codzienne bajki</Link>
-            </div>
+            <GiftHeroStart />
+            <p className="mt-4 text-center text-sm text-cream/80 lg:text-left">
+              albo <Link href="/dla-dziadkow/kup" className="font-semibold text-gold underline underline-offset-4">podaruj codzienne bajki na cały miesiąc</Link>
+            </p>
             {sp.anulowano && <p className="mt-4 rounded-2xl bg-peach p-3 text-sm text-navy">Płatność została przerwana — nic nie pobraliśmy.</p>}
           </div>
           {art.family ? (
@@ -65,7 +65,7 @@ export default async function GrandparentsPage({ searchParams }: { searchParams:
               <h3 className="mt-4 text-2xl font-semibold">Mała niespodzianka, wielki uśmiech</h3>
               <p className="mt-2 flex-1 text-muted">Stwórz krótką bajkę, w której Elofik wymieni imię wnuka i Twoje. Wyślij link rodzicom i podaruj dziecku chwilę radości.</p>
               <p className="mt-4 font-display text-2xl font-semibold text-sage-deep">Bezpłatnie</p>
-              <a href="#kreator" className={cn(buttonVariants({ size: "md" }), "relative z-10 mt-4")}>Stwórz niespodziankę</a>
+              <OpenGiftButton className={cn(buttonVariants({ size: "md" }), "relative z-10 mt-4")}>Stwórz niespodziankę</OpenGiftButton>
             </div>
             <div className="sky-night relative flex flex-col overflow-hidden rounded-[var(--radius-2xl)] p-7 text-cream shadow-[0_0_0_2px_rgb(246_199_109/0.6),0_20px_50px_-20px_rgb(28_39_71/0.7)] sm:rotate-1">
               <StarField count={26} seed={51} className="opacity-70" />
@@ -80,17 +80,6 @@ export default async function GrandparentsPage({ searchParams }: { searchParams:
             </div>
           </div>
         </div>
-      </section>
-
-      {/* Kreator niespodzianki */}
-      <section className="relative overflow-x-clip"><div className="container-page relative max-w-2xl py-12">
-        <div className="relative">
-          <div className="hidden" aria-hidden />
-          <div className="storybook-card relative p-2 [&_form]:bg-transparent [&_form]:shadow-none">
-            <GiftCreator />
-          </div>
-        </div>
-      </div>
       </section>
 
       {/* Jak to działa */}
@@ -117,7 +106,7 @@ export default async function GrandparentsPage({ searchParams }: { searchParams:
             ))}
           </ol>
           <div className="mt-10 text-center">
-            <a href="#kreator" className={buttonVariants({ size: "lg" })}><Gift className="h-5 w-5" /> Stwórz bezpłatną niespodziankę</a>
+            <OpenGiftButton className={buttonVariants({ size: "lg" })}><Gift className="h-5 w-5" /> Stwórz bezpłatną niespodziankę</OpenGiftButton>
           </div>
         </div>
       </section>
