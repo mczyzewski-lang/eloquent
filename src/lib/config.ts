@@ -79,6 +79,14 @@ export const config = {
       return getOverride("openai_image_model") ?? process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-2.5-sunburst";
     },
   },
+  sms: {
+    get smsapiToken() {
+      return clean(getOverride("smsapi_token") ?? process.env.SMSAPI_TOKEN);
+    },
+    get sender() {
+      return clean(getOverride("sms_sender") ?? process.env.SMS_SENDER);
+    },
+  },
   email: {
     resendApiKey: process.env.RESEND_API_KEY ?? "",
     from: process.env.EMAIL_FROM ?? "Elofik <bajki@elofik.com>",

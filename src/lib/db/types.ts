@@ -5,7 +5,10 @@ import type { StoryVersion } from "@/lib/domain/story";
 import type { CostProvider, CostPurpose } from "@/lib/domain/budget";
 import type { ReferralReward } from "@/lib/domain/referral";
 
-export interface UserRow { id: string; email: string; is_admin: boolean; created_at: string }
+export interface UserRow { id: string; email: string | null; phone?: string | null; is_admin: boolean; created_at: string }
+
+/** Jednorazowy kod logowania SMS (przechowywany wyłącznie jako HMAC). */
+export interface PhoneOtpRow { id: string; phone: string; code_hash: string; expires_at: string; attempts: number; consumed_at: string | null; created_at: string }
 
 export interface FamilyRow {
   id: string;
@@ -352,6 +355,7 @@ export interface Tables {
   notification_preferences: NotificationPreferencesRow;
   admin_audit_logs: AdminAuditLogRow;
   rate_limits: RateLimitRow;
+  phone_otps: PhoneOtpRow;
   app_settings: AppSettingRow;
   voice_candidates: VoiceCandidateRow;
   reference_assets: ReferenceAssetRow;

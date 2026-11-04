@@ -15,7 +15,7 @@ export async function sendDailyEmails(now = new Date()) {
     if (localParts(now, family.timezone).hour !== p.send_hour) continue;
     const user = await db.findOne("users", { id: family.owner_user_id });
     const lib = await getFamilyLibrary(family, now);
-    if (!user || !lib.today) continue;
+    if (!user?.email || !lib.today) continue; // konta „na telefon” bez e-maila — bez maili
     await sendEmail(
       user.email,
       "Nowa bajka Elofika już czeka!",

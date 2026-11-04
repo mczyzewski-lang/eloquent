@@ -38,17 +38,29 @@ test("landing: nietypowe imię bez wymuszonej odmiany", async ({ page }) => {
 test("onboarding → konto (demo) → Dzień 1", async ({ page }) => {
   await page.goto("/onboarding?imie=Zosia");
   await page.getByRole("button", { name: /Dalej/ }).click();
-  await page.getByRole("button", { name: "Babcia", exact: true }).click();
+  // pole na imię rozwija się w miejscu kliknięcia — strona nie przeskakuje
+  const grandma = page.getByRole("button", { name: "Babcia", exact: true });
+  await grandma.scrollIntoViewIfNeeded();
+  const before = await page.evaluate(() => window.scrollY);
+  await grandma.click();
+  await expect(page.getByLabel("Imię: Babcia")).toBeFocused();
+  expect(Math.abs((await page.evaluate(() => window.scrollY)) - before)).toBeLessThan(40);
   await page.getByLabel("Imię: Babcia").fill("Halina");
+  await page.getByRole("button", { name: "Dziadek", exact: true }).click();
+  await page.getByLabel("Imię: Dziadek").fill("Jan");
   await page.getByRole("button", { name: /Dalej/ }).click();
   await page.getByRole("button", { name: /Kosmos/ }).click();
   await page.getByRole("button", { name: /Dalej/ }).click();
   await expect(page.getByRole("heading", { name: "Świat Elofika dla Zosi jest gotowy!" })).toBeVisible();
   await expect(page.getByText(/babcia Halina/)).toBeVisible();
   await page.getByRole("button", { name: /Rozpocznij przygodę/ }).click();
-  await page.fill("#email", `zosia.${Date.now()}@example.com`);
+  // konto rodzica: numer telefonu + kod SMS (bez bramki SMS — kod testowy na ekranie)
+  await page.fill("#phone", `6${String(Date.now()).slice(-8)}`);
   await page.getByRole("checkbox").check();
   await page.getByTestId("auth-submit").click();
+  const code = (await page.getByTestId("test-code").locator("strong").textContent())!.trim();
+  await page.fill("#otp", code);
+  await page.getByTestId("otp-submit").click();
   await page.waitForURL("**/app?witaj=1");
   await expect(page.getByRole("heading", { name: /Zosiu! Elofik czeka/ })).toBeVisible();
   await expect(page.getByTestId("today-card")).toContainText("Dzień 1");
@@ -114,9 +126,10 @@ test("14–16. zakup prezentu → aktywacja raz, bez odnowienia", async ({ page,
   const parent = await browser.newPage();
   await parent.goto(path);
   await expect(parent.getByRole("heading", { name: /Babcia Basia podarowała prezent dla Leona/ })).toBeVisible();
+  await parent.getByTestId("auth-switch").click();
   await parent.fill("#email", `rodzic.${Date.now()}@example.com`);
   await parent.getByRole("checkbox").check();
-  await parent.getByTestId("auth-submit").click();
+  await parent.getByTestId("email-submit").click();
   await parent.waitForURL("**/app?witaj=1");
   await parent.goto("/konto");
   await expect(parent.getByText("Prezent nie odnawia się automatycznie.", { exact: false })).toBeVisible();

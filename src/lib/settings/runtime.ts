@@ -24,6 +24,8 @@ export const SETTINGS: SettingMeta[] = [
   { key: "elevenlabs_tts_model", label: "ElevenLabs — model TTS", secret: false, envVar: "ELEVENLABS_TTS_MODEL", help: "Ustawiany przy wyborze głosu w „Głos Elofika” (np. eleven_multilingual_v2, eleven_v3).", placeholder: "eleven_multilingual_v2" },
   { key: "openai_api_key", label: "OpenAI — klucz API", secret: true, envVar: "OPENAI_API_KEY", help: "platform.openai.com → API keys. Używany do scenariuszy i ilustracji (bez danych dzieci).", placeholder: "sk-…" },
   { key: "openai_image_model", label: "OpenAI — model ilustracji", secret: false, envVar: "OPENAI_IMAGE_MODEL", help: "Domyślnie gpt-image-2.5-sunburst (gpt-image-1 został wyłączony 23.10.2026). Alternatywa: gpt-image-2.5-flare.", placeholder: "gpt-image-2.5-sunburst" },
+  { key: "smsapi_token", label: "SMSAPI.pl — token (kody SMS przy logowaniu)", secret: true, envVar: "SMSAPI_TOKEN", help: "smsapi.pl → Ustawienia API → Tokeny API (OAuth) → Dodaj token z uprawnieniem SMS. Bez tokenu logowanie numerem działa w trybie testowym (kod widoczny na ekranie).", placeholder: "token OAuth z panelu SMSAPI" },
+  { key: "sms_sender", label: "SMSAPI.pl — nazwa nadawcy", secret: false, envVar: "SMS_SENDER", help: "Zarejestrowana i zatwierdzona w SMSAPI nazwa nadawcy (maks. 11 znaków, np. Elofik). Puste = nadawca domyślny SMSAPI.", placeholder: "Elofik" },
   { key: "ai_monthly_budget_usd", label: "Miesięczny budżet AI (USD)", secret: false, envVar: "AI_MONTHLY_BUDGET_USD", help: "Bez budżetu > 0 płatne generowanie (TTS, Scribe, OpenAI) jest zablokowane, nawet z kluczami.", placeholder: "np. 20" },
 ];
 
@@ -71,6 +73,8 @@ export function validateSetting(key: RuntimeSettingKey, value: string): string |
   if (key === "openai_image_model" && !/^(gpt-image|chatgpt-image)[a-z0-9.-]*$/.test(v)) return "Podaj nazwę modelu obrazów OpenAI, np. gpt-image-2.5-sunburst.";
   if (key === "elevenlabs_tts_model" && !/^eleven_[a-z0-9_]{2,40}$/.test(v)) return "Model TTS ElevenLabs, np. eleven_multilingual_v2.";
   if (key === "elevenlabs_voice_version" && !/^[A-Z0-9_]{3,40}$/.test(v)) return "Wersja głosu: wielkie litery, cyfry i _ (np. VOICE_V2).";
+  if (key === "smsapi_token" && !/^[A-Za-z0-9_-]{20,200}$/.test(v)) return "Token SMSAPI to ciąg liter i cyfr (ok. 40 znaków) z panelu SMSAPI → Tokeny API.";
+  if (key === "sms_sender" && !/^[A-Za-z0-9]{3,11}$/.test(v)) return "Nazwa nadawcy: 3–11 liter lub cyfr, bez spacji (np. Elofik).";
   if (key === "elevenlabs_voice_id" && !/^[A-Za-z0-9]{10,40}$/.test(v)) return "Voice ID składa się z liter i cyfr (ok. 20 znaków).";
   return null;
 }

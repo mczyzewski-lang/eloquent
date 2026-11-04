@@ -22,7 +22,7 @@ export class AlreadySubscribedError extends Error {}
 
 async function ensureCustomer(family: FamilyRow, email: string): Promise<string> {
   if (family.stripe_customer_id) return family.stripe_customer_id;
-  const customer = await stripe().customers.create({ email, metadata: { family_id: family.id } }, { idempotencyKey: `customer-${family.id}` });
+  const customer = await stripe().customers.create({ ...(email ? { email } : {}), metadata: { family_id: family.id } }, { idempotencyKey: `customer-${family.id}` });
   await getDb().update("families", { id: family.id }, { stripe_customer_id: customer.id });
   return customer.id;
 }

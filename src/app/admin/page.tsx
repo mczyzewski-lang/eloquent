@@ -24,13 +24,13 @@ export default async function AdminDashboard() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-semibold">Dashboard biznesowy</h1>
-      {(!hasElevenLabs() || !hasOpenAI() || config.budget.monthlyUsd <= 0) && (
+      {(!hasElevenLabs() || !hasOpenAI() || config.budget.monthlyUsd <= 0 || !config.sms.smsapiToken) && (
         <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-gold/50 bg-gold/10 p-4" data-testid="api-keys-prompt">
           <KeyRound className="h-8 w-8 flex-none text-gold-deep" />
           <div className="flex-1">
             <p className="font-display text-lg font-semibold text-navy">Podaj klucze API, aby Elofik zaczął mówić prawdziwym głosem</p>
             <p className="text-sm text-muted">
-              Brakuje: {[!config.elevenlabs.apiKey && "klucza ElevenLabs", !config.elevenlabs.voiceId && "Voice ID głosu Elofika", !hasOpenAI() && "klucza OpenAI", config.budget.monthlyUsd <= 0 && "miesięcznego budżetu AI"].filter(Boolean).join(", ")}. Do tego czasu głos, rozpoznawanie mowy i generator działają w trybie zastępczym.
+              Brakuje: {[!config.elevenlabs.apiKey && "klucza ElevenLabs", !config.elevenlabs.voiceId && "Voice ID głosu Elofika", !hasOpenAI() && "klucza OpenAI", config.budget.monthlyUsd <= 0 && "miesięcznego budżetu AI", !config.sms.smsapiToken && "tokenu SMSAPI (bez niego kody SMS przy zakładaniu konta są pokazywane na ekranie — tryb testowy)"].filter(Boolean).join(", ")}. Do tego czasu głos, rozpoznawanie mowy i generator działają w trybie zastępczym.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">

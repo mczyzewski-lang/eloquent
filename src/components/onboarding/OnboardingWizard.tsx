@@ -26,18 +26,17 @@ export interface OnboardingDraft {
   interests: string[];
 }
 
-const TILES: { relation: RelationType; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { relation: "mom", label: "Mama", icon: Heart },
-  { relation: "dad", label: "Tata", icon: User },
-  { relation: "grandma", label: "Babcia", icon: HeartHandshake },
-  { relation: "grandma", label: "Druga babcia", icon: HeartHandshake },
-  { relation: "grandpa", label: "Dziadek", icon: Users },
-  { relation: "grandpa", label: "Drugi dziadek", icon: Users },
-  { relation: "brother", label: "Brat", icon: Baby },
-  { relation: "sister", label: "Siostra", icon: Baby },
-  { relation: "dog", label: "Pies", icon: Dog },
-  { relation: "cat", label: "Kot", icon: Cat },
-  { relation: "other", label: "Inni bliscy", icon: Plus },
+/** Grupy osób: każda rozwija się w miejscu (bez przewijania strony na telefonie). */
+const GROUPS: { relation: RelationType; label: string; more: string; max: number; placeholder: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { relation: "mom", label: "Mama", more: "", max: 1, placeholder: "np. Monika", icon: Heart },
+  { relation: "dad", label: "Tata", more: "", max: 1, placeholder: "np. Marek", icon: User },
+  { relation: "grandma", label: "Babcia", more: "Druga babcia", max: 2, placeholder: "np. Basia", icon: HeartHandshake },
+  { relation: "grandpa", label: "Dziadek", more: "Drugi dziadek", max: 2, placeholder: "np. Jan", icon: Users },
+  { relation: "sister", label: "Siostra", more: "Kolejna siostra", max: 4, placeholder: "np. Ola", icon: Baby },
+  { relation: "brother", label: "Brat", more: "Kolejny brat", max: 4, placeholder: "np. Kuba", icon: Baby },
+  { relation: "dog", label: "Pies", more: "Kolejny pies", max: 3, placeholder: "np. Burek", icon: Dog },
+  { relation: "cat", label: "Kot", more: "Kolejny kot", max: 3, placeholder: "np. Mruczek", icon: Cat },
+  { relation: "other", label: "Inni bliscy", more: "Kolejna osoba", max: 4, placeholder: "np. ciocia Ania", icon: Plus },
 ];
 
 const INTERESTS: { id: string; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
@@ -165,9 +164,19 @@ export function OnboardingWizard({ initialName, auth, loggedIn, day1Cover }: { i
     }
   }
 
-  function addMember(t: (typeof TILES)[number]) {
-    setDraft((d) => ({ ...d, members: [...d.members, { id: crypto.randomUUID(), relation: t.relation, name: "", label: t.label }] }));
+  function addMember(g: (typeof GROUPS)[number]) {
+    const id = crypto.randomUUID();
+    setDraft((d) => {
+      const count = d.members.filter((m) => m.relation === g.relation).length;
+      if (count >= g.max) return d;
+      return { ...d, members: [...d.members, { id, relation: g.relation, name: "", label: count === 0 ? g.label : g.more }] };
+    });
+    // fokus bez przewijania — pole pojawia się w tym samym miejscu, w którym dotknięto
+    requestAnimationFrame(() => document.getElementById(`m-${id}`)?.focus({ preventScroll: true }));
   }
+
+  const removeMember = (id: string) => setDraft((d) => ({ ...d, members: d.members.filter((x) => x.id !== id) }));
+  const setMemberName = (id: string, name: string) => setDraft((d) => ({ ...d, members: d.members.map((x) => (x.id === id ? { ...x, name } : x)) }));
 
   const steps = ["Dziecko", "Rodzina", "Zainteresowania", "Podsumowanie", "Konto"];
   const summary = summarizeMembers(draft.members);
@@ -246,35 +255,55 @@ export function OnboardingWizard({ initialName, auth, loggedIn, day1Cover }: { i
             <div className="space-y-6">
               <h1 className="text-2xl font-semibold">Kto jeszcze może występować w bajkach Elofika?</h1>
               <p className="text-muted">Wszystko opcjonalne. Dodaj tylko te osoby, które chcesz — możesz to zmienić później.</p>
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                {TILES.map((t) => (
-                  <button key={t.label} type="button" onClick={() => addMember(t)} className="flex flex-col items-center gap-1.5 rounded-2xl border-2 border-navy/10 bg-white p-3 text-sm font-semibold text-navy transition hover:border-gold-deep hover:bg-gold/10 active:scale-95">
-                    <t.icon className="h-6 w-6 text-sage-deep" />
-                    {t.label}
-                  </button>
-                ))}
-              </div>
-              {draft.members.length > 0 && (
-                <ul className="space-y-2">
-                  {draft.members.map((m) => (
-                    <li key={m.id} className="flex items-center gap-2">
-                      <span className="w-28 flex-none text-sm font-semibold text-muted">{m.label}</span>
-                      <Input
-                        aria-label={`Imię: ${m.label}`}
-                        className="h-12 text-base"
-                        maxLength={30}
-                        autoFocus={!m.name}
-                        placeholder={m.relation === "dog" ? "np. Burek" : m.relation === "cat" ? "np. Mruczek" : "Imię"}
-                        value={m.name}
-                        onChange={(e) => setDraft((d) => ({ ...d, members: d.members.map((x) => (x.id === m.id ? { ...x, name: e.target.value } : x)) }))}
-                      />
-                      <button type="button" aria-label="Usuń" onClick={() => setDraft((d) => ({ ...d, members: d.members.filter((x) => x.id !== m.id) }))} className="flex h-10 w-10 flex-none items-center justify-center rounded-full text-muted hover:bg-navy/5">
-                        <X className="h-5 w-5" />
-                      </button>
+              <ul className="space-y-2" aria-label="Rodzina i bliscy">
+                {GROUPS.map((g) => {
+                  const list = draft.members.filter((m) => m.relation === g.relation);
+                  const on = list.length > 0;
+                  return (
+                    <li key={g.relation} className={cn("rounded-2xl border-2 transition", on ? "border-gold-deep/60 bg-gold/10" : "border-navy/10 bg-white")}>
+                      {!on ? (
+                        <button type="button" onClick={() => addMember(g)} className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold text-navy active:scale-[0.99]">
+                          <g.icon className="h-6 w-6 flex-none text-sage-deep" />
+                          <span className="flex-1">{g.label}</span>
+                          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gold/30 text-navy" aria-hidden><Plus className="h-5 w-5" /></span>
+                        </button>
+                      ) : (
+                        <div className="space-y-2 px-4 py-3">
+                          {list.map((m, i) => (
+                            <div key={m.id}>
+                              <label htmlFor={`m-${m.id}`} className="mb-1 flex items-center gap-2 text-sm font-semibold text-navy">
+                                {i === 0 && <g.icon className="h-5 w-5 text-sage-deep" />} {m.label}
+                              </label>
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  id={`m-${m.id}`}
+                                  aria-label={`Imię: ${m.label}`}
+                                  className="h-12 text-base"
+                                  maxLength={30}
+                                  enterKeyHint="done"
+                                  placeholder={g.placeholder}
+                                  value={m.name}
+                                  onChange={(e) => setMemberName(m.id, e.target.value)}
+                                  onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+                                />
+                                <button type="button" aria-label={`Usuń: ${m.label}`} onClick={() => removeMember(m.id)} className="flex h-10 w-10 flex-none items-center justify-center rounded-full text-muted hover:bg-navy/5">
+                                  <X className="h-5 w-5" />
+                                </button>
+                              </div>
+                              {m.name && !validateName(m.name).ok && <p className="mt-1 text-xs font-semibold text-red-600">Sprawdź imię — tylko litery, spacja lub myślnik.</p>}
+                            </div>
+                          ))}
+                          {list.length < g.max && (
+                            <button type="button" onClick={() => addMember(g)} className="flex items-center gap-1 text-sm font-semibold text-gold-deep">
+                              <Plus className="h-4 w-4" /> {g.more}
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </li>
-                  ))}
-                </ul>
-              )}
+                  );
+                })}
+              </ul>
               <p className="text-xs text-muted">Imiona bliskich pojawiają się w bajkach w prostej formie, np. „mama Monika powiedziała…”.</p>
               <NavButtons onBack={() => setStep(1)} onNext={next} nextLabel={draft.members.length ? "Dalej" : "Pomiń"} disabled={draft.members.some((m) => m.name && !validateName(m.name).ok)} />
             </div>
@@ -314,7 +343,7 @@ export function OnboardingWizard({ initialName, auth, loggedIn, day1Cover }: { i
           {step === 5 && (
             <div className="space-y-6">
               <h1 className="text-2xl font-semibold">Ostatni krok: konto rodzica</h1>
-              <p className="text-muted">Konto zakłada dorosły opiekun. Przechowujemy tylko to, co potrzebne do działania bajek.</p>
+              <p className="text-muted">Podaj swój numer telefonu — otrzymasz kod SMS, którym potwierdzisz konto. Konto zakłada dorosły opiekun; przechowujemy tylko to, co potrzebne do działania bajek.</p>
               {loggedIn ? (
                 <Button size="lg" className="w-full" onClick={finish} disabled={saving}>
                   {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : null} Zapisz i przejdź do bajek

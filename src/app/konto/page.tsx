@@ -4,7 +4,8 @@ import { referralSummary } from "@/lib/services/referrals";
 import { getDb } from "@/lib/db";
 import { hasStripe } from "@/lib/config";
 import { absoluteUrl } from "@/lib/config";
-import { SiteHeader } from "@/components/site/Header";
+import { AppShell } from "@/components/app/AppShell";
+import { formatPhone } from "@/lib/domain/phone";
 import { AccountPanel } from "@/components/account/AccountPanel";
 import { getFamilyLibrary } from "@/lib/services/access";
 import { getProgressMap } from "@/lib/services/progress";
@@ -23,11 +24,9 @@ export default async function AccountPage() {
   ]);
   const child = bundle.child!;
   return (
-    <div className="paper min-h-dvh pb-20">
-      <SiteHeader variant="app" />
-      <main className="container-page max-w-2xl py-6">
+    <AppShell active="konto" title="Konto">
         <h1 className="text-3xl font-semibold">Panel rodzica</h1>
-        <p className="mt-1 text-muted">{user.email}</p>
+        <p className="mt-1 text-muted">{user.phone ? formatPhone(user.phone) : user.email}</p>
         <AccountPanel
           child={{ name: child.name, age: child.age, diminutive: child.diminutive ?? "", vocative: child.vocative_override ?? "", gender: child.gender, addressStyle: child.address_style }}
           members={bundle.members.map((m) => ({ relation: m.relation, name: m.name }))}
@@ -46,7 +45,6 @@ export default async function AccountPage() {
           }}
           history={lib.unlocked.map((s) => ({ day: s.dayNumber, title: s.title, word: s.wordOfDay, listened: Boolean(progress.get(s.storyId)?.play_count), completed: Boolean(progress.get(s.storyId)?.completed) }))}
         />
-      </main>
-    </div>
+    </AppShell>
   );
 }

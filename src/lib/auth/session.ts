@@ -16,8 +16,14 @@ const ADMIN_SESSION_HOURS = 12;
 
 export interface SessionUser {
   id: string;
+  /** Pusty, gdy konto założono numerem telefonu. */
   email: string;
+  phone?: string | null;
   isAdmin: boolean;
+}
+
+function sessionCookieOptions() {
+  return { httpOnly: true, sameSite: "lax" as const, secure: config.appEnv === "production", path: "/", maxAge: 60 * 60 * 24 * 30 };
 }
 
 export async function supabaseServerClient() {
@@ -36,15 +42,16 @@ export async function supabaseServerClient() {
   });
 }
 
-async function ensureUserRow(id: string, email: string) {
+async function ensureUserRow(id: string, email: string | null, phone: string | null = null) {
   const db = getDb();
   const existing = await db.findOne("users", { id });
-  const isAdmin = config.adminEmails.includes(email.toLowerCase());
+  const isAdmin = Boolean(email) && config.adminEmails.includes(email!.toLowerCase());
   if (existing) {
     if (isAdmin && !existing.is_admin) await db.update("users", { id }, { is_admin: true });
-    return { ...existing, is_admin: existing.is_admin || isAdmin };
+    if (phone && !existing.phone) await db.update("users", { id }, { phone });
+    return { ...existing, phone: existing.phone ?? phone, is_admin: existing.is_admin || isAdmin };
   }
-  return db.insert("users", { id, email: email.toLowerCase(), is_admin: isAdmin, created_at: nowIso() });
+  return db.insert("users", { id, email: email ? email.toLowerCase() : null, phone, is_admin: isAdmin, created_at: nowIso() });
 }
 
 /** Sesja admina zalogowanego hasłem: podpisane cookie „email|wygaśnięcie”, ważne 12 h. */
@@ -80,13 +87,24 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     const user = await getDb().findOne("users", { id: userId });
     // gdy skonfigurowano hasło admina, konto demo NIGDY nie daje uprawnień admina — tylko logowanie hasłem
     const demoAdmin = !adminPasswordConfigured() && config.appEnv !== "production" && (user?.is_admin || config.adminEmails.includes(user?.email ?? ""));
-    return user ? { id: user.id, email: user.email, isAdmin: Boolean(demoAdmin) } : null;
+    return user ? { id: user.id, email: user.email ?? "", phone: user.phone ?? null, isAdmin: Boolean(demoAdmin) } : null;
   }
   const supabase = await supabaseServerClient();
   const { data } = await supabase.auth.getUser();
-  if (!data.user?.email) return null;
-  const row = await ensureUserRow(data.user.id, data.user.email);
-  return { id: row.id, email: row.email, isAdmin: row.is_admin };
+  const phone = data.user?.phone ? `+${data.user.phone.replace(/^\+/, "")}` : null;
+  if (!data.user || (!data.user.email && !phone)) return null;
+  const row = await ensureUserRow(data.user.id, data.user.email ?? null, phone);
+  return { id: row.id, email: row.email ?? "", phone: row.phone ?? null, isAdmin: row.is_admin };
+}
+
+/** Logowanie po weryfikacji kodu SMS (tryb bez Supabase — w Supabase sesję tworzy Supabase Auth). */
+export async function phoneSignIn(phone: string): Promise<SessionUser> {
+  if (!isDemoMode()) throw new Error("phoneSignIn dostępne tylko bez Supabase Auth");
+  const db = getDb();
+  let user = await db.findOne("users", { phone });
+  if (!user) user = await db.insert("users", { email: null, phone, is_admin: false, created_at: nowIso() });
+  (await cookies()).set(DEMO_COOKIE, sign(user.id, getSessionSecret()), sessionCookieOptions());
+  return { id: user.id, email: user.email ?? "", phone: user.phone ?? null, isAdmin: false };
 }
 
 /** Demo: logowanie bez wysyłki e-maila (symulacja magic linka). */
@@ -97,14 +115,8 @@ export async function demoSignIn(email: string, opts: { admin?: boolean } = {}):
   let user = await db.findOne("users", { email: normalized });
   if (!user) user = await db.insert("users", { email: normalized, is_admin: Boolean(opts.admin), created_at: nowIso() });
   else if (opts.admin && !user.is_admin) user = (await db.update("users", { id: user.id }, { is_admin: true }))[0];
-  (await cookies()).set(DEMO_COOKIE, sign(user.id, getSessionSecret()), {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: config.appEnv === "production",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 30,
-  });
-  return { id: user.id, email: user.email, isAdmin: user.is_admin };
+  (await cookies()).set(DEMO_COOKIE, sign(user.id, getSessionSecret()), sessionCookieOptions());
+  return { id: user.id, email: user.email ?? "", phone: user.phone ?? null, isAdmin: user.is_admin };
 }
 
 export async function signOut() {
