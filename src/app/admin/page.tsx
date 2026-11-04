@@ -6,12 +6,21 @@ import Link from "next/link";
 import { KeyRound } from "lucide-react";
 import { config, hasElevenLabs, hasOpenAI } from "@/lib/config";
 import { buttonVariants } from "@/components/ui/button";
+import { landingArtUncached, mascotMapUncached } from "@/lib/services/illustrations";
+import { LANDING_SCENES, MASCOT_POSES } from "@/lib/ai/elofik-bible";
 
 export default async function AdminDashboard() {
   const m = await businessMetrics();
   const db = getDb();
   const audit = await db.find("admin_audit_logs", {}, { orderBy: { column: "created_at", ascending: false }, limit: 10 });
   const jobs = await db.find("generation_jobs", { status: { in: ["queued", "running", "failed"] } }, { limit: 20 });
+  const [mascots, landingArt, pendingArt] = await Promise.all([
+    mascotMapUncached().catch(() => ({}) as Record<string, string>),
+    landingArtUncached().catch(() => ({}) as Record<string, string>),
+    db.count("illustrations", { story_id: { in: ["__mascot__", "__landing__"] }, status: "pending" }).catch(() => 0),
+  ]);
+  const artTotal = Object.keys(MASCOT_POSES).length + LANDING_SCENES.length;
+  const artApproved = Object.keys(mascots).length + LANDING_SCENES.filter((x) => landingArt[x.slot]).length;
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-semibold">Dashboard biznesowy</h1>
@@ -28,6 +37,19 @@ export default async function AdminDashboard() {
             <Link href="/admin/ustawienia" data-ui="button" data-variant="primary" data-size="md" className={buttonVariants({ size: "md" })}>Uzupełnij klucze API</Link>
             {config.elevenlabs.apiKey && !config.elevenlabs.voiceId && <Link href="/admin/glos" data-ui="button" data-variant="soft" data-size="md" className={buttonVariants({ size: "md", variant: "soft" })}>Wybierz głos Elofika</Link>}
           </div>
+        </div>
+      )}
+      {artApproved < artTotal && (
+        <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-gold/50 bg-gold/10 p-4" data-testid="site-art-prompt">
+          <div className="flex-1">
+            <p className="font-display text-lg font-semibold text-navy">Grafiki Elofika na stronie: zatwierdzone {artApproved} z {artTotal}</p>
+            <p className="text-sm text-muted">
+              {pendingArt > 0
+                ? `${pendingArt} czeka na Twoją akceptację — dopóki ich nie zatwierdzisz, strona pokazuje tymczasowo Elofika z logo.`
+                : "Do czasu wygenerowania i zatwierdzenia grafik z OpenAI strona pokazuje tymczasowo Elofika z logo."}
+            </p>
+          </div>
+          <Link href="/admin/ilustracje" data-ui="button" data-variant="primary" data-size="md" className={buttonVariants({ size: "md" })}>{pendingArt > 0 ? "Przejrzyj i zatwierdź" : "Wygeneruj grafiki"}</Link>
         </div>
       )}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">

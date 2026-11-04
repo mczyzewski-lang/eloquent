@@ -132,7 +132,7 @@ export function StoryCover({
         <SceneArt kind={s.kind} accent={s.accent} ground={s.ground} />
       </svg>
       <div className={cn("absolute left-1/2 -translate-x-1/2", compact || !title ? "bottom-[6%] w-[34%]" : "bottom-[22%] w-[28%]")}>
-        <Elofik mood={dark ? "sleepy" : "idle"} />
+        <Elofik mood={dark ? "sleepy" : "idle"} fallback={null} />
       </div>
       </>
       )}

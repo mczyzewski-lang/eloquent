@@ -129,3 +129,18 @@ export function StoryFrame({ src, alt, className, arch, children }: { src?: stri
     </div>
   );
 }
+
+/** Rytuał bez ilustracji: duży księżyc i rozchodzące się fale dźwięku „Hej Elofik!”. */
+export function ListeningMoon({ className }: { className?: string }) {
+  return (
+    <div className={cn("relative mx-auto aspect-square w-full", className)} aria-hidden>
+      {[0, 0.6, 1.2].map((d) => (
+        <span key={d} className="absolute inset-[18%] rounded-full border-2 border-gold/50 animate-pulse-ring" style={{ animationDelay: `${d}s` }} />
+      ))}
+      <Moon className="absolute inset-[12%]" />
+      <span className="absolute left-1/2 top-[8%] -translate-x-1/2 whitespace-nowrap rounded-full bg-cream px-4 py-1.5 font-display text-lg font-semibold text-navy shadow-[0_8px_24px_-8px_rgb(246_199_109/0.8)]">
+        „Hej Elofik!”
+      </span>
+    </div>
+  );
+}

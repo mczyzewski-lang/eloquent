@@ -18,7 +18,11 @@ export function MascotProvider({ map, children }: { map: Record<string, string>;
 
 export type ElofikMood = "idle" | "listening" | "happy" | "waving" | "telling" | "sleepy";
 
-export function Elofik({ mood = "idle", className, title = "Elofik, mały elf opowieści" }: { mood?: ElofikMood; className?: string; title?: string }) {
+/**
+ * `fallback` — co pokazać, gdy nie ma zatwierdzonej pozy z OpenAI (domyślnie Elofik z logo).
+ * Przekaż `null`, aby w danym miejscu nie powtarzać logo.
+ */
+export function Elofik({ mood = "idle", className, title = "Elofik, mały elf opowieści", fallback }: { mood?: ElofikMood; className?: string; title?: string; fallback?: React.ReactNode }) {
   const mascots = useContext(MascotContext);
   const src = mascots[mood] ?? mascots.idle;
   if (src) {
@@ -26,6 +30,7 @@ export function Elofik({ mood = "idle", className, title = "Elofik, mały elf op
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={src} alt={title} draggable={false} className={cn("mascot-img block h-auto w-full select-none object-contain", `mascot-${mood}`, className)} />;
   }
+  if (fallback !== undefined) return <>{fallback}</>;
   return <ElofikBrand mood={mood} className={className} title={title} />;
 }
 
