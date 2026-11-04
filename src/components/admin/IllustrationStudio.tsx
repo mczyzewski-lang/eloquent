@@ -76,10 +76,30 @@ export function IllustrationStudio({
       return j;
     });
 
-  const batch = (key: string, list: { storyId: string; type: ImageType; scene: SceneSpec; slot: string | null }[]) => {
+  const proposedMaster = refs.find((r) => r.kind === "master" && r.status === "proposed") ?? null;
+  const siteList = [
+    ...mascotPoses.map((p) => ({ storyId: "__mascot__", type: "CHARACTER_ONLY" as ImageType, scene: p.scene, slot: p.slot })),
+    ...landingScenes.map((t) => ({ storyId: "__landing__", type: t.type, scene: t.scene, slot: t.slot })),
+  ];
+
+  const approveAllPending = () =>
+    run("approve-all", async () => {
+      for (const i of pending) {
+        const j = await illustrationsApi<{ illustration: IllustrationView }>({ action: "review", id: i.id, decision: "approved" });
+        upsert(j.illustration);
+      }
+      setMsg({ ok: true, text: `Zatwierdzono ${pending.length} ilustracji — pojawią się na stronie w ciągu kilku minut.` });
+    });
+
+  const batch = (key: string, list: { storyId: string; type: ImageType; scene: SceneSpec; slot: string | null }[], opts: { approveLogoReference?: boolean } = {}) => {
     const cost = (list.length * costs[quality]).toFixed(2);
-    if (!confirm(`Wygenerować ${list.length} ilustracji (jakość ${quality})? Szacunkowy koszt: ok. $${cost}. Istniejące (cache) nie zostaną wygenerowane ponownie.`)) return;
+    const refNote = opts.approveLogoReference && !master && proposedMaster ? "\n\nNajpierw zatwierdzimy Elofika z logo jako obraz referencyjny." : "";
+    if (!confirm(`Wygenerować ${list.length} ilustracji (jakość ${quality})? Szacunkowy koszt: ok. $${cost}. Istniejące (cache) nie zostaną wygenerowane ponownie.${refNote}`)) return;
     void run(key, async () => {
+      if (opts.approveLogoReference && !master && proposedMaster) {
+        const r = await illustrationsApi<{ reference: ReferenceView }>({ action: "approve_reference", id: proposedMaster.id });
+        setRefs((l) => l.map((x) => (x.id === r.reference.id ? r.reference : x)));
+      }
       let done = 0;
       let cached = 0;
       for (const x of list) {
@@ -99,6 +119,19 @@ export function IllustrationStudio({
           <strong>Tryb demo:</strong> brak klucza OpenAI — obrazy nie są generowane (interfejs działa, nic nie jest udawane). Dodaj klucz i budżet w Ustawieniach.
         </p>
       )}
+      {/* Szybki start: wszystkie grafiki strony z OpenAI */}
+      <section className="flex flex-wrap items-center gap-4 rounded-2xl border border-gold/50 bg-gold/10 p-4">
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-navy">Grafiki Elofika na stronę — jednym kliknięciem</p>
+          <p className="text-sm text-muted">
+            {mascotPoses.length} póz maskotki + {landingScenes.length} scen strony, generowane w OpenAI z obrazem referencyjnym (Elofik z logo) i stałym opisem postaci. Po wygenerowaniu przejrzyj je i zatwierdź — dopiero wtedy zastąpią tymczasowego Elofika z logo.
+          </p>
+        </div>
+        <Button disabled={!!busy || !openaiReady || (!master && !proposedMaster)} onClick={() => batch("site-all", siteList, { approveLogoReference: true })} data-testid="gen-site-all">
+          {busy === "site-all" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />} Wygeneruj wszystkie grafiki strony ({siteList.length})
+        </Button>
+      </section>
+
       {msg && <p role="status" className={msg.ok ? "rounded-2xl bg-sage/20 p-3 text-sm font-semibold text-sage-deep" : "rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700"}>{msg.text}</p>}
 
       {/* 1. Referencja */}
@@ -166,7 +199,14 @@ export function IllustrationStudio({
 
       {/* 2. Do akceptacji */}
       <section className="space-y-3">
-        <h2 className="text-xl font-semibold">2. Do akceptacji ({pending.length})</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-xl font-semibold">2. Do akceptacji ({pending.length})</h2>
+          {pending.length > 1 && (
+            <Button size="sm" variant="sage" disabled={!!busy} onClick={() => { if (confirm(`Zatwierdzić wszystkie ${pending.length} ilustracje? Sprawdź wcześniej listę kontrolną przy każdej.`)) void approveAllPending(); }} data-testid="approve-all">
+              {busy === "approve-all" ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Zatwierdź wszystkie
+            </Button>
+          )}
+        </div>
         {pending.length === 0 && <p className="text-sm text-muted">Brak ilustracji oczekujących na akceptację.</p>}
         <div className="grid gap-4 lg:grid-cols-2">
           {pending.map((i) => (

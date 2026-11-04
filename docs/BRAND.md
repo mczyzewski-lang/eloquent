@@ -26,8 +26,9 @@ Nie obiecujemy „podnoszenia IQ” ani wymiernych efektów — komunikujemy roz
 | Proporcje | Pluszakowe: duża okrągła głowa, miękkie kompaktowe ciało, krótkie kończyny — łatwe do przeniesienia na fizycznego pluszaka |
 | Zakazane | Szpiczasta czapka świątecznego elfa, dzwoneczki, renifery, czerwono-zielone kostiumy, motywy bożonarodzeniowe |
 
-Implementacja wektorowa: `src/components/elofik/Elofik.tsx` (nastroje: `idle`, `listening`, `happy`, `waving`, `telling`, `sleepy`; animacje uszu w `globals.css`).
-Prompt bazowy ilustracji: `src/lib/ai/character.ts` (`ELOFIK_CHARACTER_SHEET`) — **każdy** prompt obrazu zawiera ten opis, a do każdego generowania dołączany jest **arkusz referencyjny** `public/brand/elofik-reference.png` (pozy: przód, machanie dłonią, radość, nasłuchiwanie), renderowany z kodu maskotki skryptem `scripts/render-reference.tsx`.
+Wizerunek kanoniczny: Elofik z logo marki (`public/brand/elofik-mark.png`) — zatwierdzona referencja dla OpenAI (Admin → Ilustracje).
+Wszystkie ilustracje (pozy maskotki, sceny strony, okładki) są generowane z tej referencji i stałego opisu postaci (`src/lib/ai/elofik-bible.ts`) i publikowane dopiero po akceptacji.
+Do czasu akceptacji póz komponent `src/components/elofik/Elofik.tsx` pokazuje Elofika z logo. Wektorowa maskotka została wycofana.
 
 Machanie: Elofik unosi rękę i macha **dłonią** (obrót wokół nadgarstka), ramię pozostaje nieruchome.
 
