@@ -26,6 +26,7 @@ export default async function AdminIllustrationsPage() {
         mascotPoses={Object.entries(MASCOT_POSES).map(([slot, p]) => ({ slot, label: p.label, scene: p.scene }))}
         testScenes={TEST_SCENES}
         landingScenes={LANDING_SCENES}
+        promptVersion={PROMPT_VERSION}
         costs={IMAGE_COST_USD}
         openaiReady={hasOpenAI()}
       />

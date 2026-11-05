@@ -40,7 +40,7 @@ const STATUS = {
 } as const;
 
 /** Podgląd obok referencji + checklista akceptacji (wszystkie punkty wymagane do zatwierdzenia). */
-export function IllustrationCard({ item, referenceUrl, onChange, onRegenerate }: { item: IllustrationView; referenceUrl: string | null; onChange: (i: IllustrationView) => void; onRegenerate?: () => Promise<void> }) {
+export function IllustrationCard({ item, referenceUrl, onChange, onRegenerate, outdated }: { item: IllustrationView; referenceUrl: string | null; onChange: (i: IllustrationView) => void; onRegenerate?: () => Promise<void>; outdated?: boolean }) {
   const [checks, setChecks] = useState<boolean[]>(ACCEPTANCE_CHECKLIST.map(() => false));
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -63,6 +63,7 @@ export function IllustrationCard({ item, referenceUrl, onChange, onRegenerate }:
       <div className="flex flex-wrap items-center gap-2">
         <p className="font-semibold text-navy">{item.imageType}{item.slot ? ` · ${item.slot}` : ""} · v{item.version}</p>
         <Badge tone={STATUS[item.status].tone}>{STATUS[item.status].label}</Badge>
+        {outdated && <Badge tone="peach">stary styl — wygeneruj ponownie</Badge>}
         <span className="text-xs text-muted">{item.model} · {item.size} · {item.quality} · prompt {item.promptVersion} · referencja v{item.referenceVersion} · ~${item.estUsd.toFixed(2)}</span>
       </div>
       <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_160px]">

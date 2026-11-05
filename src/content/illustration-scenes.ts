@@ -7,11 +7,11 @@ import type { SceneSpec } from "@/lib/ai/elofik-bible";
 export const DEFAULT_SCENES: Record<string, SceneSpec> = {
   "dzien-01-tajemniczy-slad": {
     location: "A lush fairytale forest at the edge of a glade, mossy path, ancient oak with a cozy hollow, delicate flowers.",
-    action: "Elofik kneels on the mossy path, examining tiny glowing silver footprints with delighted curiosity, one hand near his big pointed ear as if listening.",
+    action: "Elofik kneels on the mossy path, examining tiny light-colored silver footprints with delighted curiosity, one hand near his big pointed ear as if listening.",
     mood: "Curiosity, wonder, safe adventure.",
     timeAndLighting: "Early morning sunlight filtering through leaves, dewdrops sparkling.",
-    supportingCharacters: "A tiny hedgehog with softly glowing firefly-like quill tips peeking from behind a mossy stone.",
-    props: "Tiny glowing silver footprints, navy-and-gold storybook in his satchel.",
+    supportingCharacters: "A tiny hedgehog with softly lit firefly-like quill tips peeking from behind a mossy stone.",
+    props: "Tiny light-colored silver footprints, navy-and-gold storybook in his satchel.",
     composition: "Medium-wide shot, Elofik in the foreground, footprints leading into the forest.",
   },
   "dzien-02-most-z-kamykow": {
@@ -38,7 +38,7 @@ export const DEFAULT_SCENES: Record<string, SceneSpec> = {
     mood: "Imagination, gentle magic, joy.",
     timeAndLighting: "Warm golden afternoon light.",
     supportingCharacters: "One small nightingale.",
-    props: "Floating glowing musical notes (abstract shapes, no notation text).",
+    props: "Floating light-colored musical notes (abstract shapes, no notation text).",
     composition: "Medium shot focused on Elofik and the bird.",
   },
   "dzien-05-mrowki-i-wielki-lisc": {
@@ -61,12 +61,12 @@ export const DEFAULT_SCENES: Record<string, SceneSpec> = {
   },
   "dzien-07-zaginiona-gwiazda": {
     location: "A moonlit hilltop with silver grass under a vast starry sky.",
-    action: "Elofik holds a tiny glowing fallen star in his cupped hands, about to help it fly back into the sky.",
+    action: "Elofik holds a tiny light-colored fallen star in his cupped hands, about to help it fly back into the sky.",
     mood: "Perseverance, tenderness, wonder.",
     timeAndLighting: "Deep navy night, soft moonlight and warm golden starlight.",
     supportingCharacters: "A few fireflies and a friendly owl in the distance.",
-    props: "Tiny glowing star, small lantern.",
-    composition: "Wide cinematic composition, strong silhouette of Elofik against the stars.",
+    props: "Tiny light-colored star, small lantern.",
+    composition: "Wide composition, strong silhouette of Elofik against the stars.",
   },
 };
 

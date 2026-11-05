@@ -9,6 +9,7 @@ import {
 } from "@/lib/services/illustrations";
 import { getDb } from "@/lib/db";
 import { illustrationView, referenceView } from "@/lib/services/illustration-views";
+import { PROMPT_VERSION } from "@/lib/ai/elofik-bible";
 
 export const maxDuration = 300;
 
@@ -35,6 +36,7 @@ const body = z.discriminatedUnion("action", [
     regenerate: z.boolean().default(false),
   }),
   z.object({ action: z.literal("review"), id: z.string().uuid(), decision: z.enum(["approved", "rejected"]) }),
+  z.object({ action: z.literal("reject_outdated") }),
 ]);
 
 async function admin() {
@@ -83,6 +85,13 @@ export async function POST(req: Request) {
         const { row, cached } = await generateIllustrationAsset({ storyId: b.storyId, imageType: b.imageType, slot: b.slot ?? null, scene: b.scene, quality: b.quality, regenerate: b.regenerate, actor: user.email });
         if (!cached) await auditLog(user, "illustration.generate", row.id, { storyId: b.storyId, type: b.imageType, version: row.version, regenerate: b.regenerate });
         return json({ illustration: await illustrationView(row), cached });
+      }
+      case "reject_outdated": {
+        // oczekujące grafiki wygenerowane starszym opisem stylu (np. 3D) — odrzucamy hurtem
+        const rows = (await getDb().find("illustrations", { status: "pending" })).filter((r) => r.prompt_version !== PROMPT_VERSION);
+        for (const r of rows) await reviewIllustration(r.id, "rejected", user.email);
+        await auditLog(user, "illustration.reject_outdated", null, { count: rows.length });
+        return json({ rejected: rows.map((r) => r.id) });
       }
       case "review": {
         const row = await reviewIllustration(b.id, b.decision, user.email);

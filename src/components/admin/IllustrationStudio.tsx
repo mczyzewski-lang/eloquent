@@ -29,6 +29,7 @@ export function IllustrationStudio({
   testScenes,
   costs,
   openaiReady,
+  promptVersion,
 }: {
   references: ReferenceView[];
   illustrations: IllustrationView[];
@@ -37,6 +38,7 @@ export function IllustrationStudio({
   testScenes: { id: string; title: string; type: ImageType; scene: SceneSpec }[];
   costs: Record<Quality, number>;
   openaiReady: boolean;
+  promptVersion: string;
 }) {
   const [refs, setRefs] = useState(initialRefs);
   const [items, setItems] = useState(initialIll);
@@ -49,6 +51,8 @@ export function IllustrationStudio({
 
   const master = refs.find((r) => r.kind === "master" && r.status === "approved") ?? null;
   const pending = items.filter((i) => i.status === "pending");
+  const outdated = pending.filter((i) => i.promptVersion !== promptVersion);
+  const current = pending.filter((i) => i.promptVersion === promptVersion);
   const upsert = (i: IllustrationView) => setItems((list) => [i, ...list.filter((x) => x.id !== i.id)]);
   const latest = useMemo(() => {
     const m = new Map<string, IllustrationView>();
@@ -83,11 +87,18 @@ export function IllustrationStudio({
 
   const approveAllPending = () =>
     run("approve-all", async () => {
-      for (const i of pending) {
+      for (const i of current) {
         const j = await illustrationsApi<{ illustration: IllustrationView }>({ action: "review", id: i.id, decision: "approved" });
         upsert(j.illustration);
       }
-      setMsg({ ok: true, text: `Zatwierdzono ${pending.length} ilustracji — pojawią się na stronie w ciągu kilku minut.` });
+      setMsg({ ok: true, text: `Zatwierdzono ${current.length} ilustracji — pojawią się na stronie w ciągu kilku minut.` });
+    });
+
+  const rejectOutdated = () =>
+    run("reject-outdated", async () => {
+      const j = await illustrationsApi<{ rejected: string[] }>({ action: "reject_outdated" });
+      setItems((list) => list.map((x) => (j.rejected.includes(x.id) ? { ...x, status: "rejected" } : x)));
+      setMsg({ ok: true, text: `Odrzucono ${j.rejected.length} grafik w starym stylu. Wygeneruj je ponownie — powstaną w płaskim, pastelowym 2D.` });
     });
 
   const batch = (key: string, list: { storyId: string; type: ImageType; scene: SceneSpec; slot: string | null }[], opts: { approveLogoReference?: boolean } = {}) => {
@@ -200,8 +211,13 @@ export function IllustrationStudio({
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-semibold">2. Do akceptacji ({pending.length})</h2>
-          {pending.length > 1 && (
-            <Button size="sm" variant="sage" disabled={!!busy} onClick={() => { if (confirm(`Zatwierdzić wszystkie ${pending.length} ilustracje? Sprawdź wcześniej listę kontrolną przy każdej.`)) void approveAllPending(); }} data-testid="approve-all">
+          {outdated.length > 0 && (
+            <Button size="sm" variant="danger" disabled={!!busy} onClick={() => { if (confirm(`Odrzucić ${outdated.length} grafik wygenerowanych starszym opisem stylu (np. 3D)?`)) void rejectOutdated(); }} data-testid="reject-outdated">
+              {busy === "reject-outdated" ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Odrzuć wszystkie w starym stylu ({outdated.length})
+            </Button>
+          )}
+          {current.length > 1 && (
+            <Button size="sm" variant="sage" disabled={!!busy} onClick={() => { if (confirm(`Zatwierdzić wszystkie ${current.length} ilustracje w aktualnym stylu? Sprawdź wcześniej listę kontrolną przy każdej.`)) void approveAllPending(); }} data-testid="approve-all">
               {busy === "approve-all" ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Zatwierdź wszystkie
             </Button>
           )}
@@ -209,7 +225,7 @@ export function IllustrationStudio({
         {pending.length === 0 && <p className="text-sm text-muted">Brak ilustracji oczekujących na akceptację.</p>}
         <div className="grid gap-4 lg:grid-cols-2">
           {pending.map((i) => (
-            <IllustrationCard key={i.id} item={i} referenceUrl={master?.url ?? null} onChange={upsert} onRegenerate={async () => { await generate(i.storyId, i.imageType, i.scene as unknown as SceneSpec, i.slot, true); }} />
+            <IllustrationCard key={i.id} item={i} outdated={i.promptVersion !== promptVersion} referenceUrl={master?.url ?? null} onChange={upsert} onRegenerate={async () => { await generate(i.storyId, i.imageType, i.scene as unknown as SceneSpec, i.slot, true); }} />
           ))}
         </div>
       </section>
