@@ -6,7 +6,7 @@
 import { encodeWav } from "./wav";
 
 export const MUSIC_VERSION = "MUSIC_V1";
-const SR = 44100;
+export const SR = 44100;
 
 /** Długość dżingla przed pierwszym słowem (ms). */
 export const JINGLE_LEAD_MS = 2500;
@@ -14,7 +14,7 @@ export const JINGLE_LEAD_MS = 2500;
 export const MUSIC_TAIL_MS = 3200;
 
 /** Dźwięk „kalimby”: szybki atak, miękkie wybrzmienie, lekka oktawa na początku. */
-function pluck(out: Float32Array, at: number, freq: number, gain: number, decay = 1.1, wrap = false) {
+export function pluck(out: Float32Array, at: number, freq: number, gain: number, decay = 1.1, wrap = false) {
   const n = Math.floor(decay * 1.6 * SR);
   const start = Math.floor(at * SR);
   for (let i = 0; i < n; i++) {
@@ -31,7 +31,7 @@ function pluck(out: Float32Array, at: number, freq: number, gain: number, decay 
 }
 
 /** Miękki akord tła z powolnym wejściem i wyjściem. */
-function pad(out: Float32Array, at: number, dur: number, freqs: number[], gain: number, wrap = false) {
+export function pad(out: Float32Array, at: number, dur: number, freqs: number[], gain: number, wrap = false) {
   const n = Math.floor(dur * SR);
   const start = Math.floor(at * SR);
   const edge = Math.min(1.6, dur / 3);
@@ -49,7 +49,7 @@ function pad(out: Float32Array, at: number, dur: number, freqs: number[], gain: 
   }
 }
 
-function finish(buf: Float32Array, peak: number): Buffer {
+export function finish(buf: Float32Array, peak: number): Buffer {
   let max = 0;
   for (let i = 0; i < buf.length; i++) max = Math.max(max, Math.abs(buf[i]));
   const k = max > 0 ? peak / max : 1;

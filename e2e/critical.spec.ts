@@ -198,3 +198,15 @@ test("film „Elofik i tajemniczy ślad”: odtwarza się, przewija i kończy pl
   await expect(page.getByTestId("film-cta")).toBeVisible({ timeout: 8000 });
   expect(errors).toEqual([]);
 });
+
+test("reklama wideo: /video dostępne bez logowania, pliki MP4 do pobrania", async ({ page, request }) => {
+  await page.goto("/video");
+  await expect(page.getByRole("heading", { name: "Reklama wideo Elofika dla Meta" })).toBeVisible();
+  for (const f of ["9x16", "4x5"]) {
+    await expect(page.getByTestId(`download-${f}`)).toHaveAttribute("download", `elofik-reklama-${f}.mp4`);
+    const res = await request.get(`/video/elofik-reklama-${f}.mp4`);
+    expect(res.status()).toBe(200);
+    expect(res.headers()["content-type"]).toContain("video/mp4");
+    expect(Number(res.headers()["content-length"])).toBeGreaterThan(1_000_000);
+  }
+});
