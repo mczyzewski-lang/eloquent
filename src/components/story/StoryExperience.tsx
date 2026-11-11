@@ -340,6 +340,7 @@ function StoryPlayer({
             <p className="mt-2 text-xs text-muted">Samo wysłuchanie bajki nie oznacza opanowania słowa — rozmowa pomaga je utrwalić.</p>
           </div>
           <div className="mt-6 flex flex-col gap-3">
+            {story.dayNumber === 1 && <Link href="/film/tajemniczy-slad" className={buttonVariants({ size: "lg", variant: "soft" })}>🎬 Obejrzyj krótki film o tej przygodzie</Link>}
             <Link href="/app" className={buttonVariants({ size: "lg" })}>Wróć do biblioteki</Link>
             <button type="button" className="text-sm font-semibold text-muted hover:text-navy" onClick={() => location.reload()}>Posłuchaj jeszcze raz</button>
           </div>

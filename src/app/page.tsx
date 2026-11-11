@@ -13,6 +13,7 @@ import { STORY_CATALOG } from "@/content/stories";
 import { cn } from "@/lib/utils";
 import { getCoverMap } from "@/lib/services/illustrations";
 import { getLandingArt } from "@/lib/services/mascots";
+import { LazyFilm } from "@/components/film/LazyFilm";
 import { Fireflies, ForestHills, Moon as MoonArt, Ornament, Sparkles, StarField, StoryFrame, Wave } from "@/components/landing/Magic";
 
 export const revalidate = 300; // okładki z panelu pojawiają się bez nowego wdrożenia
@@ -98,6 +99,12 @@ export default async function LandingPage() {
             </article>
           ))}
         </div>
+      </section>
+
+      {/* Film: pierwsza przygoda */}
+      <section className="container-page py-16" id="film">
+        <SectionTitle eyebrow="Zobacz pierwszą przygodę" title="Elofik i tajemniczy ślad" subtitle="Minutowy film o tym, jak Elofik odkrywa słowo „dociekliwość”. Bajki Elofika są do słuchania — to tylko zwiastun tego, co dziecko zobaczy w wyobraźni." />
+        <LazyFilm className="mx-auto mt-10 max-w-4xl" />
       </section>
 
       {/* 3. Jak uczymy nowych słów */}

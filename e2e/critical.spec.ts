@@ -184,3 +184,17 @@ test("admin: zabezpieczenia logowania", async ({ page, request }) => {
   await page.goto("/admin");
   await expect(page).toHaveURL(/logowanie\/admin/);
 });
+
+test("film „Elofik i tajemniczy ślad”: odtwarza się, przewija i kończy planszą ze słowem", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.goto("/film/tajemniczy-slad");
+  await page.getByTestId("film-play").click();
+  const bar = page.getByRole("slider", { name: "Pozycja filmu" });
+  await expect.poll(async () => Number(await bar.getAttribute("aria-valuenow")), { timeout: 8000 }).toBeGreaterThanOrEqual(2);
+  // przewinięcie pod koniec → plansza końcowa z wezwaniem do działania
+  const box = (await bar.boundingBox())!;
+  await page.mouse.click(box.x + box.width * 0.985, box.y + box.height / 2);
+  await expect(page.getByTestId("film-cta")).toBeVisible({ timeout: 8000 });
+  expect(errors).toEqual([]);
+});
