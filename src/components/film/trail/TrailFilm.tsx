@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Headphones, Maximize, Pause, Play, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ElofikPuppet, HedgehogPuppet, SquirrelPuppet } from "./Puppets";
+import { ELOFIK_SPRITES, ElofikPuppet, HedgehogPuppet, SquirrelPuppet, spriteUrl, type ElofikSprite } from "./Puppets";
 import { FarHills, Foreground, MainStage, MidForest, Stone } from "./World";
 import { FilmSound } from "./sound";
 import {
@@ -13,6 +13,13 @@ import {
 } from "./timeline";
 
 const FONT = { fontFamily: "var(--font-display)", fontWeight: 700 } as const;
+
+/** Pozy Elofika w kolejnych scenach: [od sekundy, poza]. */
+const POSES: [number, ElofikSprite][] = [
+  [0, "hello"], [13.4, "confident"], [21.9, "surprised"], [23.1, "detective"], [28.6, "confident"], [33.6, "thinking"], [37, "confident"],
+  [39.6, "surprised"], [41, "idea"], [43, "confident"], [47.6, "thinking"], [48.4, "detective"], [50.3, "surprised"], [52.2, "worried"],
+  [54, "idea"], [57.2, "confident"], [62.6, "surprised"], [64.6, "jumping"], [70, "wink"], [77, "jumping"], [80, "love"],
+];
 
 /** Film „Elofik i tajemniczy ślad” — animacja 2D w całości z kodu (SVG + Web Audio). */
 export function TrailFilm({ initialTime, ctaHref = "/#probka", className }: { initialTime?: number; ctaHref?: string; className?: string }) {
@@ -66,45 +73,36 @@ export function TrailFilm({ initialTime, ctaHref = "/#probka", className }: { in
     op("stars", Math.max(night, 1 - seg(t, 0, 5) * 1.2) * 0.95);
     op("oak-window", 1);
 
-    // ---------- Elofik ----------
+    // ---------- Elofik (grafiki marki: poza zależna od sceny) ----------
     const ex = key(t, ELOFIK_X);
     const speed = Math.abs(key(t + 0.05, ELOFIK_X) - key(t - 0.05, ELOFIK_X)) / 0.1;
     const walk = clamp(speed / 140);
-    const phase = ex / 34;
-    const kneel = Math.max(window_(t, 23, 28.4, 0.5), window_(t, 48, 50.3, 0.5));
-    const jump = Math.max(window_(t, 50.3, 51.3, 0.2), window_(t, 78.6, 79.8, 0.25));
-    const bob = Math.abs(Math.sin(phase)) * 9 * walk + Math.abs(Math.sin(t * 9)) * 26 * jump;
-    const appear = seg(t, 7.6, 8.3);
-    op("e", appear);
+    const phase = ex / 30;
+    let pi = 0;
+    for (let i = 0; i < POSES.length; i++) if (t >= POSES[i][0]) pi = i;
+    const [poseAt, pose] = POSES[pi];
+    const sprite = ELOFIK_SPRITES[pose];
+    const img = $("e-img");
+    if (img && img.getAttribute("data-pose") !== pose) {
+      const hh = 318 * sprite.k, ww = (hh * sprite.w) / 360;
+      img.setAttribute("data-pose", pose);
+      img.setAttribute("href", spriteUrl(pose));
+      img.setAttribute("x", (-ww / 2).toFixed(1));
+      img.setAttribute("y", (-hh).toFixed(1));
+      img.setAttribute("width", ww.toFixed(1));
+      img.setAttribute("height", hh.toFixed(1));
+    }
+    const kneel = pose === "detective" ? 1 : 0;
+    const jump = pose === "jumping" ? 1 : Math.max(window_(t, 50.3, 51.2, 0.2), 0);
+    const hop = Math.abs(Math.sin(phase)) * 16 * walk + Math.abs(Math.sin(t * 8)) * 34 * jump;
+    // „pyk” przy zmianie pozy: krótkie ściśnięcie i rozciągnięcie
+    const pop = t - poseAt < 0.36 && pi > 0 ? Math.sin(((t - poseAt) / 0.36) * Math.PI) : 0;
+    const breathe = Math.sin(t * 2.2) * 0.012 * (1 - walk);
+    op("e", seg(t, 7.6, 8.2));
     const es = lerp(0.8, 1, smooth(seg(t, 7.6, 9.2)));
-    tf("e", `translate(${ex.toFixed(1)},${(GROUND + 4 - bob + kneel * 36).toFixed(1)}) scale(${es.toFixed(3)})`);
-    tf("e-shadow", `translate(0,${(bob - kneel * 36).toFixed(1)}) scale(${(1 - bob / 90).toFixed(2)},1)`);
-    tf("e-body", `rotate(${(kneel * 12 + walk * 3).toFixed(1)},0,-66)`);
-    const legA = Math.sin(phase) * 30 * walk;
-    tf("e-leg-front", `translate(16,-66) rotate(${(legA - kneel * 78).toFixed(1)})`);
-    tf("e-leg-back", `translate(-18,-66) rotate(${(-legA + kneel * 62).toFixed(1)})`);
-    const wave = window_(t, 9.6, 13.2, 0.4);
-    const think = window_(t, 23.2, 28.3, 0.4);
-    const point = Math.max(window_(t, 65, 69.6, 0.5), window_(t, 39.8, 42.8, 0.4));
-    const reach = window_(t, 48.4, 50.2, 0.4);
-    let arm = -Math.sin(phase) * 24 * walk + 6;
-    arm = lerp(arm, -150 + Math.sin(t * 11) * 16, wave);
-    arm = lerp(arm, -128, think);
-    arm = lerp(arm, -152 + Math.sin(t * 3) * 5, point);
-    arm = lerp(arm, -70, reach);
-    arm = lerp(arm, -165, jump);
-    tf("e-arm-front", `translate(36,-142) rotate(${arm.toFixed(1)})`);
-    tf("e-arm-back", `translate(-34,-142) rotate(${(Math.sin(phase) * 18 * walk + 10 - jump * 150).toFixed(1)})`);
-    tf("e-head", `translate(0,-208) rotate(${(think * -9 + Math.sin(t * 1.1) * 2 + kneel * 8 - walk * 2).toFixed(1)})`);
-    const wiggle = Math.max(window_(t, 8.6, 10.4, 0.2), window_(t, 22.2, 23.6, 0.2), window_(t, 39.5, 41, 0.2), window_(t, 50.3, 52.2, 0.2), window_(t, 64.5, 66, 0.2));
-    const ear = Math.sin(t * 16) * 9 * wiggle + Math.sin(t * 1.4) * 2 - walk * 4;
-    tf("e-ear-l", `rotate(${ear.toFixed(1)},-46,12)`);
-    tf("e-ear-r", `rotate(${(-ear).toFixed(1)},46,12)`);
-    const blink = t % 3.4 < 0.13 ? 0.12 : 1;
-    tf("e-eyes", `translate(0,2) scale(1,${blink}) translate(0,-2)`);
-    const oh = Math.max(window_(t, 22.3, 23.3, 0.15), window_(t, 50.3, 51.8, 0.15));
-    op("e-oh", oh);
-    op("e-smile", 1 - oh);
+    tf("e", `translate(${ex.toFixed(1)},${(GROUND + 6).toFixed(1)}) scale(${es.toFixed(3)})`);
+    tf("e-shadow", `scale(${(1 - hop / 110).toFixed(2)},1)`);
+    tf("e-body", `translate(0,${(-hop).toFixed(1)}) rotate(${(Math.sin(phase) * 5 * walk + walk * 3 + Math.sin(t * 1.3) * 1.2).toFixed(2)}) scale(${(1 + pop * 0.07 - breathe).toFixed(3)},${(1 - pop * 0.09 + breathe + Math.abs(Math.cos(phase)) * 0.03 * walk).toFixed(3)})`);
 
     // ---------- ślady ----------
     FOOTPRINTS.forEach((f, i) => {
@@ -151,7 +149,7 @@ export function TrailFilm({ initialTime, ctaHref = "/#probka", className }: { in
     });
 
     // ---------- słowo dnia ----------
-    const sx = ex + 44, sy = GROUND - 80;
+    const sx = ex - 34, sy = GROUND - 92;
     for (let i = 0; i < WORD.length; i++) {
       const a = 71.6 + i * 0.26;
       const pop = bounceOut(seg(t, a, a + 0.5));
@@ -167,7 +165,7 @@ export function TrailFilm({ initialTime, ctaHref = "/#probka", className }: { in
     // ---------- dymki ----------
     for (const b of BUBBLES) {
       const k = window_(t, b.from, b.to, 0.28);
-      let x = ex - cam + 30, y = GROUND - 330 + kneel * 36;
+      let x = ex - cam + 30, y = GROUND - 345 + kneel * 84 - hop;
       if (b.anchor === "squirrel") { x = SQUIRREL_TREE_X - 150 - cam; y = 236; }
       if (b.anchor === "hedgehog") { x = hx - cam + 10; y = GROUND - 130; }
       if (b.anchor === "stream") { x = STREAM_X + 110 - cam; y = GROUND - 80; }
@@ -217,6 +215,9 @@ export function TrailFilm({ initialTime, ctaHref = "/#probka", className }: { in
   }, [playing, frame]);
 
   useEffect(() => () => sound.current?.dispose(), []);
+  useEffect(() => {
+    for (const p of Object.keys(ELOFIK_SPRITES) as ElofikSprite[]) new Image().src = spriteUrl(p);
+  }, []);
 
   const play = useCallback((from?: number) => {
     if (from !== undefined) time.current = from;
@@ -342,12 +343,9 @@ export function TrailFilm({ initialTime, ctaHref = "/#probka", className }: { in
             <rect x={380} y={410} width={840} height={110} rx={55} fill="#ffe08a" />
             <text x={800} y={488} textAnchor="middle" fontSize={70} fill="#27335f" style={FONT}>i tajemniczy ślad</text>
           </g>
-          <text id="title-3" x={800} y={585} textAnchor="middle" fontSize={30} fill="#27335f" opacity={0} style={{ ...FONT, fontWeight: 600, letterSpacing: "0.2em" }}>KRÓTKI FILM Z PAPIERU I KODU</text>
+          <text id="title-3" x={800} y={585} textAnchor="middle" fontSize={30} fill="#27335f" opacity={0} style={{ ...FONT, fontWeight: 600, letterSpacing: "0.2em" }}>KRÓTKI FILM</text>
         </g>
       </svg>
-
-      {/* faktura papieru */}
-      <div aria-hidden className="film-grain pointer-events-none absolute inset-0" />
 
       {/* napisy */}
       <div className="pointer-events-none absolute inset-x-0 bottom-[6.5%] flex justify-center px-[2%] @max-[620px]:hidden">

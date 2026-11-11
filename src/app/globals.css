@@ -297,13 +297,8 @@
    Film „Elofik i tajemniczy ślad” (animacja z kodu): papierowe cienie, faktura, ambient
    ========================================================================== */
 .film-root { container-type: inline-size; }
-.film-root .paper-shadow * { fill: #27335f !important; stroke: none !important; }
-.film-grain {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .28 0 0 0 0 .2 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
-  mix-blend-mode: multiply;
-  opacity: 0.22;
-  box-shadow: inset 0 0 120px rgb(39 51 95 / 0.25);
-}
+/* kontur postaci rysowanych kodem (jeżyk, wiewiórka) — jak w kreskówce */
+.film-root .film-ink :is(path, ellipse, circle, rect):not(.film-noink, .film-noink *) { stroke: #5b3d2b; stroke-width: 3.2; stroke-linejoin: round; paint-order: stroke; }
 .film-wave { animation: film-wave 2.6s ease-in-out infinite; }
 @keyframes film-wave { 0%, 100% { transform: translateX(-10px); } 50% { transform: translateX(14px); } }
 .film-tip { animation: twinkle 1.7s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }

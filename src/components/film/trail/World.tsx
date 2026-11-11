@@ -1,19 +1,12 @@
 /**
- * Scenografia filmu: warstwy wyciętego papieru. Każdy element ma „cień” — kopię przesuniętą
- * o kilka pikseli — co daje wrażenie papierowej dioramy bez kosztownych filtrów.
+ * Scenografia filmu w stylu płaskiej kreskówki dla przedszkolaków: proste kształty,
+ * płaskie pastelowe kolory, warstwy przesuwające się z różną prędkością (paralaksa).
  */
 import { GROUND, H, MEADOW_X, OAK_X, SQUIRREL_TREE_X, STONE_X, STREAM_X, rng } from "./timeline";
 
-const INK = "#27335f";
-
-/** Rysuje dzieci dwa razy: raz jako cień (granatowy, przesunięty), raz normalnie. */
-export function Cut({ children, dx = 7, dy = 9, o = 0.15 }: { children: React.ReactNode; dx?: number; dy?: number; o?: number }) {
-  return (
-    <g>
-      <g className="paper-shadow" transform={`translate(${dx},${dy})`} opacity={o}>{children}</g>
-      {children}
-    </g>
-  );
+/** Grupa elementów scenografii (styl płaskiej kreskówki — bez cieni i faktur). */
+export function Cut({ children }: { children: React.ReactNode; dx?: number; dy?: number; o?: number }) {
+  return <g>{children}</g>;
 }
 
 function hillPath(seed: number, base: number, amp: number, len: number): string {
