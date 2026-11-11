@@ -1,6 +1,6 @@
 import { config, hasElevenLabs } from "@/lib/config";
 import { getStorage } from "@/lib/storage";
-import { listCandidates, NARRATOR_PRESETS, VOICE_DEMO_TEXT, VOICE_PRESETS } from "@/lib/services/voices";
+import { CHARACTER_PRESETS, listCandidates, NARRATOR_PRESETS, VOICE_DEMO_TEXT, VOICE_PRESETS } from "@/lib/services/voices";
 import { ensureRuntimeSettings } from "@/lib/settings/runtime";
 import { VoiceStudio } from "@/components/admin/VoiceStudio";
 
@@ -30,9 +30,9 @@ export default async function AdminVoicePage() {
       </div>
       <VoiceStudio
         initial={candidates}
-        presets={[...VOICE_PRESETS, ...NARRATOR_PRESETS]}
+        presets={[...VOICE_PRESETS, ...NARRATOR_PRESETS, ...CHARACTER_PRESETS]}
         demoText={VOICE_DEMO_TEXT}
-        current={{ voiceId: config.elevenlabs.voiceId || null, version: config.elevenlabs.voiceVersion, model: config.elevenlabs.ttsModel, narratorVoiceId: config.elevenlabs.narratorVoiceId || null }}
+        current={{ voiceId: config.elevenlabs.voiceId || null, version: config.elevenlabs.voiceVersion, model: config.elevenlabs.ttsModel, narratorVoiceId: config.elevenlabs.narratorVoiceId || null, characterVoiceId: config.elevenlabs.characterVoiceId || null }}
         keyConfigured={Boolean(config.elevenlabs.apiKey)}
         realTts={hasElevenLabs()}
       />

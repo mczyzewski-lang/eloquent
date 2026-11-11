@@ -48,9 +48,18 @@ export interface AssemblyOutput {
   durationMs: number;
   /** Czas trwania każdego segmentu (bez pauzy) — do osi czasu napisów */
   segmentDurationsMs: number[];
+  /** O ile przesunięty jest początek pierwszego segmentu (dżingiel przed narracją) */
+  leadMs: number;
 }
 
-export async function assembleSegments(parts: AssemblyInput[]): Promise<AssemblyOutput> {
+export interface AssemblyMusic {
+  jingle: Buffer;
+  bed: Buffer;
+  leadMs: number;
+  tailMs: number;
+}
+
+export async function assembleSegments(parts: AssemblyInput[], music?: AssemblyMusic | null): Promise<AssemblyOutput> {
   if (!parts.length) throw new Error("Brak segmentów do złożenia");
   const allWav = parts.every((p) => p.ext === "wav");
 
@@ -64,7 +73,7 @@ export async function assembleSegments(parts: AssemblyInput[]): Promise<Assembly
       if (p.pauseAfterMs > 0) chunks.push(silenceWav(p.pauseAfterMs));
     }
     const audio = concatWavs(chunks);
-    return { audio, contentType: "audio/wav", ext: "wav", durationMs: wavDurationMs(audio), segmentDurationsMs: durations };
+    return { audio, contentType: "audio/wav", ext: "wav", durationMs: wavDurationMs(audio), segmentDurationsMs: durations, leadMs: 0 };
   }
 
   const dir = path.join(os.tmpdir(), `elofik-${randomUUID()}`);
@@ -81,13 +90,38 @@ export async function assembleSegments(parts: AssemblyInput[]): Promise<Assembly
     const filters = parts
       .map((p, i) => `[${i}:a]aresample=44100,aformat=sample_fmts=fltp:channel_layouts=mono,apad=pad_dur=${(p.pauseAfterMs / 1000).toFixed(3)}[a${i}]`)
       .join(";");
-    const concat = `${parts.map((_, i) => `[a${i}]`).join("")}concat=n=${parts.length}:v=0:a=1[cat];[cat]loudnorm=I=-16:TP=-1.5:LRA=11[out]`;
+    const cat = `${parts.map((_, i) => `[a${i}]`).join("")}concat=n=${parts.length}:v=0:a=1[cat]`;
     const out = path.join(dir, "out.mp3");
-    const args = ["-y", "-hide_banner", "-loglevel", "error", ...files.flatMap((f) => ["-i", f]), "-filter_complex", `${filters};${concat}`, "-map", "[out]", "-ac", "1", "-ar", "44100", "-b:a", "128k", out];
+    const inputs = files.flatMap((f) => ["-i", f]);
+    let graph: string;
+    if (music) {
+      // dżingiel → narracja z cichym, zapętlonym podkładem → wybrzmienie i wyciszenie
+      const jingle = path.join(dir, "jingle.wav");
+      const bed = path.join(dir, "bed.wav");
+      await fs.writeFile(jingle, music.jingle);
+      await fs.writeFile(bed, music.bed);
+      inputs.push("-i", jingle, "-stream_loop", "-1", "-i", bed);
+      const n = parts.length;
+      const voiceMs = durations.reduce((sum, d, i) => sum + d + parts[i].pauseAfterMs, 0);
+      const total = (music.leadMs + voiceMs + music.tailMs) / 1000;
+      graph = [
+        filters,
+        cat,
+        // głos normalizujemy PRZED miksem — inaczej normalizacja podbijałaby podkład w pauzach
+        `[cat]loudnorm=I=-16:TP=-1.5:LRA=11,aresample=44100,adelay=${music.leadMs}:all=1,apad=pad_dur=${(music.tailMs / 1000).toFixed(3)}[voice]`,
+        `[${n}:a]aresample=44100,aformat=sample_fmts=fltp:channel_layouts=mono,volume=0.5[jin]`,
+        `[${n + 1}:a]aresample=44100,aformat=sample_fmts=fltp:channel_layouts=mono,volume=0.14,afade=t=in:st=0.8:d=2.5[bed]`,
+        `[voice][jin][bed]amix=inputs=3:duration=first:dropout_transition=0:normalize=0[mix]`,
+        `[mix]afade=t=out:st=${Math.max(0, total - 2.6).toFixed(3)}:d=2.6,alimiter=limit=0.89[out]`,
+      ].join(";");
+    } else {
+      graph = `${filters};${cat};[cat]loudnorm=I=-16:TP=-1.5:LRA=11[out]`;
+    }
+    const args = ["-y", "-hide_banner", "-loglevel", "error", ...inputs, "-filter_complex", graph, "-map", "[out]", "-ac", "1", "-ar", "44100", "-b:a", "128k", out];
     const r = await run(process.env.FFMPEG_PATH ?? "ffmpeg", args);
     if (r.code !== 0) throw new Error(`FFmpeg error: ${r.stderr.slice(0, 500)}`);
     const audio = await fs.readFile(out);
-    return { audio, contentType: "audio/mpeg", ext: "mp3", durationMs: await probeDurationMs(out), segmentDurationsMs: durations };
+    return { audio, contentType: "audio/mpeg", ext: "mp3", durationMs: await probeDurationMs(out), segmentDurationsMs: durations, leadMs: music?.leadMs ?? 0 };
   } finally {
     await fs.rm(dir, { recursive: true, force: true });
   }

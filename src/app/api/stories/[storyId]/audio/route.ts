@@ -10,14 +10,17 @@ import { getDb } from "@/lib/db";
  * (CORE z cache + brakująca personalizacja); kolejne odsłuchy — wyłącznie gotowy plik.
  * Autoryzacja: tylko odblokowane bajki własnej rodziny (czas serwera).
  */
-export async function GET(_req: Request, { params }: { params: Promise<{ storyId: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ storyId: string }> }) {
   try {
     const { storyId } = await params;
     const session = await apiFamily();
     if (!session) return error("Zaloguj się", 401);
     const { bundle } = session;
     const { story } = await assertStoryAccessible(bundle.family, storyId);
-    const res = await renderStoryForFamily(story, buildTemplateContext(bundle), bundle.family.id);
+    // powitanie „Czeeeeść, …!” na początku bajki tylko wtedy, gdy nie było rytuału „Hej Elofik!”
+    // (w rytuale Elofik już się przywitał — bez dublowania)
+    const withIntro = new URL(req.url).searchParams.get("powitanie") === "1";
+    const res = await renderStoryForFamily(story, buildTemplateContext(bundle), bundle.family.id, { introAt: withIntro ? new Date() : null });
     const provider = (await getDb().findOne("audio_cache", { cache_key: res.assembly.segment_keys[0] }))?.provider ?? "mock";
     const progress = await getDb().findOne("listening_progress", { family_id: bundle.family.id, story_id: storyId });
     return json({

@@ -13,8 +13,8 @@ registerJobHandler("render_story", async (p) => {
   const story = id === SECRET_STORY_ID ? SECRET_STORY : id.startsWith("wlasna-") ? await getCustomStory(String(p.familyId), id) : await getStoryVersion(id);
   const bundle = await getFamilyBundle(String(p.familyId));
   if (!story || !bundle) return;
-  // powitanie w bajce dopasowane do pory, o której rodzina zwykle słucha
-  await renderStoryForFamily(story, buildTemplateContext(bundle), bundle.family.id, { introAt: nextRoutineAt(bundle.family.listening_routine, bundle.family.timezone) });
+  // z rytuałem „Hej Elofik!” bajka nie ma własnego powitania; bez rytuału — powitanie na porę rutyny
+  await renderStoryForFamily(story, buildTemplateContext(bundle), bundle.family.id, { introAt: bundle.family.voice_greeting_enabled ? null : (nextRoutineAt(bundle.family.listening_routine, bundle.family.timezone) ?? undefined) });
 });
 
 registerJobHandler("render_greeting", async (p) => {

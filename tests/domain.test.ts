@@ -288,3 +288,34 @@ describe("Dwa głosy: narrator i Elofik", () => {
     }
   });
 });
+
+describe("Głosy postaci (trzeci głos)", () => {
+  it("rozpoznaje, kto mówi: Elofik, inna postać, narrator", async () => {
+    const { splitNarration } = await import("@/lib/domain/narration");
+    const sp = (t: string) => splitNarration(t).map((p) => `${p.speaker[0]}:${p.text}`);
+    expect(sp("Zapytał więc wiewiórkę. — Widziałam! — pisnęła wiewiórka. — Coś świeciło jak latarenka. Elofik zastrzygł uszami.")).toEqual([
+      "n:Zapytał więc wiewiórkę.", "c:Widziałam!", "n:pisnęła wiewiórka.", "c:Coś świeciło jak latarenka.", "n:Elofik zastrzygł uszami.",
+    ]);
+    // szybka wymiana zdań
+    expect(sp("Elofik zaczął zadawać pytania. — Co słyszałeś? — Szum wodospadu — odpowiedział jeżyk. — A co czułeś pod łapkami? — Miękką koniczynę.").map((x) => x[0])).toEqual(["n", "e", "c", "n", "e", "c"]);
+    // dwie osoby po kolei, każda z didaskaliami
+    expect(sp("— Co się stało? — zapytał Elofik. — Chcę zbudować most — fuknęła wydra.").map((x) => x[0])).toEqual(["e", "n", "c", "n"]);
+    // rodzaj żeński czasownika = nie Elofik; „szepnął do siebie” = Elofik
+    expect(sp("Chmurka westchnęła. — A jeśli spadnie jedna kropla? — zapytała.")[1][0]).toBe("c");
+    expect(sp("— Jutro też będę pytać — szepnął do siebie i ziewnął.")[0][0]).toBe("e");
+    // myślnik w zwykłym zdaniu to nie dialog
+    expect(sp("Gdy pytasz, skąd się bierze tęcza — to właśnie jest dociekliwość.")).toHaveLength(1);
+    expect(sp("[postać] Pi, pi! [narrator] pisnęła myszka.")).toEqual(["c:Pi, pi!", "n:pisnęła myszka."]);
+  });
+  it("kwestie postaci idą trzecim głosem, a bez niego — głosem narratora", async () => {
+    const { buildRenderPlan } = await import("@/lib/domain/story");
+    const v = (id: string) => ({ voiceId: id, modelId: "m", voiceVersion: id, settings: {} });
+    const ctx = { child: { name: "Leon", address: "Leonku", gender: "m" as const }, family: {} };
+    const three = buildRenderPlan(STORY_CATALOG[0], ctx, v("elofik"), null, v("narrator"), v("zwierzak"));
+    const squirrel = three.segments.find((s) => s.text === "Widziałam!")!;
+    expect(squirrel.speaker).toBe("character");
+    expect(squirrel.voice?.voiceId).toBe("zwierzak");
+    const two = buildRenderPlan(STORY_CATALOG[0], ctx, v("elofik"), null, v("narrator"), null);
+    expect(two.segments.find((s) => s.text === "Widziałam!")!.voice?.voiceId).toBe("narrator");
+  });
+});

@@ -59,6 +59,14 @@ export function narratorVoiceProfile(): VoiceProfile | null {
   return { ...elofik, voiceId: id, voiceVersion: `NARRATOR_${id.slice(0, 8).toUpperCase()}` };
 }
 
+/** Głos pozostałych postaci (wiewiórka, jeżyk…). null = ich kwestie czyta narrator. */
+export function characterVoiceProfile(): VoiceProfile | null {
+  const id = config.elevenlabs.characterVoiceId;
+  const elofik = currentVoiceProfile();
+  if (!id || id === elofik.voiceId || id === config.elevenlabs.narratorVoiceId) return null;
+  return { ...elofik, voiceId: id, voiceVersion: `CHARACTER_${id.slice(0, 8).toUpperCase()}` };
+}
+
 class ElevenLabsTts implements TtsProvider {
   readonly name = "elevenlabs" as const;
   async synthesize(text: string, voice: VoiceProfile, language: string, context?: TtsContext): Promise<TtsResult> {

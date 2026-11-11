@@ -5,8 +5,10 @@
 import { config } from "@/lib/config";
 import { getDb, nowIso, type AudioAssemblyRow, type AudioCacheRow } from "@/lib/db";
 import { getStorage } from "@/lib/storage";
-import { getTts, currentVoiceProfile, narratorVoiceProfile } from "@/lib/audio/tts";
-import { assembleSegments } from "@/lib/audio/ffmpeg";
+import { getTts, characterVoiceProfile, currentVoiceProfile, narratorVoiceProfile } from "@/lib/audio/tts";
+import { assembleSegments, hasFfmpeg } from "@/lib/audio/ffmpeg";
+import { JINGLE_LEAD_MS, MUSIC_TAIL_MS, MUSIC_VERSION, storyMusic, storyMusicEnabled } from "@/lib/audio/music";
+import { assemblyKey } from "@/lib/domain/hash";
 import { wavDurationMs } from "@/lib/audio/wav";
 import { estimateTtsUsd, type CostPurpose } from "@/lib/domain/budget";
 import { buildRenderPlan, type PlannedSegment, type RenderPlan, type StoryVersion, type VoiceProfile } from "@/lib/domain/story";
@@ -93,7 +95,7 @@ export interface AssemblyResult {
   reusedSegments: number;
 }
 
-export async function assemblePlan(plan: RenderPlan, opts: { familyId?: string | null; purposeShared?: CostPurpose; purposePersonal?: CostPurpose; language?: string }): Promise<AssemblyResult> {
+export async function assemblePlan(plan: RenderPlan, opts: { familyId?: string | null; purposeShared?: CostPurpose; purposePersonal?: CostPurpose; language?: string; music?: boolean }): Promise<AssemblyResult> {
   const db = getDb();
   const existing = await db.findOne("audio_assemblies", { assembly_key: plan.assemblyKey });
   if (existing) return { assembly: existing, plan, generatedSegments: 0, reusedSegments: plan.segments.length };
@@ -127,8 +129,10 @@ export async function assemblePlan(plan: RenderPlan, opts: { familyId?: string |
         return { audio, ext: row.storage_path.endsWith(".wav") ? ("wav" as const) : ("mp3" as const), pauseAfterMs: seg.pauseAfterMs };
       }),
     );
-    const out = await assembleSegments(parts);
-    let t = 0;
+    // muzyka tylko dla nagrań MP3 składanych przez FFmpeg (tryb zastępczy WAV zostaje bez podkładu)
+    const withMusic = opts.music && parts.some((x) => x.ext === "mp3") && (await hasFfmpeg());
+    const out = await assembleSegments(parts, withMusic ? { ...storyMusic(), leadMs: JINGLE_LEAD_MS, tailMs: MUSIC_TAIL_MS } : null);
+    let t = out.leadMs;
     const timeline = rows.map(({ seg }, i) => {
       const startMs = t;
       const endMs = t + out.segmentDurationsMs[i];
@@ -165,8 +169,11 @@ export async function renderStoryForFamily(story: StoryVersion, ctx: TemplateCon
     const listenedBefore = (await db.find("listening_progress", { family_id: familyId })).some((p) => p.play_count > 0 && p.story_id !== story.storyId);
     intro = storyIntro(ctx.child.address, opts.introAt ?? new Date(), family?.timezone ?? config.defaultTimezone, story.dayNumber <= 1 && !listenedBefore);
   }
-  const plan = buildRenderPlan(story, ctx, currentVoiceProfile(), intro, narratorVoiceProfile());
-  const res = await assemblePlan(plan, { familyId, language: story.locale });
+  const plan = buildRenderPlan(story, ctx, currentVoiceProfile(), intro, narratorVoiceProfile(), characterVoiceProfile());
+  const music = storyMusicEnabled();
+  // wersja muzyki wchodzi do klucza złożonego nagrania (segmenty mowy zostają w cache)
+  if (music) plan.assemblyKey = assemblyKey([plan.assemblyKey], MUSIC_VERSION);
+  const res = await assemblePlan(plan, { familyId, language: story.locale, music });
   if (familyId) {
     await getDb().upsert("family_assemblies", { family_id: familyId, story_id: story.storyId, assembly_key: plan.assemblyKey, created_at: nowIso() }, ["family_id", "story_id"]);
   }
@@ -176,7 +183,7 @@ export async function renderStoryForFamily(story: StoryVersion, ctx: TemplateCon
 /** Generuje wyłącznie wspólne segmenty (CORE/EDUCATIONAL/fallback) — uruchamiane raz przy publikacji. */
 export async function generateCore(story: StoryVersion) {
   await ensureRuntimeSettings();
-  const plan = buildRenderPlan(story, null, currentVoiceProfile(), null, narratorVoiceProfile());
+  const plan = buildRenderPlan(story, null, currentVoiceProfile(), null, narratorVoiceProfile(), characterVoiceProfile());
   let generated = 0;
   for (const seg of plan.segments.filter((s) => s.shared)) {
     const before = await getDb().findOne("audio_cache", { cache_key: seg.cacheKey });

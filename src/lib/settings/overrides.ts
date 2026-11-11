@@ -11,6 +11,7 @@ export type RuntimeSettingKey =
   | "elevenlabs_tts_model"
   | "ai_monthly_budget_usd"
   | "elevenlabs_narrator_voice_id"
+  | "elevenlabs_character_voice_id"
   | "smsapi_token"
   | "sms_sender";
 

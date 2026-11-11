@@ -8,6 +8,7 @@ import { addressForm } from "@/lib/domain/names";
 import { STORY_ROADMAP } from "@/content/stories";
 import { StoryCover } from "@/components/elofik/StoryCover";
 import { Elofik } from "@/components/elofik/Elofik";
+import { ELOFIK_POSES, type ElofikMood } from "@/components/elofik/poses";
 import { Badge, Card } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { PageView } from "@/components/site/PageView";
@@ -66,6 +67,22 @@ export default async function AppHome({ searchParams }: { searchParams: Promise<
       cover: story ? covers[story.storyId] : undefined,
       done: available ? Boolean(progress.get(available.storyId)?.completed) : false,
       isTomorrow: c.day === lib.unlock.todayDay + 1,
+    };
+  });
+
+  // album ze słowami: naklejka za każdą wysłuchaną bajkę + kilka kolejnych miejsc do zebrania
+  const STICKER_MOODS: ElofikMood[] = ["detective", "building", "hug", "music", "love", "idea", "stargazing", "drawing", "reading", "jumping", "hiking", "calm", "laughing", "wink", "confident", "hello"];
+  const stickers = calendar.slice(0, Math.min(calendar.length, Math.max(6, lib.unlock.todayDay + 3))).map((c) => {
+    const story = lib.stories.find((x) => x.dayNumber === c.day);
+    const p = c.available ? progress.get(c.available.storyId) : undefined;
+    return {
+      day: c.day,
+      mood: STICKER_MOODS[(c.day - 1) % STICKER_MOODS.length],
+      word: c.word,
+      definition: story?.wordDefinition ?? "",
+      storyId: c.available?.storyId ?? null,
+      discussed: Boolean(p?.word_discussed),
+      state: p?.completed ? ("done" as const) : p?.play_count ? ("started" as const) : ("locked" as const),
     };
   });
 
@@ -166,27 +183,47 @@ export default async function AppHome({ searchParams }: { searchParams: Promise<
       )}
 
       {tab === "slowa" && (
-        <div className="space-y-3">
-          <h1 className="text-2xl font-semibold">Poznane słowa</h1>
-          <p className="text-muted">Słowa z wysłuchanych bajek. Odsłuchanie to pierwszy krok — oznaczaj słowa, o których rozmawialiście.</p>
-          {lib.unlocked.filter((s) => progress.get(s.storyId)?.play_count).length === 0 && <Card>Tu pojawią się słowa z wysłuchanych bajek.</Card>}
-          {lib.unlocked
-            .filter((s) => progress.get(s.storyId)?.play_count)
-            .map((s) => {
-              const p = progress.get(s.storyId)!;
-              return (
-                <Card key={s.storyId} className="flex items-start gap-4">
-                  <div className="flex-1">
-                    <p className="font-display text-xl font-semibold capitalize text-navy">{s.wordOfDay}</p>
-                    <p className="mt-1 text-muted">{s.wordDefinition}</p>
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <Elofik mood="reading" className="w-16 flex-none" />
+            <div>
+              <h1 className="text-2xl font-semibold leading-tight">Torba na słowa</h1>
+              <p className="text-sm text-muted">Zebrane naklejki: <strong className="text-navy">{stickers.filter((x) => x.state === "done").length}</strong> z {stickers.length}. Dotknij naklejki, żeby przypomnieć sobie słowo.</p>
+            </div>
+          </div>
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3" aria-label="Album ze słowami">
+            {stickers.map((st, i) => (
+              <li key={st.day}>
+                {st.state === "locked" ? (
+                  <div className="flex h-full flex-col items-center rounded-[var(--radius-2xl)] border-2 border-dashed border-navy/20 bg-white/40 p-3 text-center" aria-label={`Dzień ${st.day} — naklejka do zdobycia`}>
+                    <div className="relative flex aspect-square w-full items-center justify-center">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={ELOFIK_POSES[st.mood]} alt="" className="absolute inset-[10%] h-[80%] w-[80%] object-contain opacity-20 brightness-0" />
+                      <Lock className="absolute h-7 w-7 text-navy/50" />
+                    </div>
+                    <p className="mt-1 text-xs font-bold uppercase tracking-wide text-muted">Dzień {st.day}</p>
+                    <p className="font-display font-semibold text-navy/40">? ? ?</p>
                   </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <Badge tone={p.completed ? "sage" : "muted"}>{p.completed ? "wysłuchana" : "w trakcie"}</Badge>
-                    {p.word_discussed && <Badge tone="gold">rozmawialiśmy</Badge>}
-                  </div>
-                </Card>
-              );
-            })}
+                ) : (
+                  <details className="group h-full rounded-[var(--radius-2xl)] bg-white p-3 text-center shadow-[inset_0_0_0_2.5px_#3b2a1f,0_5px_0_rgb(59_42_31/0.16)] [&_summary::-webkit-details-marker]:hidden" style={{ rotate: `${[-1.5, 1, -0.5, 1.5][i % 4]}deg` }}>
+                    <summary className="cursor-pointer list-none">
+                      <div className={cn("relative flex aspect-square w-full items-center justify-center rounded-2xl", ["bg-gold/25", "bg-peach/70", "bg-sage/25", "bg-[#e7defa]"][i % 4])}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={ELOFIK_POSES[st.mood]} alt="" className={cn("absolute inset-[7%] h-[86%] w-[86%] object-contain", st.state === "started" && "opacity-60 saturate-50")} />
+                        {st.state === "done" && <span className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-sage-deep text-white" aria-label="Zebrana"><Check className="h-4 w-4" /></span>}
+                        {st.discussed && <span className="absolute left-2 top-2 rounded-full bg-gold px-2 py-0.5 text-[10px] font-bold text-navy">rozmawialiśmy</span>}
+                      </div>
+                      <p className="mt-2 text-xs font-bold uppercase tracking-wide text-muted">Dzień {st.day}{st.state === "started" ? " · w trakcie" : ""}</p>
+                      <p className="font-display text-lg font-semibold capitalize leading-tight text-navy">{st.word}</p>
+                    </summary>
+                    <p className="mt-2 text-left text-sm leading-relaxed text-muted">{st.definition}</p>
+                    {st.storyId && <Link href={`/app/bajka/${st.storyId}`} className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-gold-deep"><Headphones className="h-4 w-4" /> Posłuchaj jeszcze raz</Link>}
+                  </details>
+                )}
+              </li>
+            ))}
+          </ul>
+          <p className="text-center text-xs text-muted">Naklejkę dostajesz po wysłuchaniu bajki do końca. Odsłuchanie to pierwszy krok — porozmawiajcie o słowie, żeby zostało na dłużej.</p>
         </div>
       )}
 

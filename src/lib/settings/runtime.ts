@@ -21,6 +21,7 @@ export const SETTINGS: SettingMeta[] = [
   { key: "elevenlabs_api_key", label: "ElevenLabs — klucz API", secret: true, envVar: "ELEVENLABS_API_KEY", help: "ElevenLabs → Developers → API Keys → Create (klucz zaczyna się od sk_, nie wklejaj „Key ID” z tabeli). Uprawnienia: Text to Speech, Speech to Text, Text to Voice, Voices (odczyt i zapis), User (odczyt).", placeholder: "sk_… (cały klucz, nie Key ID)" },
   { key: "elevenlabs_voice_id", label: "ElevenLabs — Voice ID głosu Elofika", secret: false, envVar: "ELEVENLABS_VOICE_ID", help: "ElevenLabs → Voices → wybrany głos → „Copy voice ID”.", placeholder: "np. 21m00Tcm4TlvDq8ikWAM" },
   { key: "elevenlabs_narrator_voice_id", label: "ElevenLabs — Voice ID narratora", secret: false, envVar: "ELEVENLABS_NARRATOR_VOICE_ID", help: "Drugi głos: zapowiada bajkę i czyta narrację (np. „zawołał radośnie”), a Elofik mówi swoje kwestie. Ustawiany w „Głos Elofika” → „Ustaw jako narratora”. Puste = całą bajkę czyta Elofik.", placeholder: "Voice ID narratora (opcjonalnie)" },
+  { key: "elevenlabs_character_voice_id", label: "ElevenLabs — Voice ID postaci (zwierzątka)", secret: false, envVar: "ELEVENLABS_CHARACTER_VOICE_ID", help: "Trzeci głos: kwestie innych bohaterów (wiewiórka, jeżyk, wydra…). Działa, gdy ustawiony jest narrator. Ustawiany w „Głos Elofika” → „Ustaw jako głos postaci”. Puste = kwestie postaci czyta narrator.", placeholder: "Voice ID postaci (opcjonalnie)" },
   { key: "elevenlabs_voice_version", label: "ElevenLabs — wersja głosu", secret: false, envVar: "ELEVENLABS_VOICE_VERSION", help: "Ustawiana automatycznie przy wyborze głosu w „Głos Elofika”. Zmiana = nowe nagrania (stare zostają w cache).", placeholder: "VOICE_V1" },
   { key: "elevenlabs_tts_model", label: "ElevenLabs — model TTS", secret: false, envVar: "ELEVENLABS_TTS_MODEL", help: "Ustawiany przy wyborze głosu w „Głos Elofika” (np. eleven_multilingual_v2, eleven_v3).", placeholder: "eleven_multilingual_v2" },
   { key: "openai_api_key", label: "OpenAI — klucz API", secret: true, envVar: "OPENAI_API_KEY", help: "platform.openai.com → API keys. Używany do scenariuszy i ilustracji (bez danych dzieci).", placeholder: "sk-…" },
@@ -76,6 +77,7 @@ export function validateSetting(key: RuntimeSettingKey, value: string): string |
   if (key === "elevenlabs_voice_version" && !/^[A-Z0-9_]{3,40}$/.test(v)) return "Wersja głosu: wielkie litery, cyfry i _ (np. VOICE_V2).";
   if (key === "smsapi_token" && !/^[A-Za-z0-9_-]{20,200}$/.test(v)) return "Token SMSAPI to ciąg liter i cyfr (ok. 40 znaków) z panelu SMSAPI → Tokeny API.";
   if (key === "sms_sender" && !/^[A-Za-z0-9]{3,11}$/.test(v)) return "Nazwa nadawcy: 3–11 liter lub cyfr, bez spacji (np. Elofik).";
+  if (key === "elevenlabs_character_voice_id" && !/^[A-Za-z0-9]{10,40}$/.test(v)) return "Voice ID składa się z liter i cyfr (ok. 20 znaków).";
   if (key === "elevenlabs_narrator_voice_id" && !/^[A-Za-z0-9]{10,40}$/.test(v)) return "Voice ID składa się z liter i cyfr (ok. 20 znaków).";
   if (key === "elevenlabs_voice_id" && !/^[A-Za-z0-9]{10,40}$/.test(v)) return "Voice ID składa się z liter i cyfr (ok. 20 znaków).";
   return null;

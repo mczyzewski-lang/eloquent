@@ -6,6 +6,7 @@
  */
 import { createContext } from "react";
 import { cn } from "@/lib/utils";
+import { ELOFIK_POSES, type ElofikMood } from "./poses";
 
 /** Zostawione dla zgodności (dawniej: pozy z OpenAI). Elofik zawsze używa grafik marki. */
 const MascotContext = createContext<Record<string, string>>({});
@@ -14,31 +15,7 @@ export function MascotProvider({ map, children }: { map: Record<string, string>;
   return <MascotContext.Provider value={map}>{children}</MascotContext.Provider>;
 }
 
-/** Pozy podstawowe (duże grafiki) + emocje i zajęcia z arkusza postaci (public/brand/elofik/emocje). */
-const BASE = {
-  idle: "/brand/elofik/idle.webp",
-  telling: "/brand/elofik/idle.webp",
-  waving: "/brand/elofik/excited.webp",
-  happy: "/brand/elofik/excited.webp",
-  amazed: "/brand/elofik/surprised.webp",
-  listening: "/brand/elofik/curious.webp",
-  pondering: "/brand/elofik/thinking.webp",
-  sleepy: "/brand/elofik/sleepy.webp",
-} as const;
-
-const EMOTIONS = [
-  "hello", "laughing", "confident", "thinking", "idea", "surprised", "worried", "grumpy",
-  "sad", "jumping", "love", "hug", "sleeping", "scared", "detective", "wink",
-  "reading", "hiking", "stargazing", "drawing", "building", "music", "calm",
-] as const;
-
-export type ElofikMood = keyof typeof BASE | (typeof EMOTIONS)[number];
-
-/** Nastrój → plik grafiki. */
-export const ELOFIK_POSES: Record<ElofikMood, string> = {
-  ...BASE,
-  ...(Object.fromEntries(EMOTIONS.map((e) => [e, `/brand/elofik/emocje/${e}.webp`])) as Record<(typeof EMOTIONS)[number], string>),
-};
+export { ELOFIK_POSES, type ElofikMood } from "./poses";
 
 /**
  * `fallback` — zostawione dla zgodności z miejscami, które wcześniej ukrywały zastępczego Elofika.

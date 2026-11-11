@@ -38,6 +38,15 @@ export const NARRATOR_PRESETS: { name: string; description: string }[] = [
   },
 ];
 
+/** Opis głosu pozostałych postaci (zwierzątka z lasu). */
+export const CHARACTER_PRESETS: { name: string; description: string }[] = [
+  {
+    name: "Postać — leśne zwierzątko",
+    description:
+      "A small, cute, slightly squeaky and high-pitched friendly forest animal character voice speaking Polish with a native Polish accent. Gentle, a little shy and very sweet, clearly different from a young boy's voice, soft and never shrill, for children's audio stories.",
+  },
+];
+
 export const VOICE_PRESETS: { name: string; description: string }[] = [
   {
     name: "Ciepły opowiadacz",
@@ -292,6 +301,13 @@ export async function chooseNarratorVoice(voiceId: string | null, actorEmail: st
   if (voiceId && !/^[A-Za-z0-9]{10,40}$/.test(voiceId)) throw new VoiceStudioError("Nieprawidłowy Voice ID.");
   await saveSetting("elevenlabs_narrator_voice_id", voiceId ?? "", actorEmail);
   return { narratorVoiceId: voiceId };
+}
+
+/** Ustawia głos pozostałych postaci (trzeci głos). Pusty voiceId = kwestie postaci czyta narrator. */
+export async function chooseCharacterVoice(voiceId: string | null, actorEmail: string) {
+  if (voiceId && !/^[A-Za-z0-9]{10,40}$/.test(voiceId)) throw new VoiceStudioError("Nieprawidłowy Voice ID.");
+  await saveSetting("elevenlabs_character_voice_id", voiceId ?? "", actorEmail);
+  return { characterVoiceId: voiceId };
 }
 
 export async function listCandidates(): Promise<VoiceCandidateRow[]> {

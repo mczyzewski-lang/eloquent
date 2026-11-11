@@ -86,7 +86,7 @@ export function StoryExperience({
   useEffect(() => {
     event(story.storyId, "story_opened");
     if (voiceRitual) event(story.storyId, "voice_greeting_screen_viewed");
-    fetch(`/api/stories/${story.storyId}/audio`)
+    fetch(`/api/stories/${story.storyId}/audio?powitanie=${voiceRitual ? 0 : 1}`)
       .then(async (r) => {
         const j = await r.json();
         if (!r.ok) throw new Error(j.error);

@@ -5,7 +5,7 @@ import { auditLog } from "@/lib/auth/guards";
 import { getDb } from "@/lib/db";
 import { getStorage } from "@/lib/storage";
 import type { VoiceCandidateRow } from "@/lib/db";
-import { chooseLeadingVoice, chooseNarratorVoice, demoLibraryVoice, designVoices, listCandidates, listLibraryVoices, listTtsModels, renderModelDemos, saveDesignedVoice, VOICE_DESIGN_MODELS, VoiceStudioError } from "@/lib/services/voices";
+import { chooseCharacterVoice, chooseLeadingVoice, chooseNarratorVoice, demoLibraryVoice, designVoices, listCandidates, listLibraryVoices, listTtsModels, renderModelDemos, saveDesignedVoice, VOICE_DESIGN_MODELS, VoiceStudioError } from "@/lib/services/voices";
 
 export const maxDuration = 300;
 
@@ -20,6 +20,8 @@ const body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("delete"), candidateId: z.string().uuid() }),
   z.object({ action: z.literal("narrator"), voiceId: z.string().max(40), candidateId: z.string().uuid().optional() }),
   z.object({ action: z.literal("narrator_off") }),
+  z.object({ action: z.literal("character"), voiceId: z.string().max(40), candidateId: z.string().uuid().optional() }),
+  z.object({ action: z.literal("character_off") }),
 ]);
 
 async function view(c: VoiceCandidateRow) {
@@ -84,6 +86,18 @@ export async function POST(req: Request) {
         await chooseNarratorVoice(null, user.email);
         await auditLog(user, "voice.narrator_off", null);
         return json({ narratorVoiceId: null });
+      }
+      case "character": {
+        let voiceId = b.voiceId;
+        if (!voiceId && b.candidateId) voiceId = (await saveDesignedVoice(b.candidateId)).voice_id!;
+        const res = await chooseCharacterVoice(voiceId, user.email);
+        await auditLog(user, "voice.character", voiceId);
+        return json(res);
+      }
+      case "character_off": {
+        await chooseCharacterVoice(null, user.email);
+        await auditLog(user, "voice.character_off", null);
+        return json({ characterVoiceId: null });
       }
       case "delete": {
         await getDb().delete("voice_candidates", { id: b.candidateId });

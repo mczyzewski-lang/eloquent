@@ -46,7 +46,7 @@ export function VoiceStudio({
   initial: Candidate[];
   presets: { name: string; description: string }[];
   demoText: string;
-  current: { voiceId: string | null; version: string; model: string; narratorVoiceId: string | null };
+  current: { voiceId: string | null; version: string; model: string; narratorVoiceId: string | null; characterVoiceId: string | null };
   keyConfigured: boolean;
   realTts: boolean;
 }) {
@@ -111,6 +111,20 @@ export function VoiceStudio({
       setCurrent((cur) => ({ ...cur, narratorVoiceId: j.narratorVoiceId }));
       setCandidates((list) => list.map((x) => (x.id === c.id ? { ...x, voiceId: j.narratorVoiceId } : x)));
       setMsg({ ok: true, text: `„${c.name}” jest teraz narratorem: zapowiada bajki i czyta narrację. Elofik mówi swoje kwestie.` });
+    });
+
+  const chooseCharacter = (c: Candidate | null) =>
+    run(`char-${c?.id ?? "off"}`, async () => {
+      if (!c) {
+        await call({ action: "character_off" });
+        setCurrent((cur) => ({ ...cur, characterVoiceId: null }));
+        setMsg({ ok: true, text: "Głos postaci wyłączony — kwestie innych bohaterów czyta narrator." });
+        return;
+      }
+      const j = await call<{ characterVoiceId: string }>({ action: "character", voiceId: c.voiceId ?? "", candidateId: c.voiceId ? undefined : c.id });
+      setCurrent((cur) => ({ ...cur, characterVoiceId: j.characterVoiceId }));
+      setCandidates((list) => list.map((x) => (x.id === c.id ? { ...x, voiceId: j.characterVoiceId } : x)));
+      setMsg({ ok: true, text: `„${c.name}” mówi teraz kwestie innych postaci (wiewiórka, jeżyk, wydra…).` });
     });
 
   const replace = (c: Candidate) => setCandidates((list) => list.map((x) => (x.id === c.id ? c : x)));
@@ -195,6 +209,15 @@ export function VoiceStudio({
           </p>
         ) : (
           <p className="mt-1 text-sm text-muted">Brak — całą bajkę czyta Elofik. Zaprojektuj głos z presetu „Narrator — …” i kliknij „Ustaw jako narratora”: narrator zapowie bajkę i przeczyta narrację (np. „zawołał radośnie”), a Elofik powie swoje kwestie.</p>
+        )}
+        <p className="mt-3 text-xs font-bold uppercase tracking-wide text-muted">Głos postaci (trzeci głos)</p>
+        {current.characterVoiceId ? (
+          <p className="mt-1 flex flex-wrap items-center gap-2 font-semibold text-navy">
+            {candidates.find((c) => c.voiceId === current.characterVoiceId)?.name ?? "Głos z ustawień"} · <code className="text-sm">{current.characterVoiceId}</code>
+            <Button size="sm" variant="ghost" disabled={!!busy} onClick={() => chooseCharacter(null)}>Wyłącz</Button>
+          </p>
+        ) : (
+          <p className="mt-1 text-sm text-muted">Brak — kwestie innych bohaterów (wiewiórka, jeżyk, wydra…) czyta narrator. Zaprojektuj głos z presetu „Postać — leśne zwierzątko” i kliknij „Ustaw jako głos postaci”. Wymaga ustawionego narratora.</p>
         )}
       </div>
 
@@ -315,6 +338,9 @@ export function VoiceStudio({
                   </Button>
                   <Button size="sm" variant={c.voiceId && c.voiceId === current.narratorVoiceId ? "sage" : "soft"} disabled={!!busy || Boolean(c.voiceId && (c.voiceId === current.narratorVoiceId || c.voiceId === current.voiceId))} onClick={() => chooseNarrator(c)} data-testid="choose-narrator">
                     {busy === `narr-${c.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <BookOpen className="h-4 w-4" />} {c.voiceId && c.voiceId === current.narratorVoiceId ? "Narrator" : "Ustaw jako narratora"}
+                  </Button>
+                  <Button size="sm" variant={c.voiceId && c.voiceId === current.characterVoiceId ? "sage" : "soft"} disabled={!!busy || Boolean(c.voiceId && (c.voiceId === current.characterVoiceId || c.voiceId === current.voiceId || c.voiceId === current.narratorVoiceId))} onClick={() => chooseCharacter(c)} data-testid="choose-character">
+                    {busy === `char-${c.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <Star className="h-4 w-4" />} {c.voiceId && c.voiceId === current.characterVoiceId ? "Głos postaci" : "Ustaw jako głos postaci"}
                   </Button>
                   <Button size="sm" variant="soft" disabled={!!busy || !keyConfigured} onClick={() => compareModels(c)}>
                     {busy === `cmp-${c.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mic2 className="h-4 w-4" />} {(c.modelDemos ?? []).length ? "Odśwież modele" : "Porównaj modele v2/v3/v4…"}

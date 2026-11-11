@@ -100,7 +100,7 @@ function introKey(text: string, story: StoryVersion, voice: VoiceProfile): strin
   return ttsCacheKey({ text, voiceId: voice.voiceId, modelId: voice.modelId, voiceSettings: voice.settings, language: story.locale, templateVersion: INTRO_TEMPLATE_VERSION, pronunciationVersion: PRONUNCIATION_VERSION });
 }
 
-export function buildRenderPlan(story: StoryVersion, ctx: TemplateContext | null, voice: VoiceProfile, intro?: StoryIntro | null, narrator?: VoiceProfile | null): RenderPlan {
+export function buildRenderPlan(story: StoryVersion, ctx: TemplateContext | null, voice: VoiceProfile, intro?: StoryIntro | null, narrator?: VoiceProfile | null, character?: VoiceProfile | null): RenderPlan {
   const ordered = [...story.segments].sort((a, b) => a.order - b.order);
   const planned: PlannedSegment[] = [];
   if (narrator) {
@@ -137,7 +137,7 @@ export function buildRenderPlan(story: StoryVersion, ctx: TemplateContext | null
     const shared = needsFamily.length === 0 && !usesChild(seg.text);
     planned.push({ segmentId: seg.id, type: seg.type, text, cacheKey: keyFor(text, story, voice), shared, pauseAfterMs });
   }
-  const final = narrator ? splitPlanByVoice(planned, story, voice, narrator) : planned;
+  const final = narrator ? splitPlanByVoice(planned, story, voice, narrator, character ?? null) : planned;
   const aKey = assemblyKey(
     final.map((p) => `${p.cacheKey}:${p.pauseAfterMs}`),
     `${MASTERING_VERSION}:${story.storyId}:v${story.version}`,
@@ -146,7 +146,7 @@ export function buildRenderPlan(story: StoryVersion, ctx: TemplateContext | null
 }
 
 /** Rozbija segmenty na fragmenty narratora i Elofika (powitanie i zapowiedź mają już przypisany głos). */
-function splitPlanByVoice(planned: PlannedSegment[], story: StoryVersion, elofik: VoiceProfile, narrator: VoiceProfile): PlannedSegment[] {
+function splitPlanByVoice(planned: PlannedSegment[], story: StoryVersion, elofik: VoiceProfile, narrator: VoiceProfile, character: VoiceProfile | null): PlannedSegment[] {
   const out: PlannedSegment[] = [];
   for (const seg of planned) {
     if (seg.speaker || seg.segmentId.startsWith("intro-")) {
@@ -155,7 +155,8 @@ function splitPlanByVoice(planned: PlannedSegment[], story: StoryVersion, elofik
     }
     const parts = splitNarration(seg.text, "narrator");
     parts.forEach((part, i) => {
-      const v = part.speaker === "narrator" ? narrator : elofik;
+      // kwestie innych postaci: osobny głos, a gdy go nie ma — narrator (żeby nie myliły się z Elofikiem)
+      const v = part.speaker === "elofik" ? elofik : part.speaker === "character" ? (character ?? narrator) : narrator;
       out.push({
         ...seg,
         segmentId: parts.length > 1 ? `${seg.segmentId}~${i + 1}` : seg.segmentId,
@@ -165,7 +166,7 @@ function splitPlanByVoice(planned: PlannedSegment[], story: StoryVersion, elofik
         previousText: parts[i - 1]?.text,
         nextText: parts[i + 1]?.text,
         speaker: part.speaker,
-        voice: part.speaker === "narrator" ? narrator : undefined,
+        voice: v === elofik ? undefined : v,
       });
     });
   }
